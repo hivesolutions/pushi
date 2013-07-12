@@ -60,18 +60,7 @@ class Server(object):
 
     def on_read_s(self, _socket):
         socket_c, address = _socket.accept()
-
-        print "new connection " + str(address)
-
-        socket_c.setblocking(0)
-        socket_c.setsockopt(socket.IPPROTO_TCP, socket.TCP_NODELAY, 1)
-
-        self.read.append(socket_c)
-        self.write.append(socket_c)
-        self.error.append(socket_c)
-
-        connection = self.new_connection(socket_c, address)
-        self.on_connection(connection)
+        self.on_socket_c(socket_c, address)
 
     def on_write_s(self, socket):
         pass
@@ -84,7 +73,7 @@ class Server(object):
             connection = self.connections_m[socket]
             while True:
                 data = socket.recv(Server.CHUNK_SIZE)
-                self.ondata(connection, data)
+                self.on_data(connection, data)
         except BaseException, exception:
             print exception
 
@@ -93,9 +82,20 @@ class Server(object):
 
     def on_error(self, socket):
         pass
-    
+
     def on_data(self, connection, data):
         pass
+
+    def on_socket_c(self, socket_c, address):
+        socket_c.setblocking(0)
+        socket_c.setsockopt(socket.IPPROTO_TCP, socket.TCP_NODELAY, 1)
+
+        self.read.append(socket_c)
+        self.write.append(socket_c)
+        self.error.append(socket_c)
+
+        connection = self.new_connection(socket_c, address)
+        self.on_connection(connection)
 
     def on_connection(self, connection):
         self.connections.append(connection)
@@ -223,7 +223,7 @@ class WSServer(Server):
 
 class EchoServer(WSServer):
 
-    def on_data(self, data):
+    def on_data_ws(self, data):
         self.send_ws(data)
 
 if __name__ == "__main__":

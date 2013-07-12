@@ -12,11 +12,53 @@ class Connection(object):
         self.socket = socket
         self.address = address
 
+    def send(self, data):
+        self.socket.send(data)
+
+    def recv(self, data):
+        return self.socket.recv()
+
 class WSConnection(Connection):
 
     def __init__(self, socket, address):
         Connection.__init__(self, socket, address)
         self.handshake = False
+        self.buffer_l = []
+        self.headers = {}
+
+    def add_buffer(self, data):
+        self.buffer_l.append(data)
+
+    def do_handshake(self):
+        if self.handshake:
+            raise RuntimeError("Handshake already done")
+
+        buffer = "".join(self.buffer_l)
+        if not buffer[-4:] == "\r\n\r\n":
+            raise RuntimeError("Missing data for handshake")
+
+        lines = buffer.split("\r\n")
+        for line in lines[1:]:
+            values = line.split(":")
+            values_l = len(values)
+            if not values_l == 2: continue
+
+            key, value = values
+            key = key.strip()
+            value = value.strip()
+            self.headers[key] = value
+
+        self.handshake = True
+
+    def accept_key(self):
+        socket_key = self.headers.get("Sec-WebSocket-Key", None)
+        if not socket_key:
+            raise RuntimeError("No socket key found in headers")
+
+        hash = hashlib.sha1(socket_key + WSServer.MAGIC_VALUE)
+        hash_digest = hash.digest()
+        accept_key = base64.b64encode(hash_digest)
+        return accept_key
 
 class Server(object):
 
@@ -115,16 +157,29 @@ class WSServer(Server):
 
     def on_data(self, connection, data):
         Server.on_data(self, connection, data)
-        print data
+
+        if connection.handshake:
+            decoded = self._decode(data)
+            self.on_data_ws(connection, decoded)
+
+        else:
+            connection.add_buffer(data)
+            connection.do_handshake()
+            accept_key = connection.accept_key()
+            response = self._handshake_response(accept_key)
+            connection.send(response)
 
     def new_connection(self, socket, address):
         return WSConnection(socket, address)
 
-    def send_ws(self, data):
-        encoded = self.encode(data)
-        self.socket.send(encoded)
+    def send_ws(self, connection, data):
+        encoded = self._encode(data)
+        connection.send(encoded)
 
-    def encode(self, data):
+    def on_data_ws(self, connection, data):
+        pass
+
+    def _encode(self, data):
         data_l = len(data)
         encoded_l = list()
 
@@ -153,7 +208,7 @@ class WSServer(Server):
         encoded = "".join(encoded_l)
         return encoded
 
-    def decode(self, data):
+    def _decode(self, data):
         second_byte = data[1]
 
         length = ord(second_byte) & 127
@@ -178,53 +233,18 @@ class WSServer(Server):
         decoded = str(decoded_a)
         return decoded
 
-    def serve_old(self, host = "127.0.0.1", port = 9090):
-        _socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        _socket.bind((host, port))
-
-        # @todo must do this in an async fashion
-        _socket.listen(1)
-
-        connection, _address = _socket.accept()
-        data = connection.recv(123123123)
-
-        lines = data.split("\r\n")
-        headers = {}
-        for line in lines[1:]:
-            values = line.split(":")
-            values_l = len(values)
-            key = values[0]
-            value = values[1] if values_l > 1 else ""
-            key = key.strip()
-            value = value.strip()
-            headers[key] = value
-
-        socket_key = headers.get("Sec-WebSocket-Key", None)
-        accept_key = base64.b64encode(hashlib.sha1(socket_key + WSServer.MAGIC_VALUE).digest())
-
+    def _handshake_response(self, accept_key):
         data = "HTTP/1.1 101 Switching Protocols\r\n" +\
-        "Upgrade: websocket\r\n" +\
-        "Connection: Upgrade\r\n" +\
-        "Sec-WebSocket-Accept: %s\r\n\r\n" % accept_key
-        connection.send(data)
-
-        data = connection.recv(10000)
-        received = self.decode(data)
-        connection.send(self.encode(received))
-        connection.send(self.encode(received))
-        connection.send(self.encode(received))
-        connection.send(self.encode(received))
-        connection.send(self.encode(received))
-        connection.send(self.encode(received))
-        connection.send(self.encode(received))
-
-        import time
-        time.sleep(100)
+            "Upgrade: websocket\r\n" +\
+            "Connection: Upgrade\r\n" +\
+            "Sec-WebSocket-Accept: %s\r\n\r\n" % accept_key
+        return data
 
 class EchoServer(WSServer):
 
-    def on_data_ws(self, data):
-        self.send_ws(data)
+    def on_data_ws(self, connection, data):
+        WSServer.on_data_ws(self, connection, data)
+        self.send_ws(connection, data)
 
 if __name__ == "__main__":
     server = EchoServer()

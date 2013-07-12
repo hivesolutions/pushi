@@ -6,6 +6,10 @@ import base64
 import hashlib
 import select
 
+CHUNK_SIZE = 4096
+""" The size of the chunk to be used while received
+data from the service socket """
+
 class Connection(object):
 
     def __init__(self, socket, address):
@@ -15,8 +19,8 @@ class Connection(object):
     def send(self, data):
         self.socket.send(data)
 
-    def recv(self, data):
-        return self.socket.recv()
+    def recv(self, size = CHUNK_SIZE):
+        return self.socket.recv(size)
 
 class WSConnection(Connection):
 
@@ -25,6 +29,15 @@ class WSConnection(Connection):
         self.handshake = False
         self.buffer_l = []
         self.headers = {}
+
+    def send_ws(self, data):
+        encoded = self._encode(data)
+        return self.send(encoded)
+
+    def recv_ws(self, size = CHUNK_SIZE):
+        data = self.recv(size = size)
+        decoded = self._decode(data)
+        return decoded
 
     def add_buffer(self, data):
         self.buffer_l.append(data)
@@ -59,125 +72,6 @@ class WSConnection(Connection):
         hash_digest = hash.digest()
         accept_key = base64.b64encode(hash_digest)
         return accept_key
-
-class Server(object):
-
-    CHUNK_SIZE = 4096
-    """ The size of the chunk to be used while received
-    data from the service socket """
-
-    def __init__(self, *args, **kwargs):
-        self.socket = None
-        self.read = []
-        self.write = []
-        self.error = []
-        self.connections = []
-        self.connections_m = {}
-
-    def serve(self, host = "127.0.0.1", port = 9090):
-        self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        self.socket.setblocking(0)
-        self.socket.setsockopt(socket.IPPROTO_TCP, socket.TCP_NODELAY, 1)
-        self.socket.bind((host, port))
-        self.socket.listen(5)
-
-        self.read.append(self.socket)
-        self.write.append(self.socket)
-        self.error.append(self.socket)
-
-        while True:
-            reads, writes, errors = select.select(self.read, self.write, self.error)
-
-            for read in reads:
-                if read == self.socket: self.on_read_s(read)
-                else: self.on_read(read)
-
-            for write in writes:
-                if write == self.socket: self.on_write_s(write)
-                else: self.on_write(write)
-
-            for error in errors:
-                if error == self.socket: self.on_error_s(error)
-                else: self.on_error(error)
-
-    def on_read_s(self, _socket):
-        socket_c, address = _socket.accept()
-        self.on_socket_c(socket_c, address)
-
-    def on_write_s(self, socket):
-        pass
-
-    def on_error_s(self, socket):
-        pass
-
-    def on_read(self, socket):
-        try:
-            connection = self.connections_m[socket]
-            while True:
-                data = socket.recv(Server.CHUNK_SIZE)
-                self.on_data(connection, data)
-        except BaseException, exception:
-            print exception
-
-    def on_write(self, socket):
-        pass
-
-    def on_error(self, socket):
-        pass
-
-    def on_data(self, connection, data):
-        pass
-
-    def on_socket_c(self, socket_c, address):
-        socket_c.setblocking(0)
-        socket_c.setsockopt(socket.IPPROTO_TCP, socket.TCP_NODELAY, 1)
-
-        self.read.append(socket_c)
-        self.write.append(socket_c)
-        self.error.append(socket_c)
-
-        connection = self.new_connection(socket_c, address)
-        self.on_connection(connection)
-
-    def on_connection(self, connection):
-        self.connections.append(connection)
-        self.connections_m[connection.socket] = connection
-
-    def new_connection(self, socket, address):
-        return Connection(socket, address)
-
-class WSServer(Server):
-
-    MAGIC_VALUE = "258EAFA5-E914-47DA-95CA-C5AB0DC85B11"
-    """ The magic value used by the websocket protocol as part
-    of the key generation process in the handshake """
-
-    def on_connection(self, connection):
-        Server.on_connection(self, connection)
-
-    def on_data(self, connection, data):
-        Server.on_data(self, connection, data)
-
-        if connection.handshake:
-            decoded = self._decode(data)
-            self.on_data_ws(connection, decoded)
-
-        else:
-            connection.add_buffer(data)
-            connection.do_handshake()
-            accept_key = connection.accept_key()
-            response = self._handshake_response(accept_key)
-            connection.send(response)
-
-    def new_connection(self, socket, address):
-        return WSConnection(socket, address)
-
-    def send_ws(self, connection, data):
-        encoded = self._encode(data)
-        connection.send(encoded)
-
-    def on_data_ws(self, connection, data):
-        pass
 
     def _encode(self, data):
         data_l = len(data)
@@ -233,6 +127,121 @@ class WSServer(Server):
         decoded = str(decoded_a)
         return decoded
 
+class Server(object):
+
+    def __init__(self, *args, **kwargs):
+        self.socket = None
+        self.read = []
+        self.write = []
+        self.error = []
+        self.connections = []
+        self.connections_m = {}
+
+    def serve(self, host = "127.0.0.1", port = 9090):
+        self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self.socket.setblocking(0)
+        self.socket.setsockopt(socket.IPPROTO_TCP, socket.TCP_NODELAY, 1)
+        self.socket.bind((host, port))
+        self.socket.listen(5)
+
+        self.read.append(self.socket)
+        self.write.append(self.socket)
+        self.error.append(self.socket)
+
+        while True:
+            reads, writes, errors = select.select(self.read, self.write, self.error)
+
+            for read in reads:
+                if read == self.socket: self.on_read_s(read)
+                else: self.on_read(read)
+
+            for write in writes:
+                if write == self.socket: self.on_write_s(write)
+                else: self.on_write(write)
+
+            for error in errors:
+                if error == self.socket: self.on_error_s(error)
+                else: self.on_error(error)
+
+    def on_read_s(self, _socket):
+        socket_c, address = _socket.accept()
+        self.on_socket_c(socket_c, address)
+
+    def on_write_s(self, socket):
+        pass
+
+    def on_error_s(self, socket):
+        pass
+
+    def on_read(self, socket):
+        try:
+            connection = self.connections_m[socket]
+            while True:
+                data = socket.recv(CHUNK_SIZE)
+                self.on_data(connection, data)
+        except BaseException, exception:
+            print exception
+
+    def on_write(self, socket):
+        pass
+
+    def on_error(self, socket):
+        pass
+
+    def on_data(self, connection, data):
+        pass
+
+    def on_socket_c(self, socket_c, address):
+        socket_c.setblocking(0)
+        socket_c.setsockopt(socket.IPPROTO_TCP, socket.TCP_NODELAY, 1)
+
+        self.read.append(socket_c)
+        self.write.append(socket_c)
+        self.error.append(socket_c)
+
+        connection = self.new_connection(socket_c, address)
+        self.on_connection(connection)
+
+    def on_connection(self, connection):
+        self.connections.append(connection)
+        self.connections_m[connection.socket] = connection
+
+    def new_connection(self, socket, address):
+        return Connection(socket, address)
+
+class WSServer(Server):
+
+    MAGIC_VALUE = "258EAFA5-E914-47DA-95CA-C5AB0DC85B11"
+    """ The magic value used by the websocket protocol as part
+    of the key generation process in the handshake """
+
+    def on_connection(self, connection):
+        Server.on_connection(self, connection)
+
+    def on_data(self, connection, data):
+        Server.on_data(self, connection, data)
+
+        if connection.handshake:
+            decoded = connection._decode(data)
+            self.on_data_ws(connection, decoded)
+
+        else:
+            connection.add_buffer(data)
+            connection.do_handshake()
+            accept_key = connection.accept_key()
+            response = self._handshake_response(accept_key)
+            connection.send(response)
+
+    def new_connection(self, socket, address):
+        return WSConnection(socket, address)
+
+    def send_ws(self, connection, data):
+        encoded = self._encode(data)
+        connection.send(encoded)
+
+    def on_data_ws(self, connection, data):
+        pass
+
     def _handshake_response(self, accept_key):
         data = "HTTP/1.1 101 Switching Protocols\r\n" +\
             "Upgrade: websocket\r\n" +\
@@ -244,7 +253,7 @@ class EchoServer(WSServer):
 
     def on_data_ws(self, connection, data):
         WSServer.on_data_ws(self, connection, data)
-        self.send_ws(connection, data)
+        connection.send_ws(data)
 
 if __name__ == "__main__":
     server = EchoServer()

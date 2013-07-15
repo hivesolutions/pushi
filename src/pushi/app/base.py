@@ -9,8 +9,9 @@ class PushiApp(appier.App):
         appier.App.__init__(self, name = "pushi")
 
     @appier.route("^/api/hello$")
-    def tobias(self):
-        return dict(message = "hello world")
+    def hello(self, message = ""):
+        message = "hello world %s" % message
+        return dict(message = message.strip())
 
 if __name__ == "__main__":
     app = PushiApp()

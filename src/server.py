@@ -203,15 +203,12 @@ class Server(object):
 
     def on_read(self, _socket):
         connection = self.connections_m[_socket]
-        
+
         try:
             while True:
                 data = _socket.recv(CHUNK_SIZE)
-                if data:
-                    self.on_data(connection, data)
-                else:
-                    self.on_connection_d(connection)
-                    break
+                if data: self.on_data(connection, data)
+                else: self.on_connection_d(connection); break
         except socket.error, error:
             if not error.args[0] in (errno.EWOULDBLOCK, errno.EAGAIN, errno.EPERM, errno.ENOENT, WSAEWOULDBLOCK):
                 connection.close()

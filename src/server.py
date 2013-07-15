@@ -1,20 +1,48 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
+import errno
 import socket
 import base64
-import hashlib
 import select
+import hashlib
 
 CHUNK_SIZE = 4096
 """ The size of the chunk to be used while received
 data from the service socket """
 
+WSAEWOULDBLOCK = 10035
+""" The wsa would block error code meant to be used on
+windows environments as a replacement for the would block
+error code that indicates the failure to operate on a non
+blocking connection """
+
 class Connection(object):
 
-    def __init__(self, socket, address):
+    def __init__(self, server, socket, address):
+        self.server = server
         self.socket = socket
         self.address = address
+
+    def open(self):
+        server = self.server
+
+        server.read.append(self.socket)
+        server.write.append(self.socket)
+        server.error.append(self.socket)
+
+        server.connections.append(self)
+        server.connections_m[self.socket] = self
+
+    def close(self):
+        server = self.server
+
+        server.read.remove(self.socket)
+        server.write.remove(self.socket)
+        server.error.remove(self.socket)
+
+        server.connections.remove(self)
+        del server.connections_m[self.socket]
 
     def send(self, data):
         self.socket.send(data)
@@ -24,8 +52,8 @@ class Connection(object):
 
 class WSConnection(Connection):
 
-    def __init__(self, socket, address):
-        Connection.__init__(self, socket, address)
+    def __init__(self, server, socket, address):
+        Connection.__init__(self, server, socket, address)
         self.handshake = False
         self.buffer_l = []
         self.headers = {}
@@ -173,14 +201,22 @@ class Server(object):
     def on_error_s(self, socket):
         pass
 
-    def on_read(self, socket):
+    def on_read(self, _socket):
+        connection = self.connections_m[_socket]
+        
         try:
-            connection = self.connections_m[socket]
             while True:
-                data = socket.recv(CHUNK_SIZE)
-                self.on_data(connection, data)
-        except BaseException, exception:
-            print exception
+                data = _socket.recv(CHUNK_SIZE)
+                if data:
+                    self.on_data(connection, data)
+                else:
+                    self.on_connection_d(connection)
+                    break
+        except socket.error, error:
+            if not error.args[0] in (errno.EWOULDBLOCK, errno.EAGAIN, errno.EPERM, errno.ENOENT, WSAEWOULDBLOCK):
+                connection.close()
+        except BaseException:
+            connection.close()
 
     def on_write(self, socket):
         pass
@@ -195,19 +231,21 @@ class Server(object):
         socket_c.setblocking(0)
         socket_c.setsockopt(socket.IPPROTO_TCP, socket.TCP_NODELAY, 1)
 
-        self.read.append(socket_c)
-        self.write.append(socket_c)
-        self.error.append(socket_c)
-
         connection = self.new_connection(socket_c, address)
         self.on_connection(connection)
 
+    def on_socket_d(self, socket_c):
+        connection = self.connections_m.get(socket_c, None)
+        if not connection: return
+
     def on_connection(self, connection):
-        self.connections.append(connection)
-        self.connections_m[connection.socket] = connection
+        connection.open()
+
+    def on_connection_d(self, connection):
+        connection.close()
 
     def new_connection(self, socket, address):
-        return Connection(socket, address)
+        return Connection(self, socket, address)
 
 class WSServer(Server):
 
@@ -233,7 +271,7 @@ class WSServer(Server):
             connection.send(response)
 
     def new_connection(self, socket, address):
-        return WSConnection(socket, address)
+        return WSConnection(self, socket, address)
 
     def send_ws(self, connection, data):
         encoded = self._encode(data)

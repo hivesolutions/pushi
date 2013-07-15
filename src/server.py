@@ -243,6 +243,21 @@ class WSServer(Server):
         pass
 
     def _handshake_response(self, accept_key):
+        """
+        Returns the response contents of the handshake operation for
+        the provided accept key.
+
+        The key value should already be calculated according to the
+        specification.
+
+        @type accept_key: String
+        @param accept_key: The accept key to be used in the creation
+        of the response message.
+        @rtype: String
+        @return: The response message contents generated according to
+        the specification and the provided accept key.
+        """
+
         data = "HTTP/1.1 101 Switching Protocols\r\n" +\
             "Upgrade: websocket\r\n" +\
             "Connection: Upgrade\r\n" +\

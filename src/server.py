@@ -23,12 +23,12 @@ class Connection(object):
         self.server = server
         self.socket = socket
         self.address = address
+        self.pending = []
 
     def open(self):
         server = self.server
 
         server.read.append(self.socket)
-        server.write.append(self.socket)
         server.error.append(self.socket)
 
         server.connections.append(self)
@@ -38,16 +38,36 @@ class Connection(object):
         server = self.server
 
         server.read.remove(self.socket)
-        server.write.remove(self.socket)
         server.error.remove(self.socket)
 
         server.connections.remove(self)
         del server.connections_m[self.socket]
 
+    def ensure_write(self):
+        if self.socket in self.server.write: return
+        self.server.write.append(self.socket)
+
+    def remove_write(self):
+        if not self.socket in self.server.write: return
+        self.server.write.remove(self.socket)
+
     def send(self, data):
-        self.socket.send(data)
+        self.ensure_write()
+        self.pending.insert(0, data)
 
     def recv(self, size = CHUNK_SIZE):
+        return self._recv(size = size)
+
+    def _send(self):
+        while True:
+            if not self.pending: break
+            data = self.pending.pop()
+            try: self.socket.send(data)
+            except: self.pending.append(data)
+
+        self.remove_write()
+
+    def _recv(self, size):
         return self.socket.recv(size)
 
 class WSConnection(Connection):
@@ -216,7 +236,14 @@ class Server(object):
             connection.close()
 
     def on_write(self, socket):
-        pass
+        connection = self.connections_m[socket]
+        try:
+            connection._send()
+        except socket.error, error:
+            if not error.args[0] in (errno.EWOULDBLOCK, errno.EAGAIN, errno.EPERM, errno.ENOENT, WSAEWOULDBLOCK):
+                connection.close()
+        except BaseException:
+            connection.close()
 
     def on_error(self, socket):
         pass

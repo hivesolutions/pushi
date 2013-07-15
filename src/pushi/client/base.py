@@ -1,3 +1,6 @@
+#!/usr/bin/python
+# -*- coding: utf-8 -*-
+
 from websocket import create_connection
 ws = create_connection("ws://localhost:9090/")
 print "Sending 'Hello, World'..."

@@ -1,0 +1,3 @@
+[submodule "src/appier"]
+	path = src/appier
+	url = https://github.com/hivesolutions/appier_bin.git

@@ -4,7 +4,9 @@
 import appier
 
 class PushiApp(appier.App):
-    pass
+    
+    def __init__(self):
+        appier.App(name = "pushi")
 
 if __name__ == "__main__":
     app = PushiApp()

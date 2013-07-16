@@ -41,7 +41,6 @@ Pushi.prototype.onodisconnect = function() {
 };
 
 Pushi.prototype.onsubscribe = function(channel) {
-    console.info(channel);
 };
 
 Pushi.prototype.onmessage = function(json) {

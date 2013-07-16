@@ -12,16 +12,13 @@ class PushiApp(appier.App):
     @appier.route("/hello/<message>")
     def hello(self, message):
         message = "hello world %s" % message
+        self.state.trigger("message", message)
         return dict(message = message.strip())
 
     @appier.route("/apps/<app_id>/events", "POST")
     def event(self, app_id, data):
         print app_id
         print data
-
-    @appier.route("/tobias", "GET")
-    def tobias(self):
-        self.state.send_channel("global", {"tobias" : "lider"})
 
 if __name__ == "__main__":
     app = PushiApp()

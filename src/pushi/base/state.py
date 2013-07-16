@@ -1,6 +1,8 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
+import json
+import types
 import threading
 
 import pushi
@@ -47,6 +49,20 @@ class State(object):
 
     def unsubscribe(self, socket_id, channel):
         pass
+
+    def trigger(self, event, data):
+        self.trigger_c("global", event, data)
+
+    def trigger_c(self, channel, event, data):
+        data_t = type(data)
+        data = data if data_t in types.StringTypes else json.dumps(data)
+
+        json_d = dict(
+            channel = channel,
+            event = event,
+            data = data
+        )
+        self.send_channel(channel, json_d)
 
     def send_channel(self, channel, json_d):
         sockets = self.channel_sockets.get(channel, [])

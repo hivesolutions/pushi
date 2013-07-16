@@ -10,7 +10,7 @@ def app_test():
         data = "hello world",
         channels = ["global"]
     )
-    
+
     appier.post("http://localhost:8080/apps/hello/events", data_j = payload)
 
 def ws_test():

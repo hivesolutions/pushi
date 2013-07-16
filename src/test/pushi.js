@@ -1,5 +1,6 @@
 jQuery(document).ready(function() {
             var socket = new WebSocket("ws://localhost:9090/");
+            
             socket.onopen = function() {
                 socket.send("Hello World");
                 console.info("Message is sent...");

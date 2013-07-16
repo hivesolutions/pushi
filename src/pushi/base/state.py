@@ -1,6 +1,8 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
+import threading
+
 import pushi
 
 class State(object):
@@ -34,5 +36,8 @@ class State(object):
         pass
 
 if __name__ == "__main__":
+    State.app = pushi.PushiApp()
     State.server = pushi.PushiServer()
-    State.server.serve()
+
+    threading.Thread(target = State.app.serve).start()
+    threading.Thread(target = State.server.serve).start()

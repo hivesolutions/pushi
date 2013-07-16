@@ -133,6 +133,7 @@ class WSServer(base.Server):
             accept_key = connection.accept_key()
             response = self._handshake_response(accept_key)
             connection.send(response)
+            self.on_handshake(connection)
 
     def new_connection(self, socket, address):
         return WSConnection(self, socket, address)
@@ -142,6 +143,9 @@ class WSServer(base.Server):
         connection.send(encoded)
 
     def on_data_ws(self, connection, data):
+        pass
+
+    def on_handshake(self, connection):
         pass
 
     def _handshake_response(self, accept_key):

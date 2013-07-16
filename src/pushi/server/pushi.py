@@ -24,10 +24,24 @@ class PushiServer(ws.WSServer):
         self.state = state
         self.sockets = {}
 
-    def new_connection(self, socket, address):
-        connection = PushiConnection(self, socket, address)
+    def on_connection(self, connection):
+        ws.WSServer.on_connection(self, connection)
         self.sockets[connection.socket_id] = connection
-        return connection
+        self.trigger(
+            "connect",
+            socket_id = connection.socket_id
+        )
+
+    def on_connection_d(self, connection):
+        ws.WSServer.on_connection_d(self, connection)
+        del self.sockets[connection.socket_id]
+        self.trigger(
+            "disconnect",
+            socket_id = connection.socket_id
+        )
+
+    def new_connection(self, socket, address):
+        return PushiConnection(self, socket, address)
 
     def on_handshake(self, connection):
         ws.WSServer.on_handshake(self, connection)

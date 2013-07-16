@@ -27,6 +27,8 @@ class State(object):
         self.app = app
         self.server = server
 
+        self.server.bind("connect", self.connect)
+        self.server.bind("disconnect", self.disconnect)
         self.server.bind("subscribe", self.subscribe)
 
         threading.Thread(target = self.app.serve).start()
@@ -36,7 +38,8 @@ class State(object):
         pass
 
     def disconnect(self, socket_id):
-        pass
+        channels = self.socket_channels.get(socket_id, [])
+        for channel in channels: self.unsubscribe(socket_id, channel)
 
     def subscribe(self, socket_id, channel):
         channels = self.socket_channels.get(socket_id, [])
@@ -48,7 +51,11 @@ class State(object):
         self.channel_sockets[channel] = sockets
 
     def unsubscribe(self, socket_id, channel):
-        pass
+        channels = self.socket_channels.get(socket_id, [])
+        if channel in channels: channels.remove(channel)
+
+        sockets = self.channel_sockets.get(channel, [])
+        if socket_id in sockets: sockets.remove(socket_id)
 
     def trigger(self, event, data):
         self.trigger_c("global", event, data)

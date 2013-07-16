@@ -6,6 +6,8 @@ import socket
 import select
 import threading
 
+import observer
+
 CHUNK_SIZE = 4096
 """ The size of the chunk to be used while received
 data from the service socket """
@@ -76,9 +78,10 @@ class Connection(object):
     def _recv(self, size):
         return self.socket.recv(size)
 
-class Server(object):
+class Server(observer.Observable):
 
     def __init__(self, *args, **kwargs):
+        observer.Observable.__init__(self, *args, **kwargs)
         self.socket = None
         self.read = []
         self.write = []
@@ -98,7 +101,7 @@ class Server(object):
         self.error.append(self.socket)
 
         while True:
-            reads, writes, errors = select.select(self.read, self.write, self.error)
+            reads, writes, errors = select.select(self.read, self.write, self.error, 0.25)
 
             for read in reads:
                 if read == self.socket: self.on_read_s(read)
@@ -123,8 +126,9 @@ class Server(object):
         pass
 
     def on_read(self, _socket):
-        connection = self.connections_m[_socket]
-
+        connection = self.connections_m.get(_socket, None)
+        if not connection: return
+        
         try:
             while True:
                 data = _socket.recv(CHUNK_SIZE)
@@ -137,7 +141,9 @@ class Server(object):
             connection.close()
 
     def on_write(self, socket):
-        connection = self.connections_m[socket]
+        connection = self.connections_m.get(socket, None)
+        if not connection: return
+                
         try:
             connection._send()
         except socket.error, error:

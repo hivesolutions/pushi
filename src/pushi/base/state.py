@@ -14,30 +14,49 @@ class State(object):
     socket_channels = {}
 
     channel_sockets = {}
+    
+    def __init__(self):
+        self.app = None
+        self.server = None
+        self.socket_channels = {}
+        self.channel_sockets = {}
+    
+    def load(self, app, server):
+        self.app = app
+        self.server = server
+        
+        self.server.bind("subscribe", self.subscribe)
+        
+        threading.Thread(target = self.app.serve).start()
+        threading.Thread(target = self.server.serve).start()
 
-    @staticmethod
-    def connect(socket_id):
+    def connect(self, socket_id):
         pass
 
-    @staticmethod
-    def disconnect(socket_id):
+    def disconnect(self, socket_id):
         pass
 
-    @staticmethod
-    def subscribe(socket_id, channel):
-        channels = State.socket_channels.get(socket_id)
+    def subscribe(self, socket_id, channel):
+        channels = self.socket_channels.get(socket_id, [])
         channels.append(channel)
+        self.socket_channels[socket_id] = channels
 
-        sockets = State.channel_sockets.get(channel)
+        sockets = self.channel_sockets.get(channel, [])
         sockets.append(socket_id)
+        self.channel_sockets[channel] = sockets
 
-    @staticmethod
-    def unsubscribe(socket_id, channel):
+    def unsubscribe(self, socket_id, channel):
         pass
+
+    def send_channel(self, channel, json_d):
+        sockets = self.channel_sockets.get(channel, [])
+        for socket_id in sockets: self.send_socket(socket_id, json_d)
+
+    def send_socket(self, socket_id, json_d):
+        self.server.send_socket(socket_id, json_d)
 
 if __name__ == "__main__":
-    State.app = pushi.PushiApp()
-    State.server = pushi.PushiServer()
-
-    threading.Thread(target = State.app.serve).start()
-    threading.Thread(target = State.server.serve).start()
+    state = State()
+    app = pushi.PushiApp(state)
+    server = pushi.PushiServer(state)
+    state.load(app, server)

@@ -14,19 +14,19 @@ class State(object):
     socket_channels = {}
 
     channel_sockets = {}
-    
+
     def __init__(self):
         self.app = None
         self.server = None
         self.socket_channels = {}
         self.channel_sockets = {}
-    
+
     def load(self, app, server):
         self.app = app
         self.server = server
-        
+
         self.server.bind("subscribe", self.subscribe)
-        
+
         threading.Thread(target = self.app.serve).start()
         threading.Thread(target = self.server.serve).start()
 

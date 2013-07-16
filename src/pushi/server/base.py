@@ -128,7 +128,7 @@ class Server(observer.Observable):
     def on_read(self, _socket):
         connection = self.connections_m.get(_socket, None)
         if not connection: return
-        
+
         try:
             while True:
                 data = _socket.recv(CHUNK_SIZE)
@@ -143,7 +143,7 @@ class Server(observer.Observable):
     def on_write(self, socket):
         connection = self.connections_m.get(socket, None)
         if not connection: return
-                
+
         try:
             connection._send()
         except socket.error, error:

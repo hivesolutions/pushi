@@ -19,8 +19,15 @@ class PushiConnection(ws.WSConnection):
 
 class PushiServer(ws.WSServer):
 
+    def __init__(self, state, *args, **kwargs):
+        ws.WSServer.__init__(self, *args, **kwargs)
+        self.state = state
+        self.sockets = {}
+
     def new_connection(self, socket, address):
-        return PushiConnection(self, socket, address)
+        connection = PushiConnection(self, socket, address)
+        self.sockets[connection.socket_id] = connection
+        return connection
 
     def on_handshake(self, connection):
         ws.WSServer.on_handshake(self, connection)
@@ -47,11 +54,21 @@ class PushiServer(ws.WSServer):
         data = json_d.get("data", {})
         channel = data.get("channel", None)
 
+        self.trigger(
+            "subscribe",
+            socket_id = connection.socket_id,
+            channel = channel
+        )
+
         json_d = dict(
             event = "pusher_internal:subscription_succeeded",
             data = json.dumps(dict()),
             channel =  channel
         )
+        connection.send_pushi(json_d)
+
+    def send_socket(self, socket_id, json_d):
+        connection = self.sockets[socket_id]
         connection.send_pushi(json_d)
 
 if __name__ == "__main__":

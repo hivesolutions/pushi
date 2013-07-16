@@ -92,10 +92,3 @@ Pushi.prototype.subscribe = function(channel) {
                 channel : channel
             });
 };
-
-jQuery(document).ready(function() {
-            var pushi = new Pushi("asdasd");
-            pushi.bind("message", function(event, data) {
-                        jQuery("body").append("<div>" + data + "</div>");
-                    });
-        });

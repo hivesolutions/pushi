@@ -7,6 +7,7 @@ var Pushi = function(appKey, options) {
     this.socket = new WebSocket(URL);
     this.socketId = null;
     this.state = "disconnected";
+    this.events = {};
 
     this.socket.onopen = function() {
     };
@@ -33,6 +34,26 @@ var Pushi = function(appKey, options) {
     };
 };
 
+Pushi.prototype.trigger = function(event) {
+    var methods = this.events[event] || [];
+    for (var index = 0; index < methods.length; index++) {
+        var method = methods[index];
+        method.apply(this, arguments);
+    }
+};
+
+Pushi.prototype.bind = function(event, method) {
+    var methods = this.events[event] || [];
+    methods.push(method);
+    this.events[event] = methods;
+};
+
+Pushi.prototype.unbind = function(event, method) {
+    var methods = this.events[event] || [];
+    var index = methods.indexOf(method);
+    index && methods.splice(index, 1);
+};
+
 Pushi.prototype.onoconnect = function() {
     this.subscribe("global");
 };
@@ -49,6 +70,8 @@ Pushi.prototype.onmessage = function(json) {
             this.onsubscribe(json.channel);
             break;
     }
+
+    this.trigger(json.event, json.data);
 };
 
 Pushi.prototype.send = function(json) {
@@ -72,4 +95,7 @@ Pushi.prototype.subscribe = function(channel) {
 
 jQuery(document).ready(function() {
             var pushi = new Pushi("asdasd");
+            pushi.bind("message", function(event, data) {
+                        jQuery("body").append("<div>" + data + "</div>");
+                    });
         });

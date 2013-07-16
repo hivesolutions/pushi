@@ -4,6 +4,7 @@
 import errno
 import socket
 import select
+import threading
 
 CHUNK_SIZE = 4096
 """ The size of the chunk to be used while received
@@ -22,6 +23,7 @@ class Connection(object):
         self.socket = socket
         self.address = address
         self.pending = []
+        self.pending_lock = threading.RLock()
 
     def open(self):
         server = self.server
@@ -51,17 +53,23 @@ class Connection(object):
 
     def send(self, data):
         self.ensure_write()
-        self.pending.insert(0, data)
+        self.pending_lock.acquire()
+        try: self.pending.insert(0, data)
+        finally: self.pending_lock.release()
 
     def recv(self, size = CHUNK_SIZE):
         return self._recv(size = size)
 
     def _send(self):
-        while True:
-            if not self.pending: break
-            data = self.pending.pop()
-            try: self.socket.send(data)
-            except: self.pending.append(data)
+        self.pending_lock.acquire()
+        try:
+            while True:
+                if not self.pending: break
+                data = self.pending.pop()
+                try: self.socket.send(data)
+                except: self.pending.append(data)
+        finally:
+            self.pending_lock.release()
 
         self.remove_write()
 

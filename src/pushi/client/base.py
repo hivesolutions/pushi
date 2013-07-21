@@ -2,7 +2,9 @@
 # -*- coding: utf-8 -*-
 
 import appier
-import websocket
+
+try: import websocket
+except: websocket = None
 
 def app_test():
     payload = dict(

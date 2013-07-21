@@ -9,7 +9,9 @@ at providing a free alternative to it (for cost reducing).
 
 ## Quick Start
 
-    var pushi = new Pushi("YOU_APP_KEY");
-    pushi.bind("message", function(event, data) {
-        jQuery("body").append("<div>" + data + "</div>");
-    });
+```javascript
+var pushi = new Pushi("YOU_APP_KEY");
+pushi.bind("message", function(event, data) {
+jQuery("body").append("<div>" + data + "</div>");
+});
+```

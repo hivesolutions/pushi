@@ -41,7 +41,7 @@ import appier
 
 BASE_URL = "http://localhost:8080"
 """ The base url to be used for the pushi service
-in the call to the API endpoints """
+in the call to the API endpoint """
 
 def setup(name = "hello_app"):
     """

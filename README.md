@@ -13,6 +13,9 @@ The API layer should be provided by a simple WSGI application implemented using
 the [appier framework](https://github.com/hivesolutions/appier) to keep things
 simple and fast.
 
+For persistence the pushi infra-structure uses the MongoDB database infra-structure
+to avoid any unwanted complexities and provide fast performance.
+
 ## Inspiration
 
 Pushi was heavily inspired by the [Pusher](http://pusher.com) service, and aims

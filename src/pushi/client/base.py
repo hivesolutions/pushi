@@ -42,6 +42,14 @@ import appier
 try: import websocket
 except: websocket = None
 
+def setup():
+
+    payload = dict(
+        name = "hello_app"
+    )
+
+    appier.post("http://localhost:8080/apps", data_j = payload)
+
 def app_test():
     payload = dict(
         name = "dummy",
@@ -62,4 +70,4 @@ def ws_test():
     ws.close()
 
 if __name__ == "__main__":
-    app_test()
+    setup()

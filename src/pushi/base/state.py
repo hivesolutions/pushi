@@ -108,6 +108,9 @@ class State(appier.Mongo):
         is_private = channel.startswith("private-") or channel.startswith("presence-")
         if is_private: self.verify(app_key, socket_id, channel, auth)
 
+        is_presence = channel.startswith("presence-")
+        if not is_presence: channel_data = None
+
         channel_socket = (channel, socket_id)
 
         channels = self.socket_channels.get(socket_id, [])
@@ -127,7 +130,7 @@ class State(appier.Mongo):
         users = info.get("users", {})
         conns = info.get("conns", [])
         user_count = info.get("user_count", 0)
-        
+
         conns.append(connection)
 
         user_conns = users.get(user_id, [])
@@ -165,7 +168,7 @@ class State(appier.Mongo):
 
         channel_data = self.channel_socket_data.get(channel_socket)
         if not channel_data: return
-        
+
         del self.channel_socket_data[channel_socket]
 
         user_id = channel_data["user_id"]
@@ -174,7 +177,7 @@ class State(appier.Mongo):
         users = info.get("users", {})
         conns = info.get("conns", [])
         user_count = info.get("user_count", 0)
-        
+
         conns.remove(connection)
 
         user_conns = users.get(user_id, [])
@@ -190,7 +193,7 @@ class State(appier.Mongo):
         self.channel_info[channel] = info
 
         if not is_old: return
-        
+
         is_empty = len(conns) == 0
         if is_empty: del self.channel_info[channel]
 

@@ -40,6 +40,7 @@ __license__ = "GNU General Public License (GPL), Version 3"
 import errno
 import socket
 import select
+import logging
 import threading
 
 import observer
@@ -75,11 +76,11 @@ class Connection(object):
     def close(self):
         server = self.server
 
-        server.read.remove(self.socket)
-        server.error.remove(self.socket)
+        if self.socket in server.read: server.read.remove(self.socket)
+        if self.socket in server.error: server.error.remove(self.socket)
 
-        server.connections.remove(self)
-        del server.connections_m[self.socket]
+        if self in server.connections: server.connections.remove(self)
+        if self.socket in server.connections_m: del server.connections_m[self.socket]
 
     def ensure_write(self):
         if self.socket in self.server.write: return
@@ -118,14 +119,35 @@ class Server(observer.Observable):
 
     def __init__(self, *args, **kwargs):
         observer.Observable.__init__(self, *args, **kwargs)
+        self.logger = None
         self.socket = None
         self.read = []
         self.write = []
         self.error = []
         self.connections = []
         self.connections_m = {}
+        self._loaded = False
+        
+    def load(self):
+        if self._loaded: return
+        
+        self.load_logging();
+        
+    def load_logging(self, level = logging.DEBUG):
+        self.logger = logging.getLogger("server")
+        self.logger.setLevel(level)
+        
+        stream = logging.StreamHandler()
+        stream.setLevel(level)
+        
+        formatter = logging.Formatter("%(asctime)s [%(levelname)s] %(message)s")
+        stream.setFormatter(formatter)
+        
+        self.logger.addHandler(stream)
 
     def serve(self, host = "127.0.0.1", port = 9090):
+        self.load()
+
         self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.socket.setblocking(0)
         self.socket.setsockopt(socket.IPPROTO_TCP, socket.TCP_NODELAY, 1)
@@ -173,7 +195,8 @@ class Server(observer.Observable):
         except socket.error, error:
             if not error.args[0] in (errno.EWOULDBLOCK, errno.EAGAIN, errno.EPERM, errno.ENOENT, WSAEWOULDBLOCK):
                 connection.close()
-        except BaseException:
+        except BaseException, exception:
+            self.info(exception)
             connection.close()
 
     def on_write(self, socket):
@@ -185,7 +208,8 @@ class Server(observer.Observable):
         except socket.error, error:
             if not error.args[0] in (errno.EWOULDBLOCK, errno.EAGAIN, errno.EPERM, errno.ENOENT, WSAEWOULDBLOCK):
                 connection.close()
-        except BaseException:
+        except BaseException, exception:
+            self.info(exception)
             connection.close()
 
     def on_error(self, socket):
@@ -213,3 +237,7 @@ class Server(observer.Observable):
 
     def new_connection(self, socket, address):
         return Connection(self, socket, address)
+
+    def log(self, object, level = logging.INFO):
+        message = str(object)
+        self.logger.log(level, message)

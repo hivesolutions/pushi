@@ -42,7 +42,7 @@ import hmac
 import hashlib
 
 def authenticate(channel, socket_id):
-    key = os.environ["PUSHI_KEY"]
+    key = os.environ["PUSHI_SECRET"]
     string = "%s:%s" % (socket_id, channel)
 
     signature = hmac.new(key, string, hashlib.sha256)

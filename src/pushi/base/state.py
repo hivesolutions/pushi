@@ -39,6 +39,7 @@ __license__ = "GNU General Public License (GPL), Version 3"
 
 import json
 import hmac
+import copy
 import types
 import hashlib
 import threading
@@ -56,12 +57,17 @@ class State(appier.Mongo):
 
     channel_sockets = {}
 
+    channel_info = {}
+
+    channel_socket_data = {}
+
     def __init__(self):
         appier.Mongo.__init__(self)
         self.app = None
         self.server = None
         self.socket_channels = {}
         self.channel_sockets = {}
+        self.channel_socket_data = {}
 
     def load(self, app, server):
         self.app = app
@@ -90,16 +96,19 @@ class State(appier.Mongo):
 
         if not auth == auth_v: raise RuntimeError("Invalid signature")
 
-    def connect(self, app_key, socket_id):
+    def connect(self, connection, app_key, socket_id):
         pass
 
-    def disconnect(self, app_key, socket_id):
+    def disconnect(self, connection, app_key, socket_id):
         channels = self.socket_channels.get(socket_id, [])
-        for channel in channels: self.unsubscribe(app_key, socket_id, channel)
+        channels = copy.copy(channels)
+        for channel in channels: self.unsubscribe(connection, app_key, socket_id, channel)
 
-    def subscribe(self, app_key, socket_id, channel, auth = None):
-        is_private = channel.startswith("private-")
+    def subscribe(self, connection, app_key, socket_id, channel, auth = None, channel_data = None):
+        is_private = channel.startswith("private-") or channel.startswith("presence-")
         if is_private: self.verify(app_key, socket_id, channel, auth)
+
+        channel_socket = (channel, socket_id)
 
         channels = self.socket_channels.get(socket_id, [])
         channels.append(channel)
@@ -109,12 +118,91 @@ class State(appier.Mongo):
         sockets.append(socket_id)
         self.channel_sockets[channel] = sockets
 
-    def unsubscribe(self, app_key, socket_id, channel):
+        if not channel_data: return
+
+        user_id = channel_data["user_id"]
+        self.channel_socket_data[channel_socket] = channel_data
+
+        info = self.channel_info.get(channel, {})
+        users = info.get("users", {})
+        conns = info.get("conns", [])
+        user_count = info.get("user_count", 0)
+        
+        conns.append(connection)
+
+        user_conns = users.get(user_id, [])
+        user_conns.append(connection)
+        users[user_id] = user_conns
+
+        is_new = len(user_conns) == 1
+        if is_new: user_count += 1
+
+        info["users"] = users
+        info["conns"] = conns
+        info["user_count"] = user_count
+        self.channel_info[channel] = info
+
+        if not is_new: return
+
+        json_d = dict(
+            event = "pusher:member_added",
+            member = json.dumps(channel_data),
+            channel =  channel
+        )
+
+        for _connection in conns:
+            if _connection == connection: continue
+            _connection.send_pushi(json_d)
+
+    def unsubscribe(self, connection, app_key, socket_id, channel):
+        channel_socket = (channel, socket_id)
+
         channels = self.socket_channels.get(socket_id, [])
         if channel in channels: channels.remove(channel)
 
         sockets = self.channel_sockets.get(channel, [])
         if socket_id in sockets: sockets.remove(socket_id)
+
+        channel_data = self.channel_socket_data.get(channel_socket)
+        if not channel_data: return
+        
+        del self.channel_socket_data[channel_socket]
+
+        user_id = channel_data["user_id"]
+
+        info = self.channel_info.get(channel, {})
+        users = info.get("users", {})
+        conns = info.get("conns", [])
+        user_count = info.get("user_count", 0)
+        
+        conns.remove(connection)
+
+        user_conns = users.get(user_id, [])
+        user_conns.remove(connection)
+        users[user_id] = user_conns
+
+        is_old = len(user_conns) == 0
+        if is_old: del users[user_id]; user_count -= 1
+
+        info["users"] = users
+        info["conns"] = conns
+        info["user_count"] = user_count
+        self.channel_info[channel] = info
+
+        if not is_old: return
+        
+        is_empty = len(conns) == 0
+        if is_empty: del self.channel_info[channel]
+
+        json_d = dict(
+            event = "pusher:member_removed",
+            member = json.dumps(channel_data),
+            channel =  channel
+        )
+
+        for _connection in conns:
+            if _connection == connection: continue
+            _connection.send_pushi(json_d)
 
     def trigger(self, event, data):
         self.trigger_c("global", event, data)

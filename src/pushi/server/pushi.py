@@ -46,12 +46,17 @@ class PushiConnection(ws.WSConnection):
 
     def __init__(self, server, socket, address):
         ws.WSConnection.__init__(self, server, socket, address)
+        self.app_key = None
         self.socket_id = str(uuid.uuid4())
         self.channels = []
 
     def send_pushi(self, json_d):
         data = json.dumps(json_d)
         self.send_ws(data)
+
+    def load_app(self):
+        self.app_key = self.path.rsplit("/", 1)[-1]
+        if not self.app_key: raise RuntimeError("Invalid app key loaded")
 
 class PushiServer(ws.WSServer):
 
@@ -81,6 +86,8 @@ class PushiServer(ws.WSServer):
 
     def on_handshake(self, connection):
         ws.WSServer.on_handshake(self, connection)
+        connection.load_app()
+
         json_d = dict(
             event = "pusher:connection_established",
             data = json.dumps(dict(

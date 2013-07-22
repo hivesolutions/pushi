@@ -47,6 +47,9 @@ class WSConnection(base.Connection):
     def __init__(self, server, socket, address):
         base.Connection.__init__(self, server, socket, address)
         self.handshake = False
+        self.method = None
+        self.path = None
+        self.version = None
         self.buffer_l = []
         self.headers = {}
 
@@ -80,6 +83,9 @@ class WSConnection(base.Connection):
             key = key.strip()
             value = value.strip()
             self.headers[key] = value
+
+        first = lines[0]
+        self.method, self.path, self.version = first.split(" ")
 
         self.handshake = True
 

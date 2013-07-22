@@ -46,6 +46,6 @@ def authenticate(channel, socket_id):
     secret = os.environ["PUSHI_SECRET"]
     string = "%s:%s" % (socket_id, channel)
 
-    signature = hmac.new(secret, string, hashlib.sha256)
-    digest = signature.hexdigest()
+    structure = hmac.new(secret, string, hashlib.sha256)
+    digest = structure.hexdigest()
     return "%s:%s" % (key, digest)

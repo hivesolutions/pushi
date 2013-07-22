@@ -41,6 +41,7 @@ import errno
 import socket
 import select
 import logging
+import traceback
 import threading
 
 import observer
@@ -134,16 +135,9 @@ class Server(observer.Observable):
         self.load_logging();
 
     def load_logging(self, level = logging.DEBUG):
-        self.logger = logging.getLogger("server")
+        logging.basicConfig(format = "%(asctime)s [%(levelname)s] %(message)s")
+        self.logger = logging.getLogger(self.__class__.__name__)
         self.logger.setLevel(level)
-
-        stream = logging.StreamHandler()
-        stream.setLevel(level)
-
-        formatter = logging.Formatter("%(asctime)s [%(levelname)s] %(message)s")
-        stream.setFormatter(formatter)
-
-        self.logger.addHandler(stream)
 
     def serve(self, host = "127.0.0.1", port = 9090):
         self.load()
@@ -197,6 +191,8 @@ class Server(observer.Observable):
                 connection.close()
         except BaseException, exception:
             self.info(exception)
+            lines = traceback.format_exc().splitlines()
+            for line in lines: self.logger.debug(line)
             connection.close()
 
     def on_write(self, socket):
@@ -210,6 +206,8 @@ class Server(observer.Observable):
                 connection.close()
         except BaseException, exception:
             self.info(exception)
+            lines = traceback.format_exc().splitlines()
+            for line in lines: self.logger.debug(line)
             connection.close()
 
     def on_error(self, socket):

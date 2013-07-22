@@ -39,35 +39,37 @@ __license__ = "GNU General Public License (GPL), Version 3"
 
 import appier
 
-try: import websocket
-except: websocket = None
+BASE_URL = "http://localhost:8080"
+""" The base url to be used for the pushi service
+in the call to the API endpoints """
 
-def setup():
+def setup(name = "hello_app"):
+    """
+    Uses the current api to create the base instances
+    for a testing system.
+
+    This method should only be used for testing purposes
+    and must be used with care.
+
+    @type name: String
+    @param name: The name of the app to be created upon
+    this initial testing structures.
+    """
 
     payload = dict(
-        name = "hello_app"
+        name = name
     )
 
-    appier.post("http://localhost:8080/apps", data_j = payload)
+    appier.post("%s/apps" % BASE_URL, data_j = payload)
 
-def app_test():
+def app_test(name = "hello_app"):
     payload = dict(
         name = "dummy",
         data = "hello world",
         channels = ["global"]
     )
 
-    appier.post("http://localhost:8080/apps/hello/events", data_j = payload)
-
-def ws_test():
-    ws = websocket.create_connection("ws://localhost:9090/")
-    print "Sending 'Hello, World'..."
-    ws.send("Hello, World")
-    print "Sent"
-    print "Reeiving..."
-    result =  ws.recv()
-    print "Received '%s'" % result
-    ws.close()
+    appier.post("%s/apps/hello/events" % BASE_URL, data_j = payload)
 
 if __name__ == "__main__":
     setup()

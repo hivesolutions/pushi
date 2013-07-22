@@ -38,12 +38,15 @@ __license__ = "GNU General Public License (GPL), Version 3"
 """ The license for the module """
 
 import json
+import hmac
 import types
+import hashlib
 import threading
 
 import pushi
+import appier
 
-class State(object):
+class State(appier.Mongo):
 
     app = None
 
@@ -54,6 +57,7 @@ class State(object):
     channel_sockets = {}
 
     def __init__(self):
+        appier.Mongo.__init__(self)
         self.app = None
         self.server = None
         self.socket_channels = {}
@@ -70,14 +74,33 @@ class State(object):
         threading.Thread(target = self.app.serve).start()
         threading.Thread(target = self.server.serve).start()
 
-    def connect(self, socket_id):
+    def get_app(self, app_key):
+        db = self.get_db("pushi")
+        app = db.app.find_one({"key" : app_key})
+        return app
+
+    def verify(self, app_key, socket_id, channel, auth):
+        app = self.get_app(app_key)
+        app_secret = app["secret"]
+
+        string = "%s:%s" % (socket_id, channel)
+        structure = hmac.new(str(app_secret), str(string), hashlib.sha256)
+        digest = structure.hexdigest()
+        auth_v = "%s:%s" % (app_key, digest)
+
+        if not auth == auth_v: raise RuntimeError("Invalid signature")
+
+    def connect(self, app_key, socket_id):
         pass
 
-    def disconnect(self, socket_id):
+    def disconnect(self, app_key, socket_id):
         channels = self.socket_channels.get(socket_id, [])
-        for channel in channels: self.unsubscribe(socket_id, channel)
+        for channel in channels: self.unsubscribe(app_key, socket_id, channel)
 
-    def subscribe(self, socket_id, channel):
+    def subscribe(self, app_key, socket_id, channel, auth = None):
+        is_private = channel.startswith("private-")
+        if is_private: self.verify(app_key, socket_id, channel, auth)
+
         channels = self.socket_channels.get(socket_id, [])
         channels.append(channel)
         self.socket_channels[socket_id] = channels
@@ -86,7 +109,7 @@ class State(object):
         sockets.append(socket_id)
         self.channel_sockets[channel] = sockets
 
-    def unsubscribe(self, socket_id, channel):
+    def unsubscribe(self, app_key, socket_id, channel):
         channels = self.socket_channels.get(socket_id, [])
         if channel in channels: channels.remove(channel)
 

@@ -3,4 +3,4 @@
 	url = https://github.com/hivesolutions/appier_bin.git
 [submodule "lib"]
 	path = lib
-	url = https://joamag@bitbucket.org/hivesolutions/pushi_lib.git
+	url = https://bitbucket.org/hivesolutions/pushi_lib.git

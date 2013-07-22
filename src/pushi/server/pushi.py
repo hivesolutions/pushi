@@ -70,6 +70,7 @@ class PushiServer(ws.WSServer):
         self.sockets[connection.socket_id] = connection
         self.trigger(
             "connect",
+            app_key = connection.app_key,
             socket_id = connection.socket_id
         )
 
@@ -78,6 +79,7 @@ class PushiServer(ws.WSServer):
         del self.sockets[connection.socket_id]
         self.trigger(
             "disconnect",
+            app_key = connection.app_key,
             socket_id = connection.socket_id
         )
 
@@ -110,11 +112,14 @@ class PushiServer(ws.WSServer):
     def handle_pusher_subscribe(self, connection, json_d):
         data = json_d.get("data", {})
         channel = data.get("channel", None)
+        auth = data.get("auth", None)
 
         self.trigger(
             "subscribe",
+            app_key = connection.app_key,
             socket_id = connection.socket_id,
-            channel = channel
+            channel = channel,
+            auth = auth
         )
 
         json_d = dict(

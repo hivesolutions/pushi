@@ -24,15 +24,18 @@
 // __license__   = GNU General Public License (GPL), Version 3
 
 var Pushi = function(appKey, options) {
-    var URL = "ws://localhost:9090/";
+    var BASE_URL = "ws://localhost:9090/";
     var self = this;
+
+    this.url = BASE_URL + appKey
 
     this.appKey = appKey;
     this.options = options || {};
-    this.socket = new WebSocket(URL);
+    this.socket = new WebSocket(this.url);
     this.socketId = null;
     this.state = "disconnected";
     this.events = {};
+    this.auths = {}
 
     this.authEndpoint = this.options.authEndpoint;
 
@@ -82,7 +85,6 @@ Pushi.prototype.unbind = function(event, method) {
 };
 
 Pushi.prototype.onoconnect = function() {
-    this.subscribe("global");
     this.trigger("connect");
 };
 
@@ -133,14 +135,26 @@ Pushi.prototype.subscribePrivate = function(channel) {
         throw "No auth endpoint defined";
     }
 
+    var self = this;
+    var query = "?socket_id=" + this.socketId + "&channel=" + channel;
+    var url = this.authEndpoint + query;
+
     var request = new XMLHttpRequest();
-    request.open("get", this.authEndpoint, true);
+    request.open("get", url, true);
     request.onreadystatechange = function() {
         if (request.readyState != 4) {
             return;
         }
 
-        alert(request.responseText);
+        var result = JSON.parse(request.responseText);
+        if (!result.auth) {
+            return;
+        }
+
+        self.sendEvent("pusher:subscribe", {
+                    channel : channel,
+                    auth : result.auth
+                });
     };
     request.send();
 };

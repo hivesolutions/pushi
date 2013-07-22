@@ -127,22 +127,22 @@ class Server(observer.Observable):
         self.connections = []
         self.connections_m = {}
         self._loaded = False
-        
+
     def load(self):
         if self._loaded: return
-        
+
         self.load_logging();
-        
+
     def load_logging(self, level = logging.DEBUG):
         self.logger = logging.getLogger("server")
         self.logger.setLevel(level)
-        
+
         stream = logging.StreamHandler()
         stream.setLevel(level)
-        
+
         formatter = logging.Formatter("%(asctime)s [%(levelname)s] %(message)s")
         stream.setFormatter(formatter)
-        
+
         self.logger.addHandler(stream)
 
     def serve(self, host = "127.0.0.1", port = 9090):

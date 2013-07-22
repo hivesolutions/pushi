@@ -238,6 +238,9 @@ class Server(observer.Observable):
     def new_connection(self, socket, address):
         return Connection(self, socket, address)
 
+    def info(self, object):
+        self.log(object, level = logging.INFO)
+
     def log(self, object, level = logging.INFO):
         message = str(object)
         self.logger.log(level, message)

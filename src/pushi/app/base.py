@@ -38,6 +38,7 @@ __license__ = "GNU General Public License (GPL), Version 3"
 """ The license for the module """
 
 import uuid
+import hashlib
 
 import appier
 
@@ -59,6 +60,10 @@ class PushiApp(appier.App, appier.Mongo):
         app_id = str(uuid.uuid4())
         key = str(uuid.uuid4())
         secret = str(uuid.uuid4())
+
+        app_id = hashlib.sha256(app_id).hexdigest()
+        key = hashlib.sha256(key).hexdigest()
+        secret = hashlib.sha256(secret).hexdigest()
 
         data["app_id"] = app_id
         data["key"] = key

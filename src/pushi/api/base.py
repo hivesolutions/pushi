@@ -38,13 +38,13 @@ __license__ = "GNU General Public License (GPL), Version 3"
 """ The license for the module """
 
 import os
-import hmac 
+import hmac
 import hashlib
 
 def authenticate(channel, socket_id):
     key = os.environ["PUSHI_KEY"]
     string = "%s:%s" % (socket_id, channel)
-    
+
     signature = hmac.new(key, string, hashlib.sha256)
     digest = signature.hexdigest()
     return digest

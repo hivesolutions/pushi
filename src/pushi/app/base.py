@@ -37,12 +37,15 @@ __copyright__ = "Copyright (c) 2008-2012 Hive Solutions Lda."
 __license__ = "GNU General Public License (GPL), Version 3"
 """ The license for the module """
 
+import uuid
+
 import appier
 
-class PushiApp(appier.App):
+class PushiApp(appier.App, appier.Mongo):
 
-    def __init__(self, state):
+    def __init__(self, state = None):
         appier.App.__init__(self, name = "pushi")
+        appier.Mongo.__init__(self)
         self.state = state
 
     @appier.route("/hello/<message>")
@@ -51,10 +54,23 @@ class PushiApp(appier.App):
         self.state.trigger("message", message)
         return dict(message = message.strip())
 
+    @appier.route("/apps", "POST")
+    def create_app(self, data):
+        app_id = str(uuid.uuid4())
+        key = str(uuid.uuid4())
+        secret = str(uuid.uuid4())
+
+        data["app_id"] = app_id
+        data["key"] = key
+        data["secret"] = secret
+
+        db = self.get_db("pushi")
+        db.app.insert(data)
+
     @appier.route("/apps/<app_id>/events", "POST")
-    def event(self, app_id, data):
-        print app_id
-        print data
+    def event_app(self, app_id, data):
+        data = data.get("data", None)
+        self.state.trigger("message", data)
 
 if __name__ == "__main__":
     app = PushiApp()

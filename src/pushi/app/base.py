@@ -67,6 +67,8 @@ class PushiApp(appier.App, appier.Mongo):
         db = self.get_db("pushi")
         db.app.insert(data)
 
+        return data
+
     @appier.route("/apps/<app_id>/events", "POST")
     def event_app(self, app_id, data):
         data = data.get("data", None)

@@ -108,7 +108,9 @@ class PushiServer(ws.WSServer):
         event = event.replace(":", "_")
 
         method_name = "handle_" + event
-        method = getattr(self, method_name)
+        has_method = hasattr(self, method_name)
+        if has_method: method = getattr(self, method_name)
+        else: method = self.handle_event
         method(connection, json_d)
 
     def handle_pusher_subscribe(self, connection, json_d):
@@ -133,6 +135,20 @@ class PushiServer(ws.WSServer):
             channel =  channel
         )
         connection.send_pushi(json_d)
+
+    def handle_event(self, connection, json_d):
+        data = json_d["data"]
+        event = json_d["event"]
+        channel = json_d["channel"]
+
+        app_id = self.state.app_key_to_app_id(connection.app_key)
+        self.state.trigger(
+            app_id,
+            event,
+            data,
+            channels = (channel,),
+            avoid_id = connection.socket_id
+        )
 
     def send_socket(self, socket_id, json_d):
         connection = self.sockets[socket_id]

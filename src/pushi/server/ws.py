@@ -135,23 +135,54 @@ class WSConnection(base.Connection):
 
         index_mask_f = 2
 
-        if length == 126: index_mask_f = 4
-        elif length == 127: index_mask_f = 10
+        if length == 126:
+            length = 0
+            length += ord(data[2]) << 8
+            length += ord(data[3])
+            index_mask_f = 4
 
+        elif length == 127:
+            length = 0
+            length += ord(data[2]) << 56
+            length += ord(data[3]) << 48
+            length += ord(data[4]) << 40
+            length += ord(data[5]) << 32
+            length += ord(data[6]) << 24
+            length += ord(data[7]) << 16
+            length += ord(data[8]) << 8
+            length += ord(data[9])
+            index_mask_f = 10
+
+        # calculates the size of the raw data part of the message and
+        # in case its smaller than the defined length of the data returns
+        # immediately indicating that there's not enough data to complete
+        # the decoding of the data (should be re-trying again latter)
+        raw_size = len(data) - index_mask_f - 4
+        if raw_size < length:
+            raise RuntimeError("Not enough data available for parsing")
+
+        # retrieves the masks part of the data that are going to be
+        # used in the decoding part of the process
         masks = data[index_mask_f:index_mask_f + 4]
 
-        index_data_f = index_mask_f + 4
+        # allocates the array that is going to be used
+        # for the decoding of the data with the length
+        # that was computed as the data length
+        decoded_a = bytearray(length)
 
-        decoded_length = len(data) - index_data_f
-        decoded_a = bytearray(decoded_length)
-
-        i = index_data_f
-        for j in range(decoded_length):
+        # starts the initial data index and then iterates over the
+        # range of decoded length applying the mask to the data
+        # (decoding it consequently) to the created decoded array
+        i = index_mask_f + 4
+        for j in range(length):
             decoded_a[j] = chr(ord(data[i]) ^ ord(masks[j % 4]))
             i += 1
 
+        # converts the decoded array of data into a string and
+        # and returns the "partial" string containing the data that
+        # remained pending to be parsed
         decoded = str(decoded_a)
-        return decoded
+        return decoded, data[i:]
 
 class WSServer(base.Server):
 
@@ -166,8 +197,9 @@ class WSServer(base.Server):
         base.Server.on_data(self, connection, data)
 
         if connection.handshake:
-            decoded = connection._decode(data)
-            self.on_data_ws(connection, decoded)
+            while data:
+                decoded, data = connection._decode(data)
+                self.on_data_ws(connection, decoded)
 
         else:
             connection.add_buffer(data)

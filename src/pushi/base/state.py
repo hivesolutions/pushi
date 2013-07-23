@@ -85,9 +85,9 @@ class State(appier.Mongo):
         self.server.bind("subscribe", self.subscribe)
 
         APP_HOST = os.environ.get("APP_HOST", "127.0.0.1")
-        APP_PORT = os.environ.get("APP_PORT", 8080)
+        APP_PORT = int(os.environ.get("APP_PORT", "8080"))
         SERVER_HOST = os.environ.get("SERVER_HOST", "127.0.0.1")
-        SERVER_PORT = os.environ.get("SERVER_PORT", 9090)
+        SERVER_PORT = int(os.environ.get("SERVER_PORT", "9090"))
 
         app_kwargs = dict(host = APP_HOST, port = APP_PORT)
         server_kwargs = dict(host = SERVER_HOST, port = SERVER_PORT)

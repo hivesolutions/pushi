@@ -23,8 +23,11 @@ at providing a free alternative to it (for cost reducing).
 
 ## Running
 
-    APP_HOST=0.0.0.0 APP_PORT=8080 SERVER_HOST=0.0.0.0 SERVER_PORT=80\
-        python pushi/src/pushi/base/state.py < /dev/null &> ~/pushi.log &
+    APP_HOST=0.0.0.0 \
+    APP_PORT=8080 \
+    SERVER_HOST=0.0.0.0 \
+    SERVER_PORT=80 \
+    python pushi/src/pushi/base/state.py < /dev/null &> ~/pushi.log &
 
 ## Quick Start
 

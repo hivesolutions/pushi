@@ -254,8 +254,8 @@ class State(appier.Mongo):
 
     def get_app(self, app_id = None, app_key = None):
         db = self.get_db("pushi")
-        if app_id: app = db.app.find_one({"app_id" : app_id})
-        if app_key: app = db.app.find_one({"key" : app_key})
+        if app_id: app = db.app.find_one(dict(app_id = app_id))
+        if app_key: app = db.app.find_one(dict(key = app_key))
         return app
 
     def verify(self, app_key, socket_id, channel, auth):

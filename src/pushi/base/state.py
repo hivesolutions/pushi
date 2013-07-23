@@ -86,10 +86,11 @@ class State(appier.Mongo):
         pass
 
     def disconnect(self, connection, app_key, socket_id):
-
-        channels = self.socket_channels.get(socket_id, [])
+        state = self.get_state(app_key = app_key)
+        channels = state.socket_channels.get(socket_id, [])
         channels = copy.copy(channels)
         for channel in channels: self.unsubscribe(connection, app_key, socket_id, channel)
+        del state.socket_channels[socket_id]
 
     def subscribe(self, connection, app_key, socket_id, channel, auth = None, channel_data = None):
         is_private = channel.startswith("private-") or channel.startswith("presence-")
@@ -196,11 +197,17 @@ class State(appier.Mongo):
             if _connection == connection: continue
             _connection.send_pushi(json_d)
 
-    def trigger(self, app_id, event, data, channels = None):
+    def trigger(self, app_id, event, data, channels = None, avoid_id = None):
         if not channels: channels = ("global",)
-        for channel in channels: self.trigger_c(app_id, channel, event, data)
+        for channel in channels: self.trigger_c(
+            app_id,
+            channel,
+            event,
+            data,
+            avoid_id = avoid_id
+        )
 
-    def trigger_c(self, app_id, channel, event, data):
+    def trigger_c(self, app_id, channel, event, data, avoid_id = None):
         data_t = type(data)
         data = data if data_t in types.StringTypes else json.dumps(data)
 
@@ -209,12 +216,14 @@ class State(appier.Mongo):
             event = event,
             data = data
         )
-        self.send_channel(app_id, channel, json_d)
+        self.send_channel(app_id, channel, json_d, avoid_id = avoid_id)
 
-    def send_channel(self, app_id, channel, json_d):
+    def send_channel(self, app_id, channel, json_d, avoid_id = None):
         state = self.get_state(app_id = app_id)
         sockets = state.channel_sockets.get(channel, [])
-        for socket_id in sockets: self.send_socket(socket_id, json_d)
+        for socket_id in sockets:
+            if socket_id == avoid_id: continue
+            self.send_socket(socket_id, json_d)
 
     def send_socket(self, socket_id, json_d):
         self.server.send_socket(socket_id, json_d)
@@ -258,6 +267,14 @@ class State(appier.Mongo):
         auth_v = "%s:%s" % (app_key, digest)
 
         if not auth == auth_v: raise RuntimeError("Invalid signature")
+
+    def app_id_to_app_key(self, app_id):
+        state = self.get_state(app_id = app_id)
+        return state.app_key
+
+    def app_key_to_app_id(self, app_key):
+        state = self.get_state(app_key = app_key)
+        return state.app_id
 
 if __name__ == "__main__":
     state = State()

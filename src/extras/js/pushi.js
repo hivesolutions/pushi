@@ -23,6 +23,15 @@
 // __copyright__ = Copyright (c) 2010-2012 Hive Solutions Lda.
 // __license__   = GNU General Public License (GPL), Version 3
 
+var Channel = function(pushi, name) {
+    this.pushi = pushi;
+    this.name = name;
+};
+
+Channel.prototype.trigger = function(event, data) {
+    this.pushi.sendChannel(event, data, this.name);
+};
+
 var Pushi = function(appKey, options) {
     var BASE_URL = "ws://localhost:9090/";
     var self = this;
@@ -96,10 +105,26 @@ Pushi.prototype.onsubscribe = function(channel) {
     this.trigger("subscribe", channel);
 };
 
+Pushi.prototype.onmemberadded = function(channel, member) {
+    this.trigger("member_added", channel, member);
+};
+
+Pushi.prototype.onmemberremoved = function(channel, member) {
+    this.trigger("member_removed", channel, member);
+};
+
 Pushi.prototype.onmessage = function(json) {
     switch (json.event) {
         case "pusher_internal:subscription_succeeded" :
             this.onsubscribe(json.channel);
+            break;
+
+        case "pusher:member_added" :
+            this.onmemberadded(json.channel, json.member);
+            break;
+
+        case "pusher:member_removed" :
+            this.onmemberremoved(json.channel, json.member);
             break;
     }
 
@@ -119,8 +144,18 @@ Pushi.prototype.sendEvent = function(event, data) {
     this.send(json);
 };
 
+Pushi.prototype.sendChannel = function(event, data, channel) {
+    var json = {
+        event : event,
+        data : data,
+        channel : channel
+    };
+    this.send(json);
+};
+
 Pushi.prototype.subscribe = function(channel) {
-    var isPrivate = channel.startsWith("private-");
+    var isPrivate = channel.startsWith("private-")
+            || channel.startsWith("presence-");
     if (isPrivate) {
         return this.subscribePrivate(channel);
     }
@@ -128,6 +163,9 @@ Pushi.prototype.subscribe = function(channel) {
     this.sendEvent("pusher:subscribe", {
                 channel : channel
             });
+
+    var channel = new Channel(this, channel);
+    return channel;
 };
 
 Pushi.prototype.subscribePrivate = function(channel) {
@@ -153,7 +191,8 @@ Pushi.prototype.subscribePrivate = function(channel) {
 
         self.sendEvent("pusher:subscribe", {
                     channel : channel,
-                    auth : result.auth
+                    auth : result.auth,
+                    channel_data : result.channel_data
                 });
     };
     request.send();

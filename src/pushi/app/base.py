@@ -88,6 +88,12 @@ class PushiApp(appier.App, appier.Mongo):
 
     @appier.route("/apps", "POST")
     def create_app(self, data):
+        name = data["name"]
+
+        db = self.get_db("pushi")
+        app = db.app.find_one(dict(name = name))
+        if app: raise RuntimeError("Duplicated app name")
+
         app_id = str(uuid.uuid4())
         key = str(uuid.uuid4())
         secret = str(uuid.uuid4())
@@ -96,15 +102,17 @@ class PushiApp(appier.App, appier.Mongo):
         key = hashlib.sha256(key).hexdigest()
         secret = hashlib.sha256(secret).hexdigest()
 
-        data["app_id"] = app_id
-        data["key"] = key
-        data["secret"] = secret
+        app = dict(
+            name = name,
+            app_id = app_id,
+            key = key,
+            secret = secret
+        )
 
-        db = self.get_db("pushi")
-        db.app.insert(data)
-        del data["_id"]
+        db.app.insert(app)
+        del app["_id"]
 
-        return data
+        return app
 
     @appier.private
     @appier.route("/apps/<app_id>/ping", "GET")

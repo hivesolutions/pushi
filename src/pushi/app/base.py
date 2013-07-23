@@ -72,13 +72,6 @@ class PushiApp(appier.App, appier.Mongo):
         del self.request.session["app_secret"]
 
     @appier.private
-    @appier.route("/hello/<message>")
-    def hello(self, message):
-        message = "hello world %s" % message
-        self.state.trigger("message", message)
-        return dict(message = message.strip())
-
-    @appier.private
     @appier.route("/apps", "GET")
     def list_apps(self):
         db = self.get_db("pushi")
@@ -88,7 +81,6 @@ class PushiApp(appier.App, appier.Mongo):
             apps = apps
         )
 
-    @appier.private
     @appier.route("/apps", "POST")
     def create_app(self, data):
         app_id = str(uuid.uuid4())
@@ -109,13 +101,20 @@ class PushiApp(appier.App, appier.Mongo):
         return data
 
     @appier.private
+    @appier.route("/apps/<app_id>/ping", "GET")
+    def ping_app(self, app_id):
+        if not app_id == self.request.session["app_id"]:
+            raise RuntimeError("Not allowed for app id")
+
+        self.state.trigger(app_id, "ping", "ping")
+
+    @appier.private
     @appier.route("/apps/<app_id>/events", "GET")
     def event_app_get(self, app_id, data = None, channel = "global"):
         if not app_id == self.request.session["app_id"]:
             raise RuntimeError("Not allowed for app id")
 
         if not data: raise RuntimeError("No data set for event")
-
         self.state.trigger(app_id, "message", data, channels = (channel,))
 
     @appier.private
@@ -127,7 +126,6 @@ class PushiApp(appier.App, appier.Mongo):
         data = data.get("data", None)
         channel = data.get("channel", "global")
         if not data: raise RuntimeError("No data set for event")
-
         self.state.trigger(app_id, "message", data, channels = (channel,))
 
 if __name__ == "__main__":

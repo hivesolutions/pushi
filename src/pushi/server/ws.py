@@ -87,6 +87,7 @@ class WSConnection(base.Connection):
         first = lines[0]
         self.method, self.path, self.version = first.split(" ")
 
+        del self.buffer_l[:]
         self.handshake = True
 
     def accept_key(self):
@@ -98,6 +99,12 @@ class WSConnection(base.Connection):
         hash_digest = hash.digest()
         accept_key = base64.b64encode(hash_digest)
         return accept_key
+
+    def get_buffer(self, delete = True):
+        if not self.buffer_l: return ""
+        buffer = "".join(self.buffer_l)
+        if delete: del self.buffer_l[:]
+        return buffer
 
     def _encode(self, data):
         data_l = len(data)
@@ -198,7 +205,9 @@ class WSServer(base.Server):
 
         if connection.handshake:
             while data:
-                decoded, data = connection._decode(data)
+                buffer = connection.get_buffer()
+                try: decoded, data = connection._decode(buffer + data)
+                except: self.add_buffer(data); break
                 self.on_data_ws(connection, decoded)
 
         else:

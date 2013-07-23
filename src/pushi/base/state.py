@@ -37,6 +37,8 @@ __copyright__ = "Copyright (c) 2008-2012 Hive Solutions Lda."
 __license__ = "GNU General Public License (GPL), Version 3"
 """ The license for the module """
 
+import os
+import sys
 import json
 import hmac
 import copy
@@ -74,6 +76,9 @@ class State(appier.Mongo):
     def load(self, app, server):
         self.app = app
         self.server = server
+
+        base_dir = (os.path.normpath(os.path.dirname(__file__) or ".") + "/../..")
+        if not base_dir in sys.path: sys.path.insert(0, base_dir)
 
         self.server.bind("connect", self.connect)
         self.server.bind("disconnect", self.disconnect)

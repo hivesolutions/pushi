@@ -147,7 +147,7 @@ class PushiServer(ws.WSServer):
             event,
             data,
             channels = (channel,),
-            avoid_id = connection.socket_id
+            owner_id = connection.socket_id
         )
 
     def send_socket(self, socket_id, json_d):

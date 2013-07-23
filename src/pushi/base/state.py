@@ -197,17 +197,17 @@ class State(appier.Mongo):
             if _connection == connection: continue
             _connection.send_pushi(json_d)
 
-    def trigger(self, app_id, event, data, channels = None, avoid_id = None):
+    def trigger(self, app_id, event, data, channels = None, owner_id = None):
         if not channels: channels = ("global",)
         for channel in channels: self.trigger_c(
             app_id,
             channel,
             event,
             data,
-            avoid_id = avoid_id
+            owner_id = owner_id
         )
 
-    def trigger_c(self, app_id, channel, event, data, avoid_id = None):
+    def trigger_c(self, app_id, channel, event, data, owner_id = None):
         data_t = type(data)
         data = data if data_t in types.StringTypes else json.dumps(data)
 
@@ -216,13 +216,14 @@ class State(appier.Mongo):
             event = event,
             data = data
         )
-        self.send_channel(app_id, channel, json_d, avoid_id = avoid_id)
+        self.send_channel(app_id, channel, json_d, owner_id = owner_id)
 
-    def send_channel(self, app_id, channel, json_d, avoid_id = None):
+    def send_channel(self, app_id, channel, json_d, owner_id = None):
         state = self.get_state(app_id = app_id)
+        if owner_id: self.verify_presence(app_id, owner_id, channel)
         sockets = state.channel_sockets.get(channel, [])
         for socket_id in sockets:
-            if socket_id == avoid_id: continue
+            if socket_id == owner_id: continue
             self.send_socket(socket_id, json_d)
 
     def send_socket(self, socket_id, json_d):
@@ -267,6 +268,12 @@ class State(appier.Mongo):
         auth_v = "%s:%s" % (app_key, digest)
 
         if not auth == auth_v: raise RuntimeError("Invalid signature")
+
+    def verify_presence(self, app_id, socket_id, channel):
+        state = self.get_state(app_id = app_id)
+        channels = state.socket_channels.get(socket_id, [])
+        if not channel in channels:
+            raise RuntimeError("Socket '%s' is not allowed for '%s'" % (socket_id, channel))
 
     def app_id_to_app_key(self, app_id):
         state = self.get_state(app_id = app_id)

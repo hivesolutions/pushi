@@ -90,7 +90,7 @@ class State(appier.Mongo):
         channels = state.socket_channels.get(socket_id, [])
         channels = copy.copy(channels)
         for channel in channels: self.unsubscribe(connection, app_key, socket_id, channel)
-        del state.socket_channels[socket_id]
+        if socket_id in state.socket_channels: del state.socket_channels[socket_id]
 
     def subscribe(self, connection, app_key, socket_id, channel, auth = None, channel_data = None):
         is_private = channel.startswith("private-") or channel.startswith("presence-")

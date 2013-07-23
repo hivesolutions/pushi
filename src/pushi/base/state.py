@@ -249,7 +249,7 @@ class State(appier.Mongo):
         return app
 
     def verify(self, app_key, socket_id, channel, auth):
-        app = self.get_app(app_key)
+        app = self.get_app(app_key = app_key)
         app_secret = app["secret"]
 
         string = "%s:%s" % (socket_id, channel)

@@ -47,27 +47,29 @@ import threading
 import pushi
 import appier
 
+class AppState(object):
+    """
+    The state object that defined the various state variables
+    for an app registered in the system. There should be one
+    of this objects per each application loaded.
+    """
+
+    def __init__(self, app_id, app_key):
+        self.app_id = app_id
+        self.app_key = app_key
+        self.socket_channels = {}
+        self.channel_sockets = {}
+        self.channel_info = {}
+        self.channel_socket_data = {}
+
 class State(appier.Mongo):
-
-    app = None
-
-    server = None
-
-    socket_channels = {}
-
-    channel_sockets = {}
-
-    channel_info = {}
-
-    channel_socket_data = {}
 
     def __init__(self):
         appier.Mongo.__init__(self)
         self.app = None
         self.server = None
-        self.socket_channels = {}
-        self.channel_sockets = {}
-        self.channel_socket_data = {}
+        self.app_id_state = {}
+        self.app_key_state = {}
 
     def load(self, app, server):
         self.app = app
@@ -80,26 +82,11 @@ class State(appier.Mongo):
         threading.Thread(target = self.app.serve).start()
         threading.Thread(target = self.server.serve).start()
 
-    def get_app(self, app_key):
-        db = self.get_db("pushi")
-        app = db.app.find_one({"key" : app_key})
-        return app
-
-    def verify(self, app_key, socket_id, channel, auth):
-        app = self.get_app(app_key)
-        app_secret = app["secret"]
-
-        string = "%s:%s" % (socket_id, channel)
-        structure = hmac.new(str(app_secret), str(string), hashlib.sha256)
-        digest = structure.hexdigest()
-        auth_v = "%s:%s" % (app_key, digest)
-
-        if not auth == auth_v: raise RuntimeError("Invalid signature")
-
     def connect(self, connection, app_key, socket_id):
         pass
 
     def disconnect(self, connection, app_key, socket_id):
+
         channels = self.socket_channels.get(socket_id, [])
         channels = copy.copy(channels)
         for channel in channels: self.unsubscribe(connection, app_key, socket_id, channel)
@@ -111,22 +98,23 @@ class State(appier.Mongo):
         is_presence = channel.startswith("presence-")
         if not is_presence: channel_data = None
 
+        state = self.get_state(app_key = app_key)
         channel_socket = (channel, socket_id)
 
-        channels = self.socket_channels.get(socket_id, [])
+        channels = state.socket_channels.get(socket_id, [])
         channels.append(channel)
-        self.socket_channels[socket_id] = channels
+        state.socket_channels[socket_id] = channels
 
-        sockets = self.channel_sockets.get(channel, [])
+        sockets = state.channel_sockets.get(channel, [])
         sockets.append(socket_id)
-        self.channel_sockets[channel] = sockets
+        state.channel_sockets[channel] = sockets
 
         if not channel_data: return
 
         user_id = channel_data["user_id"]
-        self.channel_socket_data[channel_socket] = channel_data
+        state.channel_socket_data[channel_socket] = channel_data
 
-        info = self.channel_info.get(channel, {})
+        info = state.channel_info.get(channel, {})
         users = info.get("users", {})
         conns = info.get("conns", [])
         user_count = info.get("user_count", 0)
@@ -143,7 +131,7 @@ class State(appier.Mongo):
         info["users"] = users
         info["conns"] = conns
         info["user_count"] = user_count
-        self.channel_info[channel] = info
+        state.channel_info[channel] = info
 
         if not is_new: return
 
@@ -158,22 +146,23 @@ class State(appier.Mongo):
             _connection.send_pushi(json_d)
 
     def unsubscribe(self, connection, app_key, socket_id, channel):
+        state = self.get_state(app_key = app_key)
         channel_socket = (channel, socket_id)
 
-        channels = self.socket_channels.get(socket_id, [])
+        channels = state.socket_channels.get(socket_id, [])
         if channel in channels: channels.remove(channel)
 
-        sockets = self.channel_sockets.get(channel, [])
+        sockets = state.channel_sockets.get(channel, [])
         if socket_id in sockets: sockets.remove(socket_id)
 
-        channel_data = self.channel_socket_data.get(channel_socket)
+        channel_data = state.channel_socket_data.get(channel_socket)
         if not channel_data: return
 
-        del self.channel_socket_data[channel_socket]
+        del state.channel_socket_data[channel_socket]
 
         user_id = channel_data["user_id"]
 
-        info = self.channel_info.get(channel, {})
+        info = state.channel_info.get(channel, {})
         users = info.get("users", {})
         conns = info.get("conns", [])
         user_count = info.get("user_count", 0)
@@ -190,12 +179,12 @@ class State(appier.Mongo):
         info["users"] = users
         info["conns"] = conns
         info["user_count"] = user_count
-        self.channel_info[channel] = info
+        state.channel_info[channel] = info
 
         if not is_old: return
 
         is_empty = len(conns) == 0
-        if is_empty: del self.channel_info[channel]
+        if is_empty: del state.channel_info[channel]
 
         json_d = dict(
             event = "pusher:member_removed",
@@ -207,10 +196,11 @@ class State(appier.Mongo):
             if _connection == connection: continue
             _connection.send_pushi(json_d)
 
-    def trigger(self, event, data):
-        self.trigger_c("global", event, data)
+    def trigger(self, app_id, event, data, channels = None):
+        if not channels: channels = ("global",)
+        for channel in channels: self.trigger_c(app_id, channel, event, data)
 
-    def trigger_c(self, channel, event, data):
+    def trigger_c(self, app_id, channel, event, data):
         data_t = type(data)
         data = data if data_t in types.StringTypes else json.dumps(data)
 
@@ -219,14 +209,51 @@ class State(appier.Mongo):
             event = event,
             data = data
         )
-        self.send_channel(channel, json_d)
+        self.send_channel(app_id, channel, json_d)
 
-    def send_channel(self, channel, json_d):
-        sockets = self.channel_sockets.get(channel, [])
+    def send_channel(self, app_id, channel, json_d):
+        state = self.get_state(app_id = app_id)
+        sockets = state.channel_sockets.get(channel, [])
         for socket_id in sockets: self.send_socket(socket_id, json_d)
 
     def send_socket(self, socket_id, json_d):
         self.server.send_socket(socket_id, json_d)
+
+    def get_state(self, app_id = None, app_key = None):
+        state = None
+
+        if not app_id and not app_key:
+            raise RuntimeError("No app identifier was provided")
+
+        if app_id: state = self.app_id_state.get(app_id, None)
+        if app_key: state = self.app_key_state.get(app_key, None)
+
+        if state: return state
+
+        app = self.get_app(app_id = app_id, app_key = app_key)
+        app_id = app["app_id"]
+        app_key = app["key"]
+
+        state = AppState(app_id, app_key)
+        self.app_id_state[app_id] = state
+        self.app_key_state[app_key] = state
+
+    def get_app(self, app_id = None, app_key = None):
+        db = self.get_db("pushi")
+        if app_id: app = db.app.find_one({"app_id" : app_id})
+        if app_key: app = db.app.find_one({"key" : app_key})
+        return app
+
+    def verify(self, app_key, socket_id, channel, auth):
+        app = self.get_app(app_key)
+        app_secret = app["secret"]
+
+        string = "%s:%s" % (socket_id, channel)
+        structure = hmac.new(str(app_secret), str(string), hashlib.sha256)
+        digest = structure.hexdigest()
+        auth_v = "%s:%s" % (app_key, digest)
+
+        if not auth == auth_v: raise RuntimeError("Invalid signature")
 
 if __name__ == "__main__":
     state = State()

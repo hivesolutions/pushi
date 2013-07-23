@@ -45,7 +45,7 @@ if not base_dir in sys.path: sys.path.insert(0, base_dir)
 
 import appier
 
-BASE_URL = "http://localhost:8080"
+BASE_URL = "http://puxiapp.com:8080"
 """ The base url to be used for the pushi service
 in the call to the API endpoint """
 
@@ -66,7 +66,8 @@ def setup(name = "hello_app"):
         name = name
     )
 
-    appier.post("%s/apps" % BASE_URL, data_j = payload)
+    result = appier.post("%s/apps" % BASE_URL, data_j = payload)
+    return result
 
 def app_test(name = "hello_app"):
     payload = dict(
@@ -75,7 +76,8 @@ def app_test(name = "hello_app"):
         channels = ["global"]
     )
 
-    appier.post("%s/apps/hello/events" % BASE_URL, data_j = payload)
+    result = appier.post("%s/apps/hello/events" % BASE_URL, data_j = payload)
+    return result
 
 if __name__ == "__main__":
-    setup()
+    print setup("example")

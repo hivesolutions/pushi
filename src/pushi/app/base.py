@@ -102,6 +102,7 @@ class PushiApp(appier.App, appier.Mongo):
 
         db = self.get_db("pushi")
         db.app.insert(data)
+        del data["_id"]
 
         return data
 

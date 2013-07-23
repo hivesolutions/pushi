@@ -33,7 +33,7 @@ Channel.prototype.trigger = function(event, data) {
 };
 
 var Pushi = function(appKey, options) {
-    var BASE_URL = "ws://localhost:9090/";
+    var BASE_URL = "ws://puxiapp.com/";
     var self = this;
 
     this.url = BASE_URL + appKey

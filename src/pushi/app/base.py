@@ -55,6 +55,15 @@ class PushiApp(appier.App, appier.Mongo):
         self.state.trigger("message", message)
         return dict(message = message.strip())
 
+    @appier.route("/apps", "GET")
+    def list_apps(self):
+        db = self.get_db("pushi")
+        apps = [app for app in db.app.find()]
+        for app in apps: del app["_id"]
+        return dict(
+            apps = apps
+        )
+
     @appier.route("/apps", "POST")
     def create_app(self, data):
         app_id = str(uuid.uuid4())
@@ -74,10 +83,12 @@ class PushiApp(appier.App, appier.Mongo):
 
         return data
 
-    @appier.route("/apps/<app_id>/events", "POST")
+    @appier.route("/apps/<app_id>/events", ("GET", "POST"))
     def event_app(self, app_id, data):
         data = data.get("data", None)
-        self.state.trigger("message", data)
+        if not data: raise RuntimeError("No data set for event")
+
+        self.state.trigger(app_id, "message", data)
 
 if __name__ == "__main__":
     app = PushiApp()

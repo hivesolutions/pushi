@@ -1,6 +1,3 @@
 [submodule "src/appier"]
 	path = src/appier
 	url = https://github.com/hivesolutions/appier_bin.git
-[submodule "lib"]
-	path = lib
-	url = https://bitbucket.org/hivesolutions/pushi_lib.git

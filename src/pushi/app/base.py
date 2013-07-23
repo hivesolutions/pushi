@@ -37,8 +37,13 @@ __copyright__ = "Copyright (c) 2008-2012 Hive Solutions Lda."
 __license__ = "GNU General Public License (GPL), Version 3"
 """ The license for the module """
 
+import os
+import sys
 import uuid
 import hashlib
+
+base_dir = (os.path.normpath(os.path.dirname(__file__) or ".") + "/../..")
+if not base_dir in sys.path: sys.path.insert(0, base_dir)
 
 import appier
 

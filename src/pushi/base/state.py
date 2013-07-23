@@ -46,6 +46,9 @@ import types
 import hashlib
 import threading
 
+base_dir = (os.path.normpath(os.path.dirname(__file__) or ".") + "/../..")
+if not base_dir in sys.path: sys.path.insert(0, base_dir)
+
 import pushi
 import appier
 
@@ -76,9 +79,6 @@ class State(appier.Mongo):
     def load(self, app, server):
         self.app = app
         self.server = server
-
-        base_dir = (os.path.normpath(os.path.dirname(__file__) or ".") + "/../..")
-        if not base_dir in sys.path: sys.path.insert(0, base_dir)
 
         self.server.bind("connect", self.connect)
         self.server.bind("disconnect", self.disconnect)

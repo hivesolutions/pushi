@@ -231,12 +231,16 @@ class State(appier.Mongo):
         if state: return state
 
         app = self.get_app(app_id = app_id, app_key = app_key)
+        if not app: raise RuntimeError("No app found for the provided parameters")
+
         app_id = app["app_id"]
         app_key = app["key"]
 
         state = AppState(app_id, app_key)
         self.app_id_state[app_id] = state
         self.app_key_state[app_key] = state
+
+        return state
 
     def get_app(self, app_id = None, app_key = None):
         db = self.get_db("pushi")

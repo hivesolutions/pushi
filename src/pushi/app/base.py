@@ -83,8 +83,14 @@ class PushiApp(appier.App, appier.Mongo):
 
         return data
 
-    @appier.route("/apps/<app_id>/events", ("GET", "POST"))
-    def event_app(self, app_id, data):
+    @appier.route("/apps/<app_id>/events", "GET")
+    def event_app_get(self, app_id, data = None):
+        if not data: raise RuntimeError("No data set for event")
+
+        self.state.trigger(app_id, "message", data)
+
+    @appier.route("/apps/<app_id>/events", "POST")
+    def event_app_post(self, app_id, data):
         data = data.get("data", None)
         if not data: raise RuntimeError("No data set for event")
 

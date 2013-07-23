@@ -80,4 +80,4 @@ def app_test(name = "hello_app"):
     return result
 
 if __name__ == "__main__":
-    print setup("example")
+    print setup()

@@ -21,6 +21,11 @@ to avoid any unwanted complexities and provide fast performance.
 Pushi was heavily inspired by the [Pusher](http://pusher.com) service, and aims
 at providing a free alternative to it (for cost reducing).
 
+## Running
+
+    APP_HOST=0.0.0.0 APP_PORT=8080 SERVER_HOST=0.0.0.0 SERVER_PORT=80 python\
+        repos/pushi/src/pushi/base/state.py < /dev/null &> /dev/null &
+
 ## Quick Start
 
 ```javascript

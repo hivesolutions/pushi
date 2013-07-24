@@ -83,6 +83,9 @@ class Connection(object):
         if self in server.connections: server.connections.remove(self)
         if self.socket in server.connections_m: del server.connections_m[self.socket]
 
+        try: self.socket.close()
+        except: pass
+
     def ensure_write(self):
         if self.socket in self.server.write: return
         self.server.write.append(self.socket)
@@ -188,12 +191,12 @@ class Server(observer.Observable):
                 else: self.on_connection_d(connection); break
         except socket.error, error:
             if not error.args[0] in (errno.EWOULDBLOCK, errno.EAGAIN, errno.EPERM, errno.ENOENT, WSAEWOULDBLOCK):
-                connection.close()
+                self.on_connection_d(connection)
         except BaseException, exception:
             self.info(exception)
             lines = traceback.format_exc().splitlines()
             for line in lines: self.logger.debug(line)
-            connection.close()
+            self.on_connection_d(connection)
 
     def on_write(self, socket):
         connection = self.connections_m.get(socket, None)
@@ -203,12 +206,12 @@ class Server(observer.Observable):
             connection._send()
         except socket.error, error:
             if not error.args[0] in (errno.EWOULDBLOCK, errno.EAGAIN, errno.EPERM, errno.ENOENT, WSAEWOULDBLOCK):
-                connection.close()
+                self.on_connection_d(connection)
         except BaseException, exception:
             self.info(exception)
             lines = traceback.format_exc().splitlines()
             for line in lines: self.logger.debug(line)
-            connection.close()
+            self.on_connection_d(connection)
 
     def on_error(self, socket):
         pass

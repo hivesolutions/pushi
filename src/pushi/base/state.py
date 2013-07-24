@@ -133,6 +133,7 @@ class State(appier.Mongo):
 
         info = state.channel_info.get(channel, {})
         users = info.get("users", {})
+        members = info.get("members", {})
         conns = info.get("conns", [])
         user_count = info.get("user_count", 0)
 
@@ -141,11 +142,13 @@ class State(appier.Mongo):
         user_conns = users.get(user_id, [])
         user_conns.append(connection)
         users[user_id] = user_conns
+        members[user_id] = channel_data
 
         is_new = len(user_conns) == 1
         if is_new: user_count += 1
 
         info["users"] = users
+        info["members"] = members
         info["conns"] = conns
         info["user_count"] = user_count
         state.channel_info[channel] = info
@@ -204,6 +207,7 @@ class State(appier.Mongo):
 
         info = state.channel_info.get(channel, {})
         users = info.get("users", {})
+        members = info.get("members", {})
         conns = info.get("conns", [])
         user_count = info.get("user_count", 0)
 
@@ -214,9 +218,10 @@ class State(appier.Mongo):
         users[user_id] = user_conns
 
         is_old = len(user_conns) == 0
-        if is_old: del users[user_id]; user_count -= 1
+        if is_old: del users[user_id]; del members[user_id]; user_count -= 1
 
         info["users"] = users
+        info["members"] = members
         info["conns"] = conns
         info["user_count"] = user_count
         state.channel_info[channel] = info
@@ -484,6 +489,19 @@ class State(appier.Mongo):
         self.app_key_state[app_key] = state
 
         return state
+
+    def get_channel(self, app_key, channel):
+        members = self.get_members(app_key, channel)
+        return dict(
+            name = channel,
+            members = members
+        )
+
+    def get_members(self, app_key, channel):
+        state = self.get_state(app_key = app_key)
+        info = state.channel_info.get(channel, {})
+        members = info.get("members", {})
+        return members
 
     def get_app(self, app_id = None, app_key = None):
         db = self.get_db("pushi")

@@ -129,9 +129,10 @@ class PushiServer(ws.WSServer):
             channel_data = channel_data
         )
 
+        data = self.state.get_channel(connection.app_key, channel)
         json_d = dict(
             event = "pusher_internal:subscription_succeeded",
-            data = json.dumps(dict()),
+            data = json.dumps(data),
             channel =  channel
         )
         connection.send_pushi(json_d)

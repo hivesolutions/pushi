@@ -78,6 +78,7 @@ class Connection(object):
         server = self.server
 
         if self.socket in server.read: server.read.remove(self.socket)
+        if self.socket in server.write: server.write.remove(self.socket)
         if self.socket in server.error: server.error.remove(self.socket)
 
         if self in server.connections: server.connections.remove(self)

@@ -105,9 +105,10 @@ class State(appier.Mongo):
         for channel in channels: self.unsubscribe(connection, app_key, socket_id, channel)
         if socket_id in state.socket_channels: del state.socket_channels[socket_id]
 
-    def subscribe(self, connection, app_key, socket_id, channel, auth = None, channel_data = None):
-        is_private = channel.startswith("private-") or channel.startswith("presence-")
-        if is_private: self.verify(app_key, socket_id, channel, auth)
+    def subscribe(self, connection, app_key, socket_id, channel, auth = None, channel_data = None, force = False):
+        is_private = channel.startswith("private-") or\
+            channel.startswith("presence-") or channel.startswith("peer-")
+        if is_private and not force: self.verify(app_key, socket_id, channel, auth)
 
         is_presence = channel.startswith("presence-")
         if not is_presence: channel_data = None
@@ -126,6 +127,8 @@ class State(appier.Mongo):
         if not channel_data: return
 
         user_id = channel_data["user_id"]
+        is_peer = channel_data.get("peer", False)
+
         state.channel_socket_data[channel_socket] = channel_data
 
         info = state.channel_info.get(channel, {})
@@ -147,6 +150,11 @@ class State(appier.Mongo):
         info["user_count"] = user_count
         state.channel_info[channel] = info
 
+        # subscribes all of the peer channels associated with the current
+        # presence channel that is being subscribed, this may represent some
+        # overhead but provides peer to peer communication
+        is_peer and self.subscribe_peer_all(app_key, connection, channel)
+
         if not is_new: return
 
         json_d = dict(
@@ -158,6 +166,23 @@ class State(appier.Mongo):
         for _connection in conns:
             if _connection == connection: continue
             _connection.send_pushi(json_d)
+
+            if not is_peer: continue
+
+            # retrieves the socket id of the current connection in iteration
+            # and uses it to construct the channel socket id tuple to try to
+            # retrieve the channel data for the socket in case it does not
+            # exists skips the current step, no need to subscribe to chat
+            # specific channel (because there's no channel data)
+            _socket_id = _connection.socket_id
+            _channel_socket = (channel, _socket_id)
+            _channel_data = state.channel_socket_data.get(_channel_socket)
+            if not _channel_data: continue
+
+            _user_id = _channel_data["user_id"]
+            self.subscribe_peer(
+                app_key, _connection, channel, user_id, _user_id
+            )
 
     def unsubscribe(self, connection, app_key, socket_id, channel):
         state = self.get_state(app_key = app_key)
@@ -175,6 +200,7 @@ class State(appier.Mongo):
         del state.channel_socket_data[channel_socket]
 
         user_id = channel_data["user_id"]
+        is_peer = channel_data.get("peer", False)
 
         info = state.channel_info.get(channel, {})
         users = info.get("users", {})
@@ -195,6 +221,11 @@ class State(appier.Mongo):
         info["user_count"] = user_count
         state.channel_info[channel] = info
 
+        # unsubscribes from the complete set of peer channels associated with
+        # the current presence channel, this is an expensive operation controlled
+        # by the peer flat that may be set in the channel data structure
+        is_peer and self.unsubscribe_peer_all(app_key, connection, channel)
+
         if not is_old: return
 
         is_empty = len(conns) == 0
@@ -209,6 +240,195 @@ class State(appier.Mongo):
         for _connection in conns:
             if _connection == connection: continue
             _connection.send_pushi(json_d)
+
+            if not is_peer: continue
+
+            # retrieves the socket id of the current connection in iteration
+            # and uses it to construct the channel socket id tuple to try to
+            # retrieve the channel data for the socket in case it does not
+            # exists skips the current step, no need to subscribe to chat
+            # specific channel (because there's no channel data)
+            _socket_id = _connection.socket_id
+            _channel_socket = (channel, _socket_id)
+            _channel_data = state.channel_socket_data.get(_channel_socket)
+            if not _channel_data: continue
+
+            _user_id = _channel_data["user_id"]
+            self.unsubscribe_peer(
+                app_key, _connection, channel, user_id, _user_id
+            )
+
+    def subscribe_peer_all(self, app_key, connection, channel):
+        # creates the channel socket tuple with the channel name and the
+        # socket identifier for the current connection
+        state = self.get_state(app_key = app_key)
+        channel_socket = (channel, connection.socket_id)
+
+        # retrieves the channel data information for the current channel
+        # socket and in case there's none returns immediately
+        channel_data = state.channel_socket_data.get(channel_socket)
+        if not channel_data: return
+
+        # retrieves the user identifier from the channel data of the current
+        # connection in the channel
+        user_id = channel_data["user_id"]
+
+        # uses the channel information to retrieve the list of currently
+        # registered connections for the channel, these are going to be
+        # used in the subscription iteration
+        info = state.channel_info.get(channel, {})
+        conns = info.get("conns", [])
+
+        # creates the list that will hold the list of user identifier
+        # that have already been visited so that no more that one peer
+        # subscription is done by type
+        visited = []
+
+        # iterates over all the connections subscribed for the current channel
+        # to be able to register for each of the peer channels
+        for _connection in conns:
+            # in case the current connection in iteration is the connection
+            # that is used for the subscription (own connection) skips the
+            # current loop as there's nothing to be done
+            if _connection == connection: continue
+
+            # creates the channel socket tuple containing the channel name
+            # and the socket identifier for the current connection in iteration
+            # and then uses it to retrieve the channel data for it, in case none
+            # is retrieve must skip the current loop
+            _channel_socket = (channel, _connection.socket_id)
+            _channel_data = state.channel_socket_data.get(_channel_socket)
+            if not _channel_data: continue
+
+            # retrieves the user identifier for the current channel data in
+            # case the user identifier is the same as the current channel's
+            # identifiers ignores it (no need to subscribe to our own channel)
+            # and then in case it has already been visited also ignores it
+            _user_id = _channel_data["user_id"]
+            if _user_id == user_id: continue
+            if _user_id in visited: continue
+
+            # subscribes for the peer channel for the user id pair and adds
+            # the current user id to the list of visited ids (avoid duplicated
+            # subscriptions of channels)
+            self.subscribe_peer(
+                app_key, connection, channel, user_id, _user_id
+            )
+            visited.append(_user_id)
+
+    def unsubscribe_peer_all(self, app_key, connection, channel):
+        # creates the channel socket tuple with the channel name and the
+        # socket identifier for the current connection
+        state = self.get_state(app_key = app_key)
+        channel_socket = (channel, connection.socket_id)
+
+        # retrieves the channel data information for the current channel
+        # socket and in case there's none returns immediately
+        channel_data = state.channel_socket_data.get(channel_socket)
+        if not channel_data: return
+
+        # retrieves the user identifier from the channel data of the current
+        # connection in the channel
+        user_id = channel_data["user_id"]
+
+        # uses the channel information to retrieve the list of currently
+        # registered connections for the channel, these are going to be
+        # used in the unsubscription iteration
+        info = state.channel_info.get(channel, {})
+        conns = info.get("conns", [])
+
+        # creates the list that will hold the list of user identifier
+        # that have already been visited so that no more that one peer
+        # unsubscription is done by type
+        visited = []
+
+        # iterates over all the connections subscribed for the current channel
+        # to be able to unregister for each of the peer channels
+        for _connection in conns:
+            # in case the current connection in iteration is the connection
+            # that is used for the subscription (own connection) skips the
+            # current loop as there's nothing to be done
+            if _connection == connection: continue
+
+            # creates the channel socket tuple containing the channel name
+            # and the socket identifier for the current connection in iteration
+            # and then uses it to retrieve the channel data for it, in case none
+            # is retrieve must skip the current loop
+            _channel_socket = (channel, _connection.socket_id)
+            _channel_data = state.channel_socket_data.get(_channel_socket)
+            if not _channel_data: continue
+
+            # retrieves the user identifier for the current channel data in
+            # case the user identifier is the same as the current channel's
+            # identifiers ignores it (no need to unsubscribe to our own channel)
+            # and then in case it has already been visited also ignores it
+            _user_id = _channel_data["user_id"]
+            if _user_id == user_id: continue
+            if _user_id in visited: continue
+
+            # unsubscribes from the peer channel for the user id pair and adds
+            # the current user id to the list of visited ids (avoid duplicated
+            # subscriptions of channels)
+            self.unsubscribe_peer(
+                app_key, connection, channel, user_id, _user_id
+            )
+            visited.append(_user_id)
+
+    def subscribe_peer(self, app_key, connection, channel, first_id, second_id):
+        if first_id == second_id: return
+
+        base = [first_id, second_id]; base.sort()
+        base_s = "_".join(base)
+        base_channel = channel[9:]
+        _channel = "peer-" + base_channel + ":" + base_s
+        self.subscribe(
+            connection,
+            app_key,
+            connection.socket_id,
+            _channel,
+            force = True
+        )
+
+    def unsubscribe_peer(self, app_key, connection, channel, first_id, second_id):
+        if first_id == second_id: return
+
+        base = [first_id, second_id]; base.sort()
+        base_s = "_".join(base)
+        base_channel = channel[9:]
+        _channel = "peer-" + base_channel + ":" + base_s
+        self.unsubscribe(
+            connection,
+            app_key,
+            connection.socket_id,
+            _channel
+        )
+
+    def is_subscribed(self, app_key, socket_id, channel):
+        """
+        Verifies if the socket identified by the provided socket
+        id is subscribed for the provided channel.
+
+        Keep in mind that the channel should be an app id absent
+        value and does not identify a channel in an unique way.
+
+        @type app_key: String
+        @param app_key: The app key to be used in the retrieval of
+        the state for the subscription testing.
+        @type socket_id: String
+        @param socket_id: The identifier of the socket to be checked
+        for subscription.
+        @type channel: String
+        @param channel: The "local" name of the channel to be verified
+        for subscription in the current socket context.
+        @rtype: bool
+        @return: The result of the is subscribed test for the provided
+        app key, socket id and channel information.
+        """
+
+        state = self.get_state(app_key = app_key)
+        channels = state.socket_channels[socket_id]
+        is_subscribed = channel in channels
+        return is_subscribed
 
     def trigger(self, app_id, event, data, channels = None, owner_id = None):
         if not channels: channels = ("global",)

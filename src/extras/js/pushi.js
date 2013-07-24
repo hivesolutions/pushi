@@ -101,8 +101,8 @@ Pushi.prototype.onodisconnect = function() {
     this.trigger("disconnect");
 };
 
-Pushi.prototype.onsubscribe = function(channel) {
-    this.trigger("subscribe", channel);
+Pushi.prototype.onsubscribe = function(channel, data) {
+    this.trigger("subscribe", channel, data);
 };
 
 Pushi.prototype.onmemberadded = function(channel, member) {
@@ -116,19 +116,22 @@ Pushi.prototype.onmemberremoved = function(channel, member) {
 Pushi.prototype.onmessage = function(json) {
     switch (json.event) {
         case "pusher_internal:subscription_succeeded" :
-            this.onsubscribe(json.channel);
+            var data = JSON.parse(json.data);
+            this.onsubscribe(json.channel, data);
             break;
 
         case "pusher:member_added" :
-            this.onmemberadded(json.channel, json.member);
+            var member = JSON.parse(json.member);
+            this.onmemberadded(json.channel, member);
             break;
 
         case "pusher:member_removed" :
-            this.onmemberremoved(json.channel, json.member);
+            var member = JSON.parse(json.member);
+            this.onmemberremoved(json.channel, member);
             break;
     }
 
-    this.trigger(json.event, json.data);
+    this.trigger(json.event, json.data, json.channel);
 };
 
 Pushi.prototype.send = function(json) {

@@ -142,6 +142,31 @@ class PushiApp(appier.App, appier.Mongo):
         if not data: raise RuntimeError("No data set for event")
         self.state.trigger(app_id, "message", data, channels = (channel,))
 
+    @appier.private
+    @appier.route("/apps/<app_id>/sockets", "GET")
+    def list_sockets(self, app_id):
+        state = self.state.get_state(app_id = app_id)
+
+        sockets = []
+
+        for socket_id, channel in state.socket_channels.items():
+            socket = dict(socket_id = socket_id, channel = channel)
+            sockets.append(socket)
+
+        return dict(
+            sockets = sockets
+        )
+
+    @appier.private
+    @appier.route("/apps/<app_id>/sockets/<socket_id>", "GET")
+    def show_socket(self, app_id, socket_id):
+        state = self.state.get_state(app_id = app_id)
+        channels = state.socket_channels.get(socket_id, [])
+
+        return dict(
+            channels = channels
+        )
+
 if __name__ == "__main__":
     app = PushiApp()
     app.serve()

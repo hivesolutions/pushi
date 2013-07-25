@@ -99,6 +99,13 @@ class State(appier.Mongo):
         pass
 
     def disconnect(self, connection, app_key, socket_id):
+        # in case no app key or socket id is defined must return
+        # immediately because it's not possible to perform the
+        # disconnect operation in such conditions, possible a non
+        # established connection is attempting to disconnect
+        if not app_key: return
+        if not socket_id: return
+
         state = self.get_state(app_key = app_key)
         channels = state.socket_channels.get(socket_id, [])
         channels = copy.copy(channels)

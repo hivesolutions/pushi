@@ -4,3 +4,6 @@
 [submodule "lib"]
 	path = lib
 	url = git@bitbucket.org:hivesolutions/pushi_lib.git
+[submodule "js"]
+	path = js
+	url = git@bitbucket.org:hivesolutions/pushi_js.git

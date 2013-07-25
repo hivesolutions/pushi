@@ -41,9 +41,9 @@ import os
 import hmac
 import hashlib
 
-def authenticate(channel, socket_id):
-    key = os.environ["PUSHI_KEY"]
-    secret = os.environ["PUSHI_SECRET"]
+def authenticate(channel, socket_id, app_key = None, app_secret = None):
+    key = app_key or os.environ["PUSHI_KEY"]
+    secret = app_secret or os.environ["PUSHI_SECRET"]
     string = "%s:%s" % (socket_id, channel)
 
     structure = hmac.new(secret, string, hashlib.sha256)

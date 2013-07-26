@@ -263,8 +263,8 @@ class Server(observer.Observable):
         extras_path = os.path.join(base_path, "extras")
         ssl_path = os.path.join(extras_path, "ssl")
 
-        key_file = key_file or os.path.join(ssl_path, "server.key")
-        cer_file = cer_file or os.path.join(ssl_path, "server.cer")
+        key_file = key_file or os.path.join(ssl_path, "puxiapp.com.key")
+        cer_file = cer_file or os.path.join(ssl_path, "puxiapp.com.cer")
 
         socket_ssl = ssl.wrap_socket(
             socket,

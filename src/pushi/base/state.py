@@ -86,11 +86,29 @@ class State(appier.Mongo):
 
         APP_HOST = os.environ.get("APP_HOST", "127.0.0.1")
         APP_PORT = int(os.environ.get("APP_PORT", "8080"))
+        APP_SSL = int(os.environ.get("APP_SSL", "0"))
+        APP_SSL_KEY = os.environ.get("APP_SSL_KEY", None)
+        APP_SSL_CER = os.environ.get("APP_SSL_CER", None)
         SERVER_HOST = os.environ.get("SERVER_HOST", "127.0.0.1")
         SERVER_PORT = int(os.environ.get("SERVER_PORT", "9090"))
+        SERVER_SSL = int(os.environ.get("SERVER_SSL", "0"))
+        SERVER_SSL_KEY = os.environ.get("SERVER_SSL_KEY", None)
+        SERVER_SSL_CER = os.environ.get("SERVER_SSL_CER", None)
 
-        app_kwargs = dict(host = APP_HOST, port = APP_PORT)
-        server_kwargs = dict(host = SERVER_HOST, port = SERVER_PORT)
+        app_kwargs = dict(
+            host = APP_HOST,
+            port = APP_PORT,
+            ssl = APP_SSL,
+            key_file = APP_SSL_KEY,
+            cer_file = APP_SSL_CER,
+        )
+        server_kwargs = dict(
+            host = SERVER_HOST,
+            port = SERVER_PORT,
+            ssl = SERVER_SSL,
+            key_file = SERVER_SSL_KEY,
+            cer_file = SERVER_SSL_CER,
+        )
 
         threading.Thread(target = self.app.serve, kwargs = app_kwargs).start()
         threading.Thread(target = self.server.serve, kwargs = server_kwargs).start()

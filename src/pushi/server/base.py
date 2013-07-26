@@ -180,9 +180,14 @@ class Server(observer.Observable):
                 else: self.on_error(error)
 
     def on_read_s(self, _socket):
-        socket_c, address = _socket.accept()
-        if self.ssl: self._ssl_handshake(socket_c)
-        self.on_socket_c(socket_c, address)
+        try:
+            socket_c, address = _socket.accept()
+            if self.ssl: self._ssl_handshake(socket_c)
+            self.on_socket_c(socket_c, address)
+        except BaseException, exception:
+            self.info(exception)
+            lines = traceback.format_exc().splitlines()
+            for line in lines: self.logger.debug(line)
 
     def on_write_s(self, socket):
         pass

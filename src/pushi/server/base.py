@@ -37,6 +37,8 @@ __copyright__ = "Copyright (c) 2008-2012 Hive Solutions Lda."
 __license__ = "GNU General Public License (GPL), Version 3"
 """ The license for the module """
 
+import os
+import ssl
 import errno
 import socket
 import select
@@ -126,6 +128,7 @@ class Server(observer.Observable):
         observer.Observable.__init__(self, *args, **kwargs)
         self.logger = None
         self.socket = None
+        self.ssl = False
         self.read = []
         self.write = []
         self.error = []
@@ -143,11 +146,13 @@ class Server(observer.Observable):
         self.logger = logging.getLogger(self.__class__.__name__)
         self.logger.setLevel(level)
 
-    def serve(self, host = "127.0.0.1", port = 9090):
+    def serve(self, host = "127.0.0.1", port = 9090, ssl = False, key_file = None, cer_file = None):
         self.load()
 
+        self.ssl = ssl
         self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.socket.setblocking(0)
+        if ssl: self.socket = self._ssl_wrap(self.socket, key_file = key_file, cer_file = cer_file)
         self.socket.setsockopt(socket.IPPROTO_TCP, socket.TCP_NODELAY, 1)
         self.socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         hasattr(socket, "SO_REUSEPORT") and\
@@ -176,6 +181,7 @@ class Server(observer.Observable):
 
     def on_read_s(self, _socket):
         socket_c, address = _socket.accept()
+        if self.ssl: self._ssl_handshake(socket_c)
         self.on_socket_c(socket_c, address)
 
     def on_write_s(self, socket):
@@ -249,3 +255,36 @@ class Server(observer.Observable):
     def log(self, object, level = logging.INFO):
         message = str(object)
         self.logger.log(level, message)
+
+    def _ssl_wrap(self, socket, key_file = None, cer_file = None):
+        dir_path = os.path.dirname(__file__)
+        base_path = os.path.join(dir_path, "../../")
+        base_path = os.path.normpath(base_path)
+        extras_path = os.path.join(base_path, "extras")
+        ssl_path = os.path.join(extras_path, "ssl")
+
+        key_file = key_file or os.path.join(ssl_path, "server.key")
+        cer_file = cer_file or os.path.join(ssl_path, "server.cer")
+
+        socket_ssl = ssl.wrap_socket(
+            socket,
+            keyfile = key_file,
+            certfile = cer_file,
+            server_side = True,
+            do_handshake_on_connect = False
+        )
+        return socket_ssl
+
+    def _ssl_handshake(self, _socket):
+        while True:
+            try:
+                _socket.do_handshake()
+                break
+            except ssl.SSLError, error:
+                error_v = error.args[0]
+                if error_v == ssl.SSL_ERROR_WANT_READ:
+                    select.select([_socket], [], [])
+                elif error_v == ssl.SSL_ERROR_WANT_WRITE:
+                    select.select([], [_socket], [])
+                else:
+                    raise

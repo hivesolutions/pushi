@@ -23,10 +23,24 @@ at providing a free alternative to it (for cost reducing).
 
 ## Running
 
+To be able to run the pushi infra-structure under a normal non ecrypted connection
+and bind to the complete set of network interfaces in the host the following command:
+
     APP_HOST=0.0.0.0 \
     APP_PORT=8080 \
     SERVER_HOST=0.0.0.0 \
     SERVER_PORT=80 \
+    python pushi/src/pushi/base/state.py < /dev/null &> ~/pushi.log &
+
+To be able to run in using SSL encryption additional commands must be used:
+
+    APP_HOST=0.0.0.0 \
+    APP_PORT=80 \
+    SERVER_HOST=0.0.0.0 \
+    SERVER_PORT=443 \
+    SERVER_SSL=1 \
+    SERVER_SSL_KEY=/path/to/file.key \
+    SERVER_SSL_CER=/path/to/file.cer \
     python pushi/src/pushi/base/state.py < /dev/null &> ~/pushi.log &
 
 ## Quick Start

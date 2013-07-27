@@ -193,8 +193,6 @@ class Server(observer.Observable):
     def on_read_s(self, _socket):
         try:
             socket_c, address = _socket.accept()
-            socket_c.setblocking(0)
-            if self.ssl: self._ssl_handshake(socket_c)
             self.on_socket_c(socket_c, address)
         except BaseException, exception:
             self.info(exception)
@@ -255,6 +253,8 @@ class Server(observer.Observable):
     def on_socket_c(self, socket_c, address):
         socket_c.setblocking(0)
         socket_c.setsockopt(socket.IPPROTO_TCP, socket.TCP_NODELAY, 1)
+
+        if self.ssl: self._ssl_handshake(socket_c)
 
         connection = self.new_connection(socket_c, address)
         self.on_connection(connection)

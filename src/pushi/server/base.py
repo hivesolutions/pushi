@@ -58,6 +58,13 @@ windows environments as a replacement for the would block
 error code that indicates the failure to operate on a non
 blocking connection """
 
+VALID_ERRORS = (
+    ssl.SSL_ERROR_WANT_READ,
+    ssl.SSL_ERROR_WANT_WRITE
+)
+""" The list containing the valid error in the handshake
+operation of the ssl connection establishment """
+
 class Connection(object):
 
     def __init__(self, server, socket, address):
@@ -128,6 +135,8 @@ class Server(observer.Observable):
         observer.Observable.__init__(self, *args, **kwargs)
         self.logger = None
         self.socket = None
+        self.host = None
+        self.port = None
         self.ssl = False
         self.read = []
         self.write = []
@@ -149,6 +158,8 @@ class Server(observer.Observable):
     def serve(self, host = "127.0.0.1", port = 9090, ssl = False, key_file = None, cer_file = None):
         self.load()
 
+        self.host = host
+        self.port = port
         self.ssl = ssl
         self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.socket.setblocking(0)
@@ -196,6 +207,12 @@ class Server(observer.Observable):
         pass
 
     def on_read(self, _socket):
+        # verifies if there's any pending operations in the
+        # socket (eg: ssl handshaking) and performs them trying
+        # to finish them, in they are still pending at the current
+        # state returns immediately (waits for next loop)
+        if self._pending(_socket): return
+
         connection = self.connections_m.get(_socket, None)
         if not connection: return
 
@@ -261,7 +278,30 @@ class Server(observer.Observable):
         message = str(object)
         self.logger.log(level, message)
 
-    def _ssl_wrap(self, socket, key_file = None, cer_file = None):
+    def _pending(self, _socket):
+        """
+        Tries to perform the pending operations in the socket
+        and, these operations are set in the pending variable
+        of the socket structure.
+
+        The method returns if there are still pending operations
+        after this method tick.
+
+        @type _socket: Socket
+        @param _socket: The socket object to be checked for
+        pending operations and that is going to be used in the
+        performing of these operations.
+        @rtype: bool
+        @return: If there are still pending operations to be
+        performed in the privded socket.
+        """
+
+        if not _socket.pending: return False
+        _socket.pending(_socket)
+        is_pending = not _socket.pending == None
+        return is_pending
+
+    def _ssl_wrap(self, _socket, key_file = None, cer_file = None):
         dir_path = os.path.dirname(__file__)
         base_path = os.path.join(dir_path, "../../")
         base_path = os.path.normpath(base_path)
@@ -272,7 +312,7 @@ class Server(observer.Observable):
         cer_file = cer_file or os.path.join(ssl_path, "server.cer")
 
         socket_ssl = ssl.wrap_socket(
-            socket,
+            _socket,
             keyfile = key_file,
             certfile = cer_file,
             server_side = True,
@@ -281,15 +321,11 @@ class Server(observer.Observable):
         return socket_ssl
 
     def _ssl_handshake(self, _socket):
-        while True:
-            try:
-                _socket.do_handshake()
-                break
-            except ssl.SSLError, error:
-                error_v = error.args[0]
-                if error_v == ssl.SSL_ERROR_WANT_READ:
-                    select.select([_socket], [], [])
-                elif error_v == ssl.SSL_ERROR_WANT_WRITE:
-                    select.select([], [_socket], [])
-                else:
-                    raise
+        try:
+            _socket.do_handshake()
+            _socket.pending = None
+        except ssl.SSLError, error:
+            error_v = error.args[0]
+            if error_v in VALID_ERRORS:
+                _socket.pending = self._ssl_handshake
+            else: raise

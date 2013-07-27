@@ -193,6 +193,7 @@ class Server(observer.Observable):
     def on_read_s(self, _socket):
         try:
             socket_c, address = _socket.accept()
+            socket_c.setblocking(0)
             if self.ssl: self._ssl_handshake(socket_c)
             self.on_socket_c(socket_c, address)
         except BaseException, exception:
@@ -293,7 +294,7 @@ class Server(observer.Observable):
         performing of these operations.
         @rtype: bool
         @return: If there are still pending operations to be
-        performed in the privded socket.
+        performed in the provided socket.
         """
 
         if not _socket.pending: return False

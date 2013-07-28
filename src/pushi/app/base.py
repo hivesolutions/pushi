@@ -63,6 +63,12 @@ class PushiApp(appier.App, appier.Mongo):
         ))
         if not app: raise RuntimeError("Invalid credentials provided")
 
+    def info(self, data = {}):
+        info = appier.App.info(self, data)
+        server = self.state.server
+        info["service"] = server.info_dict()
+        return info
+
     def on_login(self, sid, secret, app_id, app_key, app_secret, **kwargs):
         appier.App.on_login(self, sid, secret, **kwargs)
         self.request.session["app_id"] = app_id

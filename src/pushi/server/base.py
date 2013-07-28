@@ -200,6 +200,15 @@ class Server(observer.Observable):
                 if error == self.socket: self.on_error_s(error)
                 else: self.on_error(error)
 
+    def info_dict(self):
+        return dict(
+            running = self._loaded,
+            host = self.host,
+            port = self.port,
+            ssl = self.ssl,
+            connections = len(self.connections)
+        )
+
     def on_read_s(self, _socket):
         try:
             socket_c, address = _socket.accept()

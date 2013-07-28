@@ -65,8 +65,8 @@ class PushiServer(ws.WSServer):
         self.state = state
         self.sockets = {}
 
-    def on_connection(self, connection):
-        ws.WSServer.on_connection(self, connection)
+    def on_connection_c(self, connection):
+        ws.WSServer.on_connection_c(self, connection)
         self.sockets[connection.socket_id] = connection
         self.trigger(
             "connect",

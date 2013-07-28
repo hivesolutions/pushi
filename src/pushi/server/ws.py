@@ -197,8 +197,8 @@ class WSServer(base.Server):
     """ The magic value used by the websocket protocol as part
     of the key generation process in the handshake """
 
-    def on_connection(self, connection):
-        base.Server.on_connection(self, connection)
+    def on_connection_c(self, connection):
+        base.Server.on_connection_c(self, connection)
 
     def on_data(self, connection, data):
         base.Server.on_data(self, connection, data)

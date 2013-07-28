@@ -251,19 +251,20 @@ class Server(observer.Observable):
         pass
 
     def on_socket_c(self, socket_c, address):
+        socket_c.pending = None
         socket_c.setblocking(0)
         socket_c.setsockopt(socket.IPPROTO_TCP, socket.TCP_NODELAY, 1)
 
         if self.ssl: self._ssl_handshake(socket_c)
 
         connection = self.new_connection(socket_c, address)
-        self.on_connection(connection)
+        self.on_connection_c(connection)
 
     def on_socket_d(self, socket_c):
         connection = self.connections_m.get(socket_c, None)
         if not connection: return
 
-    def on_connection(self, connection):
+    def on_connection_c(self, connection):
         connection.open()
 
     def on_connection_d(self, connection):

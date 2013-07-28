@@ -203,7 +203,7 @@ class Server(observer.Observable):
 
     def info_dict(self):
         return dict(
-            running = self._loaded,
+            loaded = self._loaded,
             host = self.host,
             port = self.port,
             ssl = self.ssl,

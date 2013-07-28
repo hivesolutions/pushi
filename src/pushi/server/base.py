@@ -159,6 +159,7 @@ class Server(observer.Observable):
         if self._loaded: return
 
         self.load_logging();
+        self._loaded = True
 
     def load_logging(self, level = logging.DEBUG):
         logging.basicConfig(format = "%(asctime)s [%(levelname)s] %(message)s")

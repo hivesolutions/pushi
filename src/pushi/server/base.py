@@ -59,6 +59,16 @@ error code that indicates the failure to operate on a non
 blocking connection """
 
 VALID_ERRORS = (
+    errno.EWOULDBLOCK,
+    errno.EAGAIN,
+    errno.EPERM,
+    errno.ENOENT,
+    WSAEWOULDBLOCK
+)
+""" List containing the complete set of error that represent
+non ready operations in a non blocking socket """
+
+SSL_VALID_ERRORS = (
     ssl.SSL_ERROR_WANT_READ,
     ssl.SSL_ERROR_WANT_WRITE
 )
@@ -193,7 +203,8 @@ class Server(observer.Observable):
     def on_read_s(self, _socket):
         try:
             socket_c, address = _socket.accept()
-            self.on_socket_c(socket_c, address)
+            try: self.on_socket_c(socket_c, address)
+            except: socket_c.close(); raise
         except BaseException, exception:
             self.info(exception)
             lines = traceback.format_exc().splitlines()
@@ -206,22 +217,33 @@ class Server(observer.Observable):
         pass
 
     def on_read(self, _socket):
-        # verifies if there's any pending operations in the
-        # socket (eg: ssl handshaking) and performs them trying
-        # to finish them, in they are still pending at the current
-        # state returns immediately (waits for next loop)
-        if self._pending(_socket): return
-
         connection = self.connections_m.get(_socket, None)
         if not connection: return
 
         try:
+            # verifies if there's any pending operations in the
+            # socket (eg: ssl handshaking) and performs them trying
+            # to finish them, in they are still pending at the current
+            # state returns immediately (waits for next loop)
+            if self._pending(_socket): return
+
             while True:
                 data = _socket.recv(CHUNK_SIZE)
                 if data: self.on_data(connection, data)
                 else: self.on_connection_d(connection); break
+        except ssl.SSLError, error:
+            error_v = error.args[0]
+            if not error_v in SSL_VALID_ERRORS:
+                self.info(error)
+                lines = traceback.format_exc().splitlines()
+                for line in lines: self.logger.debug(line)
+                self.on_connection_d(connection)
         except socket.error, error:
-            if not error.args[0] in (errno.EWOULDBLOCK, errno.EAGAIN, errno.EPERM, errno.ENOENT, WSAEWOULDBLOCK):
+            error_v = error.args[0]
+            if not error_v in VALID_ERRORS:
+                self.info(error)
+                lines = traceback.format_exc().splitlines()
+                for line in lines: self.logger.debug(line)
                 self.on_connection_d(connection)
         except BaseException, exception:
             self.info(exception)
@@ -235,8 +257,19 @@ class Server(observer.Observable):
 
         try:
             connection._send()
+        except ssl.SSLError, error:
+            error_v = error.args[0]
+            if not error_v in SSL_VALID_ERRORS:
+                self.info(error)
+                lines = traceback.format_exc().splitlines()
+                for line in lines: self.logger.debug(line)
+                self.on_connection_d(connection)
         except socket.error, error:
-            if not error.args[0] in (errno.EWOULDBLOCK, errno.EAGAIN, errno.EPERM, errno.ENOENT, WSAEWOULDBLOCK):
+            error_v = error.args[0]
+            if not error_v in VALID_ERRORS:
+                self.info(error)
+                lines = traceback.format_exc().splitlines()
+                for line in lines: self.logger.debug(line)
                 self.on_connection_d(connection)
         except BaseException, exception:
             self.info(exception)
@@ -328,6 +361,6 @@ class Server(observer.Observable):
             _socket.pending = None
         except ssl.SSLError, error:
             error_v = error.args[0]
-            if error_v in VALID_ERRORS:
+            if error_v in SSL_VALID_ERRORS:
                 _socket.pending = self._ssl_handshake
             else: raise

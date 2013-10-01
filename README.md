@@ -51,3 +51,15 @@ pushi.bind("message", function(event, data) {
     jQuery("body").append("<div>" + data + "</div>");
 });
 ```
+
+```python
+import pushi
+    
+pushi.trigger(
+    channel = "global",
+    data = "hello world",
+    event = "message",
+    app_id = "YOU_APP_ID",
+    app_key = "YOU_APP_KEY",
+    app_secret = "YOU_APP_SECRET",)
+```

@@ -32,10 +32,15 @@ and bind to the complete set of network interfaces in the host the following com
     SERVER_PORT=80 \
     python pushi/src/pushi/base/state.py < /dev/null &> ~/pushi.log &
 
-To be able to run in using SSL encryption additional commands must be used:
+To be able to run in using SSL encryption additional commands must be used, please note
+that the SSL port used by the app is not the default one:
 
+    APP_SERVER=tornado \
     APP_HOST=0.0.0.0 \
-    APP_PORT=80 \
+    APP_PORT=9090 \
+    APP_SSL=1 \
+    APP_SSL_KEY=/path/to/file.key \
+    APP_SSL_CER=/path/to/file.cer \
     SERVER_HOST=0.0.0.0 \
     SERVER_PORT=443 \
     SERVER_SSL=1 \

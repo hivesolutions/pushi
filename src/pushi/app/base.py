@@ -130,12 +130,12 @@ class PushiApp(appier.App, appier.Mongo):
 
     @appier.private
     @appier.route("/apps/<app_id>/events", "GET")
-    def event_app_get(self, app_id, data = None, channel = "global"):
+    def event_app_get(self, app_id, data = None, event = "message", channel = "global"):
         if not app_id == self.request.session["app_id"]:
             raise RuntimeError("Not allowed for app id")
 
         if not data: raise RuntimeError("No data set for event")
-        self.state.trigger(app_id, "message", data, channels = (channel,))
+        self.state.trigger(app_id, event, data, channels = (channel,))
 
     @appier.private
     @appier.route("/apps/<app_id>/events", "POST")
@@ -143,10 +143,11 @@ class PushiApp(appier.App, appier.Mongo):
         if not app_id == self.request.session["app_id"]:
             raise RuntimeError("Not allowed for app id")
 
-        data = data.get("data", None)
+        _data = data.get("data", None)
+        event = data.get("event", "message")
         channel = data.get("channel", "global")
         if not data: raise RuntimeError("No data set for event")
-        self.state.trigger(app_id, "message", data, channels = (channel,))
+        self.state.trigger(app_id, event, _data, channels = (channel,))
 
     @appier.private
     @appier.route("/apps/<app_id>/sockets", "GET")

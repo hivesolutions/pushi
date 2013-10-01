@@ -61,5 +61,6 @@ pushi.trigger(
     event = "message",
     app_id = "YOU_APP_ID",
     app_key = "YOU_APP_KEY",
-    app_secret = "YOU_APP_SECRET",)
+    app_secret = "YOU_APP_SECRET"
+)
 ```

@@ -84,6 +84,7 @@ class State(appier.Mongo):
         self.server.bind("disconnect", self.disconnect)
         self.server.bind("subscribe", self.subscribe)
 
+        APP_SERVER = os.environ.get("APP_SERVER", "waitress")
         APP_HOST = os.environ.get("APP_HOST", "127.0.0.1")
         APP_PORT = int(os.environ.get("APP_PORT", "8080"))
         APP_SSL = bool(int(os.environ.get("APP_SSL", "0")))
@@ -96,6 +97,7 @@ class State(appier.Mongo):
         SERVER_SSL_CER = os.environ.get("SERVER_SSL_CER", None)
 
         app_kwargs = dict(
+            server = APP_SERVER,
             host = APP_HOST,
             port = APP_PORT,
             ssl = APP_SSL,

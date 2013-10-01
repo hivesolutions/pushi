@@ -41,11 +41,73 @@ import os
 import hmac
 import hashlib
 
+import appier
+
+BASE_URL = "http://puxiapp.com"
+""" The base url to be used by the api to access
+the remote endpoints, should not be changed """
+
+token = None
+""" The reference to the token value that is used
+for the current session, if this value is set to
+a valid value the session is considered to exist """
+
 def authenticate(channel, socket_id, app_key = None, app_secret = None):
+    # retrieves both the app key and secret either from the
+    # provided arguments or the environment variables
     key = app_key or os.environ["PUSHI_KEY"]
     secret = app_secret or os.environ["PUSHI_SECRET"]
+
+    # creates the string to hashed using both the provided
+    # socket id and channel (concatenation)
     string = "%s:%s" % (socket_id, channel)
 
+    # runs the hmac encryption in the provided secret and
+    # the constructed string and returns a string containing
+    # both the key and the hexadecimal digest
     structure = hmac.new(secret, string, hashlib.sha256)
     digest = structure.hexdigest()
     return "%s:%s" % (key, digest)
+
+def login(app_id = None, app_key = None, app_secret = None):
+    global token
+
+    id = app_id or os.environ["PUSHI_ID"]
+    key = app_key or os.environ["PUSHI_KEY"]
+    secret = app_secret or os.environ["PUSHI_SECRET"]
+
+    result = appier.get(BASE_URL + "/login", dict(
+        app_id = id,
+        app_key = key,
+        app_secret = secret
+    ))
+
+    # unpacks the token value from the result map and then
+    # returns the token to the caller method
+    token = result["token"]
+    return token
+
+def ensure_login(app_id = None, app_key = None, app_secret = None):
+    global token
+    if token: return token
+    return login(
+        app_id = app_id,
+        app_key = app_key,
+        app_secret = app_secret
+    )
+
+def trigger(channel, data, event = "message", app_id = None, app_key = None, app_secret = None):
+    id = app_id or os.environ["PUSHI_ID"]
+
+    token = ensure_login(
+        app_id = app_id,
+        app_key = app_key,
+        app_secret = app_secret
+    )
+
+    result = appier.post(BASE_URL + "/apps/%s/events" % app_id, dict(
+        data = data,
+        event = event,
+        channel = channel
+    ), dict(sid = token))
+    return result

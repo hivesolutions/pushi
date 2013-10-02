@@ -28,17 +28,27 @@ so that each one has its own objectives.
 
 ### Public Channels
 
-Has no prefix allows
+Channels that may be subscribed by any connection without any sort of validation.
 
 ### Private Channels
 
+Authenticated channels that for which the access is constrained to only server side
+validated connections.
+
 ### Presence Channels
+
+Channels that provide extra information on the situation on the channel, for instance
+allow the identification of a set of connection using a single `user_id` tag. Using
+this approach it's possible to know when a new user connects to the channel and when
+one disconnect (no more connection with the same `user_id` are present). These channels
+are considered private and so are subject to validation from the server side.
 
 ### Peer Channels
 
 Targeted at chat environment allows for the creation of automatic channels for the
 various elements (users) that are subscribed to a peer channel. The activation of the
 automatic peer channel configuration is archieved using the `peer` flag in the `channel_data`.
+This channel type **should not be created directly**.
 
 ## Running
 

@@ -151,6 +151,10 @@ class State(appier.Mongo):
         sockets.append(socket_id)
         state.channel_sockets[channel] = sockets
 
+        # in case there's no channel data to be used to change
+        # metadata and in additional processing must return
+        # immediately as there's nothing else remaining to be
+        # done in the subscription process
         if not channel_data: return
 
         user_id = channel_data["user_id"]
@@ -193,10 +197,14 @@ class State(appier.Mongo):
             channel =  channel
         )
 
+        # iterates over the complete set of connections currently subscribed
+        # to the channel, in order to be notify them about the member added
         for _connection in conns:
             if _connection == connection: continue
             _connection.send_pushi(json_d)
 
+            # in case the connection is not of type peer there's nothing
+            # else to be done related with the other connections
             if not is_peer: continue
 
             # retrieves the socket id of the current connection in iteration
@@ -224,6 +232,9 @@ class State(appier.Mongo):
         sockets = state.channel_sockets.get(channel, [])
         if socket_id in sockets: sockets.remove(socket_id)
 
+        # tries to retrieve the channel data for the channel socket
+        # tuple in case there's none available there's nothing else
+        # remaining to be done in the unsubscribe process
         channel_data = state.channel_socket_data.get(channel_socket)
         if not channel_data: return
 
@@ -244,9 +255,14 @@ class State(appier.Mongo):
         user_conns.remove(connection)
         users[user_id] = user_conns
 
+        # verifies if the current connection is old, a connection is considered
+        # old when no more connections exist for a certain user id in the channel
+        # for this situations additional housekeeping must be performed
         is_old = len(user_conns) == 0
         if is_old: del users[user_id]; del members[user_id]; user_count -= 1
 
+        # updates the various attributes of the channel information structure
+        # so that it remains updated according to the unsubscribe operation
         info["users"] = users
         info["members"] = members
         info["conns"] = conns
@@ -258,6 +274,8 @@ class State(appier.Mongo):
         # by the peer flat that may be set in the channel data structure
         is_peer and self.unsubscribe_peer_all(app_key, connection, channel)
 
+        # verifies if the current connection is old in case it's not no operation
+        # remain for the unsubscribe operation and so the function may return
         if not is_old: return
 
         is_empty = len(conns) == 0

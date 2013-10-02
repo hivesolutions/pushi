@@ -21,6 +21,25 @@ to avoid any unwanted complexities and provide fast performance.
 Pushi was heavily inspired by the [Pusher](http://pusher.com) service, and aims
 at providing a free alternative to it (for cost reducing).
 
+## Channels
+
+The channel is the base object for communication and there are four types of channels
+so that each one has its own objectives.
+
+### Public Channels
+
+Has no prefix allows
+
+### Private Channels
+
+### Presence Channels
+
+### Peer Channels
+
+Targetted at chat environment allows for the creation of automatic channels for the
+various elements (users) that are subscribed to a peer channel. The activation of the
+automatic peer channel configuration is archieved using the `peer` flag in the `channel_data`.
+
 ## Running
 
 To be able to run the pushi infra-structure under a normal non ecrypted connection

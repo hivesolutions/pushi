@@ -32,8 +32,8 @@ Channels that may be subscribed by any connection without any sort of validation
 
 ### Private Channels
 
-Authenticated channels that for which the access is constrained to only server side
-validated connections.
+Authenticated channels for which the access is constrained to only server side
+validated connections. The validation is performed using a REST-JSON based API.
 
 ### Presence Channels
 

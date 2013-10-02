@@ -45,7 +45,7 @@ if not base_dir in sys.path: sys.path.insert(0, base_dir)
 
 import appier
 
-BASE_URL = "http://puxiapp.com:8080"
+BASE_URL = "https://puxiapp.com:9090"
 """ The base url to be used for the pushi service
 in the call to the API endpoint """
 

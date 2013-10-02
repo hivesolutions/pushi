@@ -36,7 +36,7 @@ Has no prefix allows
 
 ### Peer Channels
 
-Targetted at chat environment allows for the creation of automatic channels for the
+Targeted at chat environment allows for the creation of automatic channels for the
 various elements (users) that are subscribed to a peer channel. The activation of the
 automatic peer channel configuration is archieved using the `peer` flag in the `channel_data`.
 

@@ -46,6 +46,7 @@ import logging
 import traceback
 import threading
 
+import log
 import observer
 
 CHUNK_SIZE = 4096
@@ -141,8 +142,9 @@ class Connection(object):
 
 class Server(observer.Observable):
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, handler = None, *args, **kwargs):
         observer.Observable.__init__(self, *args, **kwargs)
+        self.handler = handler or log.MemoryHandler()
         self.logger = None
         self.socket = None
         self.host = None
@@ -165,6 +167,7 @@ class Server(observer.Observable):
         logging.basicConfig(format = "%(asctime)s [%(levelname)s] %(message)s")
         self.logger = logging.getLogger(self.__class__.__name__)
         self.logger.setLevel(level)
+        self.logger.addHandler(self.handler)
 
     def serve(self, host = "127.0.0.1", port = 9090, ssl = False, key_file = None, cer_file = None):
         self.load()
@@ -177,6 +180,7 @@ class Server(observer.Observable):
         if ssl: self.socket = self._ssl_wrap(self.socket, key_file = key_file, cer_file = cer_file)
         self.socket.setsockopt(socket.IPPROTO_TCP, socket.TCP_NODELAY, 1)
         self.socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+        self.socket.setsockopt(socket.SOL_SOCKET, socket.SO_KEEPALIVE, 1)
         hasattr(socket, "SO_REUSEPORT") and\
             self.socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEPORT, 1) #@UndefinedVariable
         self.socket.bind((host, port))
@@ -297,6 +301,7 @@ class Server(observer.Observable):
         socket_c.pending = None
         socket_c.setblocking(0)
         socket_c.setsockopt(socket.IPPROTO_TCP, socket.TCP_NODELAY, 1)
+        socket_c.setsockopt(socket.SOL_SOCKET, socket.SO_KEEPALIVE, 1)
 
         if self.ssl: self._ssl_handshake(socket_c)
 

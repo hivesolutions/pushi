@@ -36,10 +36,14 @@ __license__ = "GNU General Public License (GPL), Version 3"
 
 import base
 import echo
+import log
+import observer
 import pushi
 import ws
 
 from base import *
 from echo import *
+from log import *
+from observer import *
 from pushi import *
 from ws import *

@@ -80,6 +80,11 @@ class State(appier.Mongo):
         self.app = app
         self.server = server
 
+        # "moves" the (in memory) logging handler of the app to the
+        # server so that they share a common logging infrastructure
+        handler = self.app.handler
+        self.server.handler = handler
+
         self.server.bind("connect", self.connect)
         self.server.bind("disconnect", self.disconnect)
         self.server.bind("subscribe", self.subscribe)
@@ -250,7 +255,7 @@ class State(appier.Mongo):
         user_count = info.get("user_count", 0)
 
         # removes the current connection from the list of connection currently
-        # active for the channel, because it's no longer available 
+        # active for the channel, because it's no longer available
         conns.remove(connection)
 
         # retrieves the currently active connections registered under the user id

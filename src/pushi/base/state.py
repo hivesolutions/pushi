@@ -509,7 +509,18 @@ class State(appier.Mongo):
             event = event,
             data = data
         )
+        self.log_channel(app_id, channel, json_d, owner_id = owner_id)
         self.send_channel(app_id, channel, json_d, owner_id = owner_id)
+
+    def log_channel(self, app_id, channel, json_d, owner_id = None):
+        db = self.get_db("pushi")
+        event = dict(
+            app_id = app_id,
+            channel = channel,
+            owner_id = owner_id,
+            data = json_d
+        )
+        db.events.insert(event)
 
     def send_channel(self, app_id, channel, json_d, owner_id = None):
         state = self.get_state(app_id = app_id)

@@ -112,12 +112,7 @@ class PushiServer(ws.WSServer):
     def on_data_ws(self, connection, data):
         ws.WSServer.on_data_ws(self, connection, data)
 
-        try:
-            json_d = json.loads(data)
-        except BaseException, exception:
-            self.error("Problem decoding data: %s", unicode(exception))
-            self.info("%s", data)
-            return
+        json_d = json.loads(data)
 
         event = json_d.get("event", None)
         event = event.replace(":", "_")

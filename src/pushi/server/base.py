@@ -39,6 +39,7 @@ __license__ = "GNU General Public License (GPL), Version 3"
 
 import os
 import ssl
+import types
 import errno
 import socket
 import select
@@ -190,6 +191,17 @@ class Server(observer.Observable):
         self.write.append(self.socket)
         self.error.append(self.socket)
 
+        try: self.loop()
+        except BaseException, exception:
+            self.error(exception)
+            lines = traceback.format_exc().splitlines()
+            for line in lines: self.warning(line)
+        except:
+            self.critical("Critical level loop exception raised")
+            lines = traceback.format_exc().splitlines()
+            for line in lines: self.error(line)
+
+    def loop(self):
         while True:
             reads, writes, errors = select.select(self.read, self.write, self.error, 0.25)
 
@@ -222,7 +234,7 @@ class Server(observer.Observable):
         except BaseException, exception:
             self.info(exception)
             lines = traceback.format_exc().splitlines()
-            for line in lines: self.logger.debug(line)
+            for line in lines: self.debug(line)
 
     def on_write_s(self, socket):
         pass
@@ -250,19 +262,19 @@ class Server(observer.Observable):
             if not error_v in SSL_VALID_ERRORS:
                 self.info(error)
                 lines = traceback.format_exc().splitlines()
-                for line in lines: self.logger.debug(line)
+                for line in lines: self.debug(line)
                 self.on_connection_d(connection)
         except socket.error, error:
             error_v = error.args[0]
             if not error_v in VALID_ERRORS:
                 self.info(error)
                 lines = traceback.format_exc().splitlines()
-                for line in lines: self.logger.debug(line)
+                for line in lines: self.debug(line)
                 self.on_connection_d(connection)
         except BaseException, exception:
             self.info(exception)
             lines = traceback.format_exc().splitlines()
-            for line in lines: self.logger.debug(line)
+            for line in lines: self.debug(line)
             self.on_connection_d(connection)
 
     def on_write(self, socket):
@@ -276,19 +288,19 @@ class Server(observer.Observable):
             if not error_v in SSL_VALID_ERRORS:
                 self.info(error)
                 lines = traceback.format_exc().splitlines()
-                for line in lines: self.logger.debug(line)
+                for line in lines: self.debug(line)
                 self.on_connection_d(connection)
         except socket.error, error:
             error_v = error.args[0]
             if not error_v in VALID_ERRORS:
                 self.info(error)
                 lines = traceback.format_exc().splitlines()
-                for line in lines: self.logger.debug(line)
+                for line in lines: self.debug(line)
                 self.on_connection_d(connection)
         except BaseException, exception:
             self.info(exception)
             lines = traceback.format_exc().splitlines()
-            for line in lines: self.logger.debug(line)
+            for line in lines: self.debug(line)
             self.on_connection_d(connection)
 
     def on_error(self, socket):
@@ -337,7 +349,8 @@ class Server(observer.Observable):
         self.log(object, level = logging.CRITICAL)
 
     def log(self, object, level = logging.INFO):
-        message = str(object)
+        object_t = type(object)
+        message = unicode(object) if not object_t in types.StringTypes else object
         self.logger.log(level, message)
 
     def _pending(self, _socket):

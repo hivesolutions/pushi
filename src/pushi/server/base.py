@@ -76,12 +76,21 @@ SSL_VALID_ERRORS = (
 """ The list containing the valid error in the handshake
 operation of the ssl connection establishment """
 
+STOP_STATE = 1
+START_STATE = 2
+CONFIG_STATE = 3
+SELECT_STATE = 4
+READ_STATE = 5
+WRITE_STATE = 6
+ERROR_STATE = 7
+
 class Connection(object):
 
     def __init__(self, server, socket, address):
         self.server = server
         self.socket = socket
         self.address = address
+        self.state = STOP_STATE;
         self.pending = []
         self.pending_lock = threading.RLock()
 
@@ -171,7 +180,8 @@ class Server(observer.Observable):
 
     def serve(self, host = "127.0.0.1", port = 9090, ssl = False, key_file = None, cer_file = None):
         self.load()
-
+        
+        self.state = CONFIG_STATE
         self.host = host
         self.port = port
         self.ssl = ssl
@@ -189,6 +199,8 @@ class Server(observer.Observable):
         self.read.append(self.socket)
         self.write.append(self.socket)
         self.error.append(self.socket)
+        
+        self.state = START_STATE
 
         try: self.loop()
         except BaseException, exception:

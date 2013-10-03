@@ -69,7 +69,7 @@ class Pushi:
         return "%s:%s" % (self.app_key, digest)
 
     def auth_callback(self, params):
-        token = self.ensure_login()
+        token = self.login()
         params["sid"] = token
 
     def ensure_login(self):
@@ -104,12 +104,13 @@ class Pushi:
         # performs the concrete event trigger operation creating an event
         # with the provided information using a secure channel
         result = appier.post(
-            self.base_url + "/apps/%s/events" % id,
+            self.base_url + "/apps/%s/events" % self.app_id,
             data_j = dict(
                 data = data,
                 event = event,
                 channel = channel
             ),
-            params = dict(sid = token)
+            params = dict(sid = token),
+            auth_callback = self.auth_callback
         )
         return result

@@ -88,13 +88,15 @@ pushi.bind("message", function(event, data) {
 
 ```python
 import pushi
-    
-pushi.trigger(
-    channel = "global",
-    data = "hello world",
-    event = "message",
+
+proxy = pushi.Pushi(
     app_id = "YOU_APP_ID",
     app_key = "YOU_APP_KEY",
     app_secret = "YOU_APP_SECRET"
+)
+proxy.trigger(
+    channel = "global",
+    data = "hello world",
+    event = "message"
 )
 ```

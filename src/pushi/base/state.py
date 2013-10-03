@@ -249,8 +249,13 @@ class State(appier.Mongo):
         conns = info.get("conns", [])
         user_count = info.get("user_count", 0)
 
+        # removes the current connection from the list of connection currently
+        # active for the channel, because it's no longer available 
         conns.remove(connection)
 
+        # retrieves the currently active connections registered under the user id
+        # of the connection to be unregistered then removes the current connection
+        # from the list of connections and re-sets the connections list
         user_conns = users.get(user_id, [])
         user_conns.remove(connection)
         users[user_id] = user_conns

@@ -47,80 +47,84 @@ BASE_URL = "https://puxiapp.com:9090"
 """ The base url to be used by the api to access
 the remote endpoints, should not be changed """
 
-token = None
-""" The reference to the token value that is used
-for the current session, if this value is set to
-a valid value the session is considered to exist """
+class Pushi:
 
-def authenticate(channel, socket_id, app_key = None, app_secret = None):
-    # retrieves both the app key and secret either from the
-    # provided arguments or the environment variables
-    key = app_key or os.environ["PUSHI_KEY"]
-    secret = app_secret or os.environ["PUSHI_SECRET"]
+    def __init__(self, app_id = None, app_key = None, app_secret = None, base_url = BASE_URL):
+        self.app_id = app_id or os.environ.get("PUSHI_ID", None)
+        self.app_key = app_key or os.environ.get("PUSHI_KEY", None)
+        self.app_secret = app_secret or os.environ.get("PUSHI_SECRET", None)
+        self.base_url = base_url
+        self.token = None
 
-    # creates the string to hashed using both the provided
-    # socket id and channel (concatenation)
-    string = "%s:%s" % (socket_id, channel)
+    def authenticate(self, channel, socket_id):
+        # creates the string to hashed using both the provided
+        # socket id and channel (concatenation)
+        string = "%s:%s" % (socket_id, channel)
 
-    # runs the hmac encryption in the provided secret and
-    # the constructed string and returns a string containing
-    # both the key and the hexadecimal digest
-    structure = hmac.new(secret, string, hashlib.sha256)
-    digest = structure.hexdigest()
-    return "%s:%s" % (key, digest)
+        # runs the hmac encryption in the provided secret and
+        # the constructed string and returns a string containing
+        # both the key and the hexadecimal digest
+        structure = hmac.new(self.app_secret, string, hashlib.sha256)
+        digest = structure.hexdigest()
+        return "%s:%s" % (self.app_key, digest)
 
-def ensure_login(app_id = None, app_key = None, app_secret = None):
-    global token
-    if token: return token
-    return login(
-        app_id = app_id,
-        app_key = app_key,
-        app_secret = app_secret
+    def auth_callback(self, params):
+        token = self.ensure_login()
+        params["sid"] = token
+
+    def ensure_login(self):
+        if self.token: return self.token
+        return self.login()
+
+    def login(self):
+        # tries to login in the pushi infra-structure using the
+        # login route together with the full set of auth info
+        # retrieving the result map that should contain the
+        # session token, to be used in further calls
+        result = appier.get(
+            self.base_url + "/login",
+            params = dict(
+                app_id = self.app_id,
+                app_key = self.app_key,
+                app_secret = self.app_secret
+            )
+        )
+
+        # unpacks the token value from the result map and then
+        # returns the token to the caller method
+        self.token = result["token"]
+        return self.token
+
+    def trigger(self, channel, data, event = "message"):
+        # runs the ensure login call making sure that the login token
+        # is currently present in the environment, this is required
+        # to perform secured remote calls
+        token = self.ensure_login()
+
+        # performs the concrete event trigger operation creating an event
+        # with the provided information using a secure channel
+        result = appier.post(
+            self.base_url + "/apps/%s/events" % id,
+            data_j = dict(
+                data = data,
+                event = event,
+                channel = channel
+            ),
+            params = dict(sid = token)
+        )
+        return result
+
+pushi = Pushi(
+    app_id = "24e8ee9d21e1feb9bc2f02f337eb71a8b624621f0cc3d83179cb70437242b531",
+    app_key = "274cb7377bdfd1f18eabe6eb7b43879ad821ce13d3c1a9400590fc0fe58ebd31",
+    app_secret = "d1bbb71be5ed3b516fc6fb29cde1425f17a537ce2b6e4867dfc26f260e5e11e6"
+)
+
+while True:
+    pushi.trigger(
+        "global",
+        "dasdadasd",
+        event = "message"
     )
-
-def login(app_id = None, app_key = None, app_secret = None):
-    global token
-
-    # retrieves the base pushi related variable either from
-    # the passed arguments or from the global environment
-    id = app_id or os.environ["PUSHI_ID"]
-    key = app_key or os.environ["PUSHI_KEY"]
-    secret = app_secret or os.environ["PUSHI_SECRET"]
-
-    # tries to login in the pushi infra-structure using the
-    # login route together with the full set of auth info
-    # retrieving the result map that should contain the
-    # session token, to be used in further calls
-    result = appier.get(BASE_URL + "/login", dict(
-        app_id = id,
-        app_key = key,
-        app_secret = secret
-    ))
-
-    # unpacks the token value from the result map and then
-    # returns the token to the caller method
-    token = result["token"]
-    return token
-
-def trigger(channel, data, event = "message", app_id = None, app_key = None, app_secret = None):
-    # retrieve the app id value either from the passed attributes
-    # or from the global environment variable
-    id = app_id or os.environ["PUSHI_ID"]
-
-    # runs the ensure login call making sure that the login token
-    # is currently present in the environment, this is required
-    # to perform secured remote calls
-    token = ensure_login(
-        app_id = app_id,
-        app_key = app_key,
-        app_secret = app_secret
-    )
-
-    # performs the concrete event trigger operation creating an event
-    # with the provided information using a secure channel
-    result = appier.post(BASE_URL + "/apps/%s/events" % app_id, dict(
-        data = data,
-        event = event,
-        channel = channel
-    ), dict(sid = token))
-    return result
+    import time
+    time.sleep(30)

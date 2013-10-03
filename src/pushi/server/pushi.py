@@ -116,6 +116,7 @@ class PushiServer(ws.WSServer):
             json_d = json.loads(data)
         except BaseException, exception:
             self.error("Problem decoding data: %s", unicode(exception))
+            self.info("%s", data)
             return
 
         event = json_d.get("event", None)

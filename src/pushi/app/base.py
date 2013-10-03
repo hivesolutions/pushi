@@ -130,12 +130,18 @@ class PushiApp(appier.App, appier.Mongo):
 
     @appier.private
     @appier.route("/apps/<app_id>/events", "GET")
-    def list_events(self, app_id):
+    def list_events(self, app_id, limit = 100):
         if not app_id == self.request.session["app_id"]:
             raise RuntimeError("Not allowed for app id")
 
         db = self.get_db("pushi")
-        events = [event for event in db.event.find(app_id = app_id)]
+        limit = int(limit)
+        cursor = db.event.find(
+            app_id = app_id,
+            limit = limit,
+            sort = (("_id", -1))
+        )
+        events = [event for event in cursor]
         for event in events: del event["_id"]
         return dict(
             events = events

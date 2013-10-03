@@ -520,7 +520,7 @@ class State(appier.Mongo):
             owner_id = owner_id,
             data = json_d
         )
-        db.events.insert(event)
+        db.event.insert(event)
 
     def send_channel(self, app_id, channel, json_d, owner_id = None):
         state = self.get_state(app_id = app_id)

@@ -135,7 +135,7 @@ class PushiApp(appier.App, appier.Mongo):
             raise RuntimeError("Not allowed for app id")
 
         db = self.get_db("pushi")
-        events = [event for event in db.events.find(app_id = app_id)]
+        events = [event for event in db.event.find(app_id = app_id)]
         for event in events: del event["_id"]
         return dict(
             events = events

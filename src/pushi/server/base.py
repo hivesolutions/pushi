@@ -47,7 +47,6 @@ import logging
 import traceback
 import threading
 
-import log
 import observer
 
 CHUNK_SIZE = 4096
@@ -145,7 +144,7 @@ class Server(observer.Observable):
 
     def __init__(self, handler = None, *args, **kwargs):
         observer.Observable.__init__(self, *args, **kwargs)
-        self.handler = handler or log.MemoryHandler()
+        self.handler = handler
         self.logger = None
         self.socket = None
         self.host = None
@@ -168,7 +167,7 @@ class Server(observer.Observable):
         logging.basicConfig(format = "%(asctime)s [%(levelname)s] %(message)s")
         self.logger = logging.getLogger(self.__class__.__name__)
         self.logger.setLevel(level)
-        self.logger.addHandler(self.handler)
+        self.handler and self.logger.addHandler(self.handler)
 
     def serve(self, host = "127.0.0.1", port = 9090, ssl = False, key_file = None, cer_file = None):
         self.load()

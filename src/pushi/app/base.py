@@ -139,7 +139,7 @@ class PushiApp(appier.App, appier.Mongo):
         cursor = db.event.find(
             app_id = app_id,
             limit = limit,
-            sort = (("_id", -1))
+            sort = [("_id", -1),]
         )
         events = [event for event in cursor]
         for event in events: del event["_id"]

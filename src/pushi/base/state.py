@@ -39,11 +39,13 @@ __license__ = "GNU General Public License (GPL), Version 3"
 
 import os
 import sys
+import time
 import json
 import hmac
 import copy
 import types
 import hashlib
+import datetime
 import threading
 
 base_dir = (os.path.normpath(os.path.dirname(__file__) or ".") + "/../..")
@@ -512,14 +514,20 @@ class State(appier.Mongo):
         self.log_channel(app_id, channel, json_d, owner_id = owner_id)
         self.send_channel(app_id, channel, json_d, owner_id = owner_id)
 
-    def log_channel(self, app_id, channel, json_d, owner_id = None):
+    def log_channel(self, app_id, channel, json_d, owner_id = None, has_date = True):
         db = self.get_db("pushi")
+        timestamp = time.time()
         event = dict(
             app_id = app_id,
             channel = channel,
             owner_id = owner_id,
+            timestamp = timestamp,
             data = json_d
         )
+        if has_date:
+            date = datetime.datetime.utcfromtimestamp(timestamp)
+            date_s = date.strftime("%B %d, %Y")
+            event["date"] = date_s
         db.event.insert(event)
 
     def send_channel(self, app_id, channel, json_d, owner_id = None):

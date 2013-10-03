@@ -526,7 +526,7 @@ class State(appier.Mongo):
         )
         if has_date:
             date = datetime.datetime.utcfromtimestamp(timestamp)
-            date_s = date.strftime("%B %d, %Y")
+            date_s = date.strftime("%B %d, %Y %H:%M:%S UTC")
             event["date"] = date_s
         db.event.insert(event)
 

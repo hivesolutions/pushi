@@ -241,7 +241,7 @@ class Server(observer.Observable):
 
         self.set_state(STATE_START)
 
-        self.info("Starting the service with the loop stage")
+        self.info("Starting the service's \"loop\" stage")
         try: self.loop()
         except BaseException, exception:
             self.error(exception)
@@ -252,7 +252,7 @@ class Server(observer.Observable):
             lines = traceback.format_exc().splitlines()
             for line in lines: self.error(line)
         finally:
-            self.info("Exiting the system from the loop stage")
+            self.info("Stopping the service's \"loop\" stage")
             self.set_state(STATE_STOP)
 
     def loop(self):

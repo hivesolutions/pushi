@@ -76,6 +76,14 @@ SSL_VALID_ERRORS = (
 """ The list containing the valid error in the handshake
 operation of the ssl connection establishment """
 
+OPEN = 1
+""" The open status value, meant to be used in situations
+where the status of the entity is open (opposite of closed) """
+
+CLOSED = 2
+""" Closed status value to be used in entities which have
+no pending structured opened and operations are limited """
+
 STATE_STOP = 1
 """ The stop state value, this value is set when the service
 is either in the constructed stage or when the service has been
@@ -126,6 +134,7 @@ create an integer to string resolution mechanism """
 class Connection(object):
 
     def __init__(self, server, socket, address):
+        self.status = CLOSED
         self.server = server
         self.socket = socket
         self.address = address
@@ -141,6 +150,8 @@ class Connection(object):
         server.connections.append(self)
         server.connections_m[self.socket] = self
 
+        self.status = OPEN
+
     def close(self):
         server = self.server
 
@@ -153,6 +164,8 @@ class Connection(object):
 
         try: self.socket.close()
         except: pass
+
+        self.status = CLOSED
 
     def ensure_write(self):
         if self.socket in self.server.write_l: return

@@ -131,7 +131,6 @@ class Connection(object):
         self.address = address
         self.pending = []
         self.pending_lock = threading.RLock()
-        self.set_state(STATE_STOP);
 
     def open(self):
         server = self.server
@@ -204,6 +203,7 @@ class Server(observer.Observable):
         self.connections = []
         self.connections_m = {}
         self._loaded = False
+        self.set_state(STATE_STOP);
 
     def load(self):
         if self._loaded: return

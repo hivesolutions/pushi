@@ -189,8 +189,9 @@ class Connection(object):
 
 class Server(observer.Observable):
 
-    def __init__(self, handler = None, *args, **kwargs):
+    def __init__(self, name = None, handler = None, *args, **kwargs):
         observer.Observable.__init__(self, *args, **kwargs)
+        self.name = name or self.__class__.__name__
         self.handler = handler
         self.logger = None
         self.socket = None

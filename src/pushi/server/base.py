@@ -76,13 +76,52 @@ SSL_VALID_ERRORS = (
 """ The list containing the valid error in the handshake
 operation of the ssl connection establishment """
 
-STOP_STATE = 1
-START_STATE = 2
-CONFIG_STATE = 3
-SELECT_STATE = 4
-READ_STATE = 5
-WRITE_STATE = 6
-ERROR_STATE = 7
+STATE_STOP = 1
+""" The stop state value, this value is set when the service
+is either in the constructed stage or when the service has been
+stop normally or with an error """
+
+STATE_START = 2
+""" The start state set when the service is in the starting
+stage and running, normal state """
+
+STATE_CONFIG = 3
+""" The configuration state that is set when the service is
+preparing to become started and the configuration attributes
+are being set according to pre-determined indications """
+
+STATE_SELECT = 4
+""" State to be used when the service is in the select part
+of the loop, this is the most frequent state in an idle service
+as the service "spends" most of its time in it """
+
+STATE_READ = 5
+""" Read state that is set when the connection are being read
+and the on data handlers are being called, this is the part
+where all the logic driven by incoming data is being called """
+
+STATE_WRITE = 6
+""" The write state that is set on the writing of data to the
+connections, this is a pretty "fast" state as no logic is
+associated with it """
+
+STATE_ERRROR = 7
+""" The error state to be used when the connection is processing
+any error state coming from its main select operation and associated
+with a certain connection (very rare) """
+
+STATE_STRINGS = (
+    "STOP",
+    "START",
+    "CONFIG",
+    "SELECT",
+    "READ",
+    "WRITE",
+    "ERROR"
+)
+""" Sequence that contains the various strings associated with
+the various states for the base service, this may be used to
+create an integer to string resolution mechanism """
 
 class Connection(object):
 
@@ -90,7 +129,7 @@ class Connection(object):
         self.server = server
         self.socket = socket
         self.address = address
-        self.state = STOP_STATE;
+        self.state = STATE_STOP;
         self.pending = []
         self.pending_lock = threading.RLock()
 
@@ -180,8 +219,8 @@ class Server(observer.Observable):
 
     def serve(self, host = "127.0.0.1", port = 9090, ssl = False, key_file = None, cer_file = None):
         self.load()
-        
-        self.state = CONFIG_STATE
+
+        self.state = STATE_CONFIG
         self.host = host
         self.port = port
         self.ssl = ssl
@@ -199,9 +238,10 @@ class Server(observer.Observable):
         self.read.append(self.socket)
         self.write.append(self.socket)
         self.error.append(self.socket)
-        
-        self.state = START_STATE
 
+        self.state = STATE_START
+
+        self.info("Starting the service with the loop stage")
         try: self.loop()
         except BaseException, exception:
             self.error(exception)
@@ -211,22 +251,41 @@ class Server(observer.Observable):
             self.critical("Critical level loop exception raised")
             lines = traceback.format_exc().splitlines()
             for line in lines: self.error(line)
+        finally:
+            self.info("Exiting the system from the loop stage")
+            self.state = STATE_STOP
 
     def loop(self):
         while True:
-            reads, writes, errors = select.select(self.read, self.write, self.error, 0.25)
+            self.state = STATE_SELECT
+            reads, writes, errors = select.select(
+                self.read,
+                self.write,
+                self.error,
+                0.25
+            )
 
-            for read in reads:
-                if read == self.socket: self.on_read_s(read)
-                else: self.on_read(read)
+            self.reads(reads)
+            self.writes(writes)
+            self.errors(errors)
 
-            for write in writes:
-                if write == self.socket: self.on_write_s(write)
-                else: self.on_write(write)
+    def reads(self, reads):
+        self.state = STATE_READ
+        for read in reads:
+            if read == self.socket: self.on_read_s(read)
+            else: self.on_read(read)
 
-            for error in errors:
-                if error == self.socket: self.on_error_s(error)
-                else: self.on_error(error)
+    def writes(self, writes):
+        self.state = STATE_WRITE
+        for write in writes:
+            if write == self.socket: self.on_write_s(write)
+            else: self.on_write(write)
+
+    def errors(self, errors):
+        self.state = STATE_ERRROR
+        for error in errors:
+            if error == self.socket: self.on_error_s(error)
+            else: self.on_error(error)
 
     def info_dict(self):
         return dict(
@@ -234,7 +293,8 @@ class Server(observer.Observable):
             host = self.host,
             port = self.port,
             ssl = self.ssl,
-            connections = len(self.connections)
+            connections = len(self.connections),
+            state = self.get_state_s()
         )
 
     def on_read_s(self, _socket):
@@ -363,6 +423,11 @@ class Server(observer.Observable):
         object_t = type(object)
         message = unicode(object) if not object_t in types.StringTypes else object
         self.logger.log(level, message)
+
+    def get_state_s(self, lower = True):
+        state_s = STATE_STRINGS[self.state - 1]
+        state_s = state_s.lower() if lower else state_s
+        return state_s
 
     def _pending(self, _socket):
         """

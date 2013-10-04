@@ -376,7 +376,10 @@ class Server(observer.Observable):
             self.on_connection_d(connection)
 
     def on_error(self, socket):
-        pass
+        connection = self.connections_m.get(socket, None)
+        if not connection: return
+
+        self.on_connection_d(connection)
 
     def on_data(self, connection, data):
         pass

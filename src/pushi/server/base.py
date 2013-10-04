@@ -129,9 +129,9 @@ class Connection(object):
         self.server = server
         self.socket = socket
         self.address = address
-        self.state = STATE_STOP;
         self.pending = []
         self.pending_lock = threading.RLock()
+        self.set_state(STATE_STOP);
 
     def open(self):
         server = self.server
@@ -220,7 +220,7 @@ class Server(observer.Observable):
     def serve(self, host = "127.0.0.1", port = 9090, ssl = False, key_file = None, cer_file = None):
         self.load()
 
-        self.state = STATE_CONFIG
+        self.set_state(STATE_CONFIG)
         self.host = host
         self.port = port
         self.ssl = ssl
@@ -239,7 +239,7 @@ class Server(observer.Observable):
         self.write.append(self.socket)
         self.error.append(self.socket)
 
-        self.state = STATE_START
+        self.set_state(STATE_START)
 
         self.info("Starting the service with the loop stage")
         try: self.loop()
@@ -253,11 +253,11 @@ class Server(observer.Observable):
             for line in lines: self.error(line)
         finally:
             self.info("Exiting the system from the loop stage")
-            self.state = STATE_STOP
+            self.set_state(STATE_STOP)
 
     def loop(self):
         while True:
-            self.state = STATE_SELECT
+            self.set_state(STATE_SELECT)
             reads, writes, errors = select.select(
                 self.read,
                 self.write,
@@ -270,19 +270,19 @@ class Server(observer.Observable):
             self.errors(errors)
 
     def reads(self, reads):
-        self.state = STATE_READ
+        self.set_state(STATE_READ)
         for read in reads:
             if read == self.socket: self.on_read_s(read)
             else: self.on_read(read)
 
     def writes(self, writes):
-        self.state = STATE_WRITE
+        self.set_state(STATE_WRITE)
         for write in writes:
             if write == self.socket: self.on_write_s(write)
             else: self.on_write(write)
 
     def errors(self, errors):
-        self.state = STATE_ERRROR
+        self.set_state(STATE_ERRROR)
         for error in errors:
             if error == self.socket: self.on_error_s(error)
             else: self.on_error(error)
@@ -424,8 +424,11 @@ class Server(observer.Observable):
         message = unicode(object) if not object_t in types.StringTypes else object
         self.logger.log(level, message)
 
+    def set_state(self, state):
+        self._state = state
+
     def get_state_s(self, lower = True):
-        state_s = STATE_STRINGS[self.state - 1]
+        state_s = STATE_STRINGS[self._state - 1]
         state_s = state_s.lower() if lower else state_s
         return state_s
 

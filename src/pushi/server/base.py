@@ -142,6 +142,8 @@ class Connection(object):
         self.pending_lock = threading.RLock()
 
     def open(self):
+        if not self.status == CLOSED: return
+        
         server = self.server
 
         server.read_l.append(self.socket)
@@ -153,6 +155,8 @@ class Connection(object):
         self.status = OPEN
 
     def close(self):
+        if not self.status == OPEN: return
+        
         server = self.server
 
         if self.socket in server.read_l: server.read_l.remove(self.socket)
@@ -183,6 +187,12 @@ class Connection(object):
 
     def recv(self, size = CHUNK_SIZE):
         return self._recv(size = size)
+    
+    def is_open(self):
+        return self.status == OPEN
+
+    def is_closed(self):
+        return self.status == CLOSED
 
     def _send(self):
         self.pending_lock.acquire()
@@ -330,6 +340,7 @@ class Server(observer.Observable):
     def on_read(self, _socket):
         connection = self.connections_m.get(_socket, None)
         if not connection: return
+        if not connection.status == OPEN: return
 
         try:
             # verifies if there's any pending operations in the
@@ -365,6 +376,7 @@ class Server(observer.Observable):
     def on_write(self, socket):
         connection = self.connections_m.get(socket, None)
         if not connection: return
+        if not connection.status == OPEN: return
 
         try:
             connection._send()
@@ -391,6 +403,7 @@ class Server(observer.Observable):
     def on_error(self, socket):
         connection = self.connections_m.get(socket, None)
         if not connection: return
+        if not connection.status == OPEN: return
 
         self.on_connection_d(connection)
 

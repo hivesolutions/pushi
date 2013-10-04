@@ -398,7 +398,8 @@ class Server(observer.Observable):
         pass
 
     def on_socket_c(self, socket_c, address):
-        socket_c.pending = None
+        if self.ssl: socket_c.pending = None
+
         socket_c.setblocking(0)
         socket_c.setsockopt(socket.IPPROTO_TCP, socket.TCP_NODELAY, 1)
         socket_c.setsockopt(socket.SOL_SOCKET, socket.SO_KEEPALIVE, 1)
@@ -467,7 +468,7 @@ class Server(observer.Observable):
         performed in the provided socket.
         """
 
-        if not _socket.pending: return False
+        if not self.ssl or not _socket.pending: return False
         _socket.pending(_socket)
         is_pending = not _socket.pending == None
         return is_pending

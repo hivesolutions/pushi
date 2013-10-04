@@ -193,6 +193,18 @@ class Connection(object):
         self.server.write_l.remove(self.socket)
 
     def send(self, data):
+        """
+        The main send call to be used by a proxy connection and
+        from different threads.
+
+        Calling this method should be done with care as this can
+        create dead lock or socket corruption situations.
+
+        @type data: String
+        @param data: The buffer containing the data to be sent
+        through this connection to the other endpoint.
+        """
+
         self.ensure_write()
         self.pending_lock.acquire()
         try: self.pending.insert(0, data)

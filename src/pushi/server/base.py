@@ -142,8 +142,11 @@ class Connection(object):
         self.pending_lock = threading.RLock()
 
     def open(self):
+        # in case the current status of the connection is not
+        # closed does not make sense to open it as it should
+        # already be open anyway (returns immediately)
         if not self.status == CLOSED: return
-        
+
         server = self.server
 
         server.read_l.append(self.socket)
@@ -152,11 +155,21 @@ class Connection(object):
         server.connections.append(self)
         server.connections_m[self.socket] = self
 
+        # sets the status of the current connection as open
+        # as all the internal structures have been correctly
+        # updated and not it's safe to perform operations
         self.status = OPEN
 
     def close(self):
+        # in case the current status of the connection is not open
+        # doen't make sense to close as it's already closed
         if not self.status == OPEN: return
-        
+
+        # immediately sets the status of the connection as closed
+        # so that no one else changed the current connection status
+        # this is relevant to avoid any erroneous situation
+        self.status = CLOSED
+
         server = self.server
 
         if self.socket in server.read_l: server.read_l.remove(self.socket)
@@ -169,13 +182,13 @@ class Connection(object):
         try: self.socket.close()
         except: pass
 
-        self.status = CLOSED
-
     def ensure_write(self):
+        if not self.status == OPEN: return
         if self.socket in self.server.write_l: return
         self.server.write_l.append(self.socket)
 
     def remove_write(self):
+        if not self.status == OPEN: return
         if not self.socket in self.server.write_l: return
         self.server.write_l.remove(self.socket)
 
@@ -187,7 +200,7 @@ class Connection(object):
 
     def recv(self, size = CHUNK_SIZE):
         return self._recv(size = size)
-    
+
     def is_open(self):
         return self.status == OPEN
 

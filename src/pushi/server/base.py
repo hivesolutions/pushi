@@ -135,8 +135,8 @@ class Connection(object):
     def open(self):
         server = self.server
 
-        server.read.append(self.socket)
-        server.error.append(self.socket)
+        server.read_l.append(self.socket)
+        server.error_l.append(self.socket)
 
         server.connections.append(self)
         server.connections_m[self.socket] = self
@@ -144,9 +144,9 @@ class Connection(object):
     def close(self):
         server = self.server
 
-        if self.socket in server.read: server.read.remove(self.socket)
-        if self.socket in server.write: server.write.remove(self.socket)
-        if self.socket in server.error: server.error.remove(self.socket)
+        if self.socket in server.read_l: server.read_l.remove(self.socket)
+        if self.socket in server.write_l: server.write_l.remove(self.socket)
+        if self.socket in server.error_l: server.error_l.remove(self.socket)
 
         if self in server.connections: server.connections.remove(self)
         if self.socket in server.connections_m: del server.connections_m[self.socket]
@@ -155,12 +155,12 @@ class Connection(object):
         except: pass
 
     def ensure_write(self):
-        if self.socket in self.server.write: return
-        self.server.write.append(self.socket)
+        if self.socket in self.server.write_l: return
+        self.server.write_l.append(self.socket)
 
     def remove_write(self):
-        if not self.socket in self.server.write: return
-        self.server.write.remove(self.socket)
+        if not self.socket in self.server.write_l: return
+        self.server.write_l.remove(self.socket)
 
     def send(self, data):
         self.ensure_write()
@@ -198,9 +198,9 @@ class Server(observer.Observable):
         self.host = None
         self.port = None
         self.ssl = False
-        self.read = []
-        self.write = []
-        self.error = []
+        self.read_l = []
+        self.write_l = []
+        self.error_l = []
         self.connections = []
         self.connections_m = {}
         self._loaded = False
@@ -236,9 +236,9 @@ class Server(observer.Observable):
         self.socket.bind((host, port))
         self.socket.listen(5)
 
-        self.read.append(self.socket)
-        self.write.append(self.socket)
-        self.error.append(self.socket)
+        self.read_l.append(self.socket)
+        self.write_l.append(self.socket)
+        self.error_l.append(self.socket)
 
         self.set_state(STATE_START)
 
@@ -260,9 +260,9 @@ class Server(observer.Observable):
         while True:
             self.set_state(STATE_SELECT)
             reads, writes, errors = select.select(
-                self.read,
-                self.write,
-                self.error,
+                self.read_l,
+                self.write_l,
+                self.error_l,
                 0.25
             )
 

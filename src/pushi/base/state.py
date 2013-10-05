@@ -485,6 +485,10 @@ class State(appier.Mongo):
         Keep in mind that the channel should be an app id absent
         value and does not identify a channel in an unique way.
 
+        This not a very light operation as it verifies the socket's
+        associated channels structure for presence of the channel.
+        Use this with care to avoid performance issues.
+
         @type app_key: String
         @param app_key: The app key to be used in the retrieval of
         the state for the subscription testing.

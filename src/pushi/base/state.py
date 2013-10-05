@@ -140,12 +140,24 @@ class State(appier.Mongo):
         if socket_id in state.socket_channels: del state.socket_channels[socket_id]
 
     def subscribe(self, connection, app_key, socket_id, channel, auth = None, channel_data = None, force = False):
+        # checks if the the channel to be registered is considered private
+        # (either private, presence or peer) and in case it's private verifies
+        # if the correct credentials (including auth token) are valid
         is_private = channel.startswith("private-") or\
             channel.startswith("presence-") or channel.startswith("peer-")
         if is_private and not force: self.verify(app_key, socket_id, channel, auth)
 
+        # verifies if the channel is of type presence (prefix based
+        # verification) and in case it's not invalidate the channel
+        # data as channel data is not valid
         is_presence = channel.startswith("presence-")
         if not is_presence: channel_data = None
+
+        # verifies if the current connection (by socket id) is already
+        # registered to the channel and in case it's unsubscribes the
+        # connection from it (avoid duplicated registration)
+        is_subscribed = self.is_subscribed(app_key, socket_id, channel)
+        if is_subscribed: self.unsubscribe(connection, app_key, socket_id, channel)
 
         state = self.get_state(app_key = app_key)
         channel_socket = (channel, socket_id)

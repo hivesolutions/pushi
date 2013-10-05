@@ -500,8 +500,8 @@ class State(appier.Mongo):
         """
 
         state = self.get_state(app_key = app_key)
-        channels = state.socket_channels[socket_id]
-        is_subscribed = channel in channels
+        channels = state.socket_channels.get(socket_id, None)
+        is_subscribed = channel in channels if channels else False
         return is_subscribed
 
     def trigger(self, app_id, event, data, channels = None, owner_id = None):

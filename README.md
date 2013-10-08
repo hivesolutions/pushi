@@ -50,6 +50,13 @@ various elements (users) that are subscribed to a peer channel. The activation o
 automatic peer channel configuration is archieved using the `peer` flag in the `channel_data`.
 This channel type **should not be created directly**.
 
+## Persistence
+
+It's possible to use pushi to store messages in the server side in a publish/subscriber
+way so that a `user_id` may susbscribe for a certain channel even when it's offline.
+
+[More information](persistence.md)
+
 ## Running
 
 To be able to run the pushi infra-structure under a normal non ecrypted connection

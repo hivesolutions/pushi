@@ -55,7 +55,21 @@ This channel type **should not be created directly**.
 It's possible to use pushi to store messages in the server side in a publish/subscriber
 way so that a `user_id` may susbscribe for a certain channel even when it's offline.
 
-[More information](persistence.md)
+### Subscribe
+
+To be able to subscribe for a channel use the `apps/<app_id>/subscribe` route with the
+`user_id` and the `event` parameters indicating both the id and the name of the event
+that should be subscribed.
+
+### Unsubscribe
+
+To revert the subscribe operation one should call the `apps/<app_id>/unsubscribe` route
+with the same `user_id` and the `event` parameters.
+
+### Usage
+
+When a user connects to the channel that it has subscribed the last messages are returned
+as part of the `channel_data` structure.
 
 ## Running
 

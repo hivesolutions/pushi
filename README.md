@@ -55,7 +55,7 @@ This channel type **should not be created directly**.
 It's possible to use pushi to store messages in the server side in a publish/subscriber
 way so that a `user_id` may susbscribe for a certain channel even when it's offline.
 
-[More information](persistence.md)
+[More information](pushi/persistence.md)
 
 ## Running
 

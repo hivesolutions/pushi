@@ -126,7 +126,7 @@ class Pushi:
         # defined app id for the operation, then returns the
         # resulting dictionary to the caller method
         result = appier.get(
-            self.base_url + "apps/%s/subscribe" % self.app_id,
+            self.base_url + "/apps/%s/subscribe" % self.app_id,
             params = dict(
                 sid = token,
                 user_id = user_id,
@@ -146,7 +146,7 @@ class Pushi:
         # defined app id for the operation, then returns the
         # resulting dictionary to the caller method
         result = appier.get(
-            self.base_url + "apps/%s/unsubscribe" % self.app_id,
+            self.base_url + "/apps/%s/unsubscribe" % self.app_id,
             params = dict(
                 sid = token,
                 user_id = user_id,

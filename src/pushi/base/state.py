@@ -42,6 +42,7 @@ import sys
 import time
 import json
 import hmac
+import uuid
 import copy
 import types
 import hashlib
@@ -242,12 +243,20 @@ class State(appier.Mongo):
             )
 
     def unsubscribe(self, connection, app_key, socket_id, channel):
+        # uses the provided app key to retrieve the state of the
+        # app and then creates the channel socket tuple that is
+        # going to be used for unique identification
         state = self.get_state(app_key = app_key)
         channel_socket = (channel, socket_id)
 
+        # retrieves the list of channels for which the provided socket
+        # id is currently subscribed and removes the current channel
+        # from that list in case it exists there
         channels = state.socket_channels.get(socket_id, [])
         if channel in channels: channels.remove(channel)
 
+        # retrieves the list of sockets that are subscribed to the defined
+        # channel and removes the current socket from it
         sockets = state.channel_sockets.get(channel, [])
         if socket_id in sockets: sockets.remove(socket_id)
 
@@ -257,11 +266,18 @@ class State(appier.Mongo):
         channel_data = state.channel_socket_data.get(channel_socket)
         if not channel_data: return
 
+        # deletes the channel socket tuple reference from the channel
+        # socket data list, no longer going to be required
         del state.channel_socket_data[channel_socket]
 
+        # retrieves both the information on the user id associated with
+        # the channel data and the is peer (channel) boolean flag
         user_id = channel_data["user_id"]
         is_peer = channel_data.get("peer", False)
 
+        # gather information on the channel from the global state object
+        # this would include the ammount of users the members, current
+        # connections and more
         info = state.channel_info.get(channel, {})
         users = info.get("users", {})
         members = info.get("members", {})
@@ -530,21 +546,43 @@ class State(appier.Mongo):
         self.log_channel(app_id, channel, json_d, owner_id = owner_id)
         self.send_channel(app_id, channel, json_d, owner_id = owner_id)
 
-    def log_channel(self, app_id, channel, json_d, owner_id = None, has_date = True):
+    def get_subscriptions(self, app_id, channel):
         db = self.get_db("pushi")
-        timestamp = time.time()
-        event = dict(
+        subscription = dict(
             app_id = app_id,
-            channel = channel,
-            owner_id = owner_id,
-            timestamp = timestamp,
-            data = json_d
+            event = channel
         )
-        if has_date:
-            date = datetime.datetime.utcfromtimestamp(timestamp)
-            date_s = date.strftime("%B %d, %Y %H:%M:%S UTC")
-            event["date"] = date_s
+        cursor = db.subs.find(subscription)
+        subscriptions = [subscription for subscription in cursor]
+        return subscriptions
+
+    def log_channel(self, app_id, channel, json_d, owner_id = None, has_date = True):
+        # retrieves the reference to the pushi database that is going
+        # to be used for the operation in the logging
+        db = self.get_db("pushi")
+
+        # generates the proper event structure (includes identifiers
+        # and timestamps) to the current event and then adds it to
+        # the list of events registered in the data source
+        event = self.gen_event(
+            app_id,
+            channel,
+            json_d = json_d,
+            owner_id = owner_id,
+            has_date = has_date
+        )
         db.event.insert(event)
+
+        # retrieves the complete set of subscription for the
+        # provided channel and under the current app id to be
+        # able to create the proper associations
+        subscriptions = self.get_subscriptions(app_id, channel)
+        for subscription in subscriptions:
+            assoc = dict(
+                mid = event["mid"],
+                user_id = subscription["user_id"]
+            )
+            db.assoc.insert(assoc)
 
     def send_channel(self, app_id, channel, json_d, owner_id = None):
         state = self.get_state(app_id = app_id)
@@ -623,6 +661,68 @@ class State(appier.Mongo):
     def app_key_to_app_id(self, app_key):
         state = self.get_state(app_key = app_key)
         return state.app_id
+
+    def gen_event(self, app_id, channel, json_d, owner_id = None, has_date = True):
+        """
+        Generates the complete event structure from the provided
+        details on the current context.
+
+        Anyone using this method should not expect the same
+        results from two different calls as this method includes
+        some random string generation.
+
+        @type app_id: String
+        @param app_id: The identifier of the app that is currently
+        being used for the the event sending.
+        @type channel: String
+        @param channel: The name of the channel that is going to be
+        used for sending the event.
+        @type json_d: Dictionary
+        @param json_d: The map containing all the (payload) information
+        that is the proper event.
+        @type owner_id: String
+        @param owner_id: The identifier used by the entity that "owns"
+        the event to be sent.
+        @type has_date: bool
+        @param has_date: If the generates event structure should include
+        the data in its structure, this account for more processing.
+        @rtype: Dictionary
+        @return: The generated event structure that was created according
+        to the provided details for generation.
+        """
+
+        # generates a globally unique identifier that is going to be the
+        # sole unique value for the event, this may be used latter for
+        # unique unique identification
+        mid = str(uuid.uuid4())
+
+        # generates a timestamp that is going to identify the timing of the
+        # event this value should not be trusted as this does not represent
+        # the time of sending of the event but instead the generation of
+        # the global event structure
+        timestamp = time.time()
+
+        # creates the proper dictionary of the event that includes all of the
+        # main values of it, together with the ones that have been generated
+        event = dict(
+            mid = mid,
+            app_id = app_id,
+            channel = channel,
+            owner_id = owner_id,
+            timestamp = timestamp,
+            data = json_d
+        )
+
+        # in case the date inclusion flag is set a new date string must be
+        # generates and attached to the current event structure (extra values)
+        if has_date:
+            date = datetime.datetime.utcfromtimestamp(timestamp)
+            date_s = date.strftime("%B %d, %Y %H:%M:%S UTC")
+            event["date"] = date_s
+
+        # returns the "final" event structure to the caller method so that it
+        # can be used as the complete event structure
+        return event
 
 if __name__ == "__main__":
     state = State()

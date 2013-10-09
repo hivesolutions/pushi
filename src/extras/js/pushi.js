@@ -23,6 +23,8 @@
 // __copyright__ = Copyright (c) 2010-2012 Hive Solutions Lda.
 // __license__   = GNU General Public License (GPL), Version 3
 
+var PUSHI_CONNECTIONS = {}
+
 var Channel = function(pushi, name) {
     this.pushi = pushi;
     this.name = name;
@@ -33,20 +35,76 @@ Channel.prototype.trigger = function(event, data) {
 };
 
 var Pushi = function(appKey, options) {
+    var TIMEOUT = 5000;
     var BASE_URL = "wss://puxiapp.com/";
-    var self = this;
 
-    this.url = BASE_URL + appKey
+    var timeout = options.timeout || TIMEOUT;
+    var baseURL = options.baseUrl || BASE_URL;
+
+    var previous = PUSHI_CONNECTIONS[appKey];
+    if (previous) {
+        return this.clone(previous);
+    }
+
+    this.socket = null;
+    this.timeoutT = timeout;
+    this.url = baseURL + appKey;
 
     this.appKey = appKey;
     this.options = options || {};
-    this.socket = new WebSocket(this.url);
     this.socketId = null;
     this.state = "disconnected";
+    this.channels = {};
     this.events = {};
-    this.auths = {}
+    this.auths = {};
+    this._base = null;
+    this._cloned = false;
 
     this.authEndpoint = this.options.authEndpoint;
+
+    PUSHI_CONNECTIONS[appKey] = this;
+
+    this.init();
+};
+
+Pushi.prototype.clone = function(base) {
+    this.timeout = base.timeout;
+    this.url = base.url
+    this.appKey = base.appKey;
+    this.options = base.options;
+    this.socket = base.socket;
+    this.socketId = base.socketId;
+    this.state = base.state;
+    this.channels = [];
+    this.events = [];
+    this.auths = base.auths;
+    this.authEndpoint = base.authEndpoint;
+    this._base = base;
+    this._cloned = true;
+
+    this.socket.subscriptions.push(this);
+
+    if (this.state == "connected") {
+        this.onoconnect();
+    }
+};
+
+Pushi.prototype.init = function() {
+    var self = this;
+    var subscriptions = this.socket ? this.socket.subscriptions : [this];
+
+    // creates the new websocket reference with the currently defined
+    // url and then updates the reference to the underlying subscriptions
+    var socket = new WebSocket(this.url);
+    socket.subscriptions = subscriptions;
+
+    // creates the function that will initialize the instance's socket to
+    // the one that has now been created and then calls it to all the
+    // subscriptor of the current socket
+    var _init = function() {
+        this.socket = socket;
+    };
+    this.callobj(_init, subscriptions);
 
     this.socket.onopen = function() {
     };
@@ -55,22 +113,55 @@ var Pushi = function(appKey, options) {
         var message = event.data;
         var json = JSON.parse(message);
 
-        if (self.state == "disconnected"
-                && json.event == "pusher:connection_established") {
+        var isConnected = self.state == "disconnected"
+                && json.event == "pusher:connection_established";
+
+        if (isConnected) {
             var data = JSON.parse(json.data);
-            self.socketId = data.socket_id;
-            self.state = "connected";
-            self.onoconnect();
+            self.callobj(Pushi.prototype.onoconnect, this.subscriptions, data);
         } else if (self.state == "connected") {
-            self.onmessage(json);
+            var data = json;
+            self.callobj(Pushi.prototype.onmessage, this.subscriptions, data);
         }
     };
 
     this.socket.onclose = function() {
-        self.socketId = null;
-        self.state == "disconnected";
-        self.onodisconnect();
+        self.callobj(Pushi.prototype.onodisconnect, this.subscriptions);
     };
+};
+
+Pushi.prototype.callobj = function(callable, objects) {
+    var args = [];
+
+    for (var index = 2; index < arguments.length; index++) {
+        args.push(arguments[index])
+    }
+
+    for (var index = 0; index < objects.length; index++) {
+        var _object = objects[index];
+        callable.apply(_object, args);
+    }
+};
+
+Pushi.prototype.retry = function() {
+    // sets the current object context in the self variable
+    // to be used by the clojures that are going to be created
+    var self = this;
+
+    // in case this is a cloned object the retry operation
+    // is not possible because this object does not owns
+    // the underyling websocket object
+    if (this._cloned) {
+        return;
+    }
+
+    // sets the timeout for the new initialization of the
+    // object this value should not be to low that congests
+    // the server side nor to large that takes to long for
+    // the reconnection to take effect (bad user experience)
+    setTimeout(function() {
+                self.init();
+            }, this.timeout);
 };
 
 Pushi.prototype.trigger = function(event) {
@@ -93,27 +184,55 @@ Pushi.prototype.unbind = function(event, method) {
     index && methods.splice(index, 1);
 };
 
-Pushi.prototype.onoconnect = function() {
+Pushi.prototype.onoconnect = function(data) {
+    this.socketId = data.socket_id;
+    this.state = "connected";
     this.trigger("connect");
 };
 
-Pushi.prototype.onodisconnect = function() {
+Pushi.prototype.onodisconnect = function(data) {
+    this.socketId = null;
+    this.channels = {};
+    this.state = "disconnected";
     this.trigger("disconnect");
+    this.retry();
 };
 
 Pushi.prototype.onsubscribe = function(channel, data) {
+    var _channel = this.channels[channel];
+    if (!_channel) {
+        return
+    }
+
     this.trigger("subscribe", channel, data);
 };
 
 Pushi.prototype.onmemberadded = function(channel, member) {
+    var _channel = this.channels[channel];
+    if (!_channel) {
+        return
+    }
+
     this.trigger("member_added", channel, member);
 };
 
 Pushi.prototype.onmemberremoved = function(channel, member) {
+    var _channel = this.channels[channel];
+    if (!_channel) {
+        return
+    }
+
     this.trigger("member_removed", channel, member);
 };
 
 Pushi.prototype.onmessage = function(json) {
+    var channel = json.channel;
+    var _channel = this.channels[channel];
+    var isPeer = channel.startsWith("peer-");
+    if (channel && !_channel && !isPeer) {
+        return;
+    }
+
     switch (json.event) {
         case "pusher_internal:subscription_succeeded" :
             var data = JSON.parse(json.data);
@@ -157,41 +276,96 @@ Pushi.prototype.sendChannel = function(event, data, channel) {
 };
 
 Pushi.prototype.subscribe = function(channel) {
+    var self = this;
+
+    var _channel = this.channels[channel];
+    if (_channel) {
+        return _channel;
+    }
+
+    // in case this is a cloned proxy object we must also
+    // check if the base object is already subscribed for
+    // the channel for such cases the callback should be
+    // called immediately as there's no remote call to be
+    // performed for such situations
+    if (this._cloned) {
+        var _channel = this._base.channels[channel];
+        if (_channel) {
+            setTimeout(function() {
+                        self.onsubscribe(channel);
+                    });
+            this.channels[channel] = _channel;
+            return _channel;
+        }
+    }
+
+    // verifies if the current channel to be subscribed
+    // is of type private and in case it is uses the proper
+    // private way of subscription otherwise uses the public
+    // way for subscription (no authentication process)
     var isPrivate = channel.startsWith("private-")
             || channel.startsWith("presence-");
     if (isPrivate) {
-        return this.subscribePrivate(channel);
+        this.subscribePrivate(channel);
+    } else {
+        this.subscribePublic(channel);
     }
 
-    this.sendEvent("pusher:subscribe", {
-                channel : channel
-            });
+    var name = channel;
+    var channel = new Channel(this, name);
+    this.channels[name] = channel;
 
-    var channel = new Channel(this, channel);
     return channel;
 };
 
+Pushi.prototype.subscribePublic = function(channel) {
+    this.sendEvent("pusher:subscribe", {
+                channel : channel
+            });
+};
+
 Pushi.prototype.subscribePrivate = function(channel) {
+    // in case no authentication endpoint exists returns imediately
+    // because there's not enough information to proceed with the
+    // authentication process for the private channel
     if (!this.authEndpoint) {
         throw "No auth endpoint defined";
     }
 
+    // sets the current context in the self variable to be
+    // used by the clojures in the current function
     var self = this;
+
+    // contructs the get query part of the url with both the socket
+    // id of the current connection and the channel value for it
+    // then constructs the complete url value for the connection
     var query = "?socket_id=" + this.socketId + "&channel=" + channel;
     var url = this.authEndpoint + query;
 
+    // creates the remote async request that it's going
+    // to be used to retrieve the authentication information
+    // this is going to use the provided auth endpoint together
+    // with some of the current context
     var request = new XMLHttpRequest();
     request.open("get", url, true);
     request.onreadystatechange = function() {
+        // in case the current state is not ready returns
+        // immediately as it's not a (to) success change
         if (request.readyState != 4) {
             return;
         }
 
+        // retrieves the reponse data and parses it as a json
+        // message and returns immediately in case no auth
+        // information is provided as part of the response
         var result = JSON.parse(request.responseText);
         if (!result.auth) {
             return;
         }
 
+        // sends a pusher subscribe event containing all of the
+        // channel information together with the auth token and
+        // the channel data to be used (in case it exists)
         self.sendEvent("pusher:subscribe", {
                     channel : channel,
                     auth : result.auth,

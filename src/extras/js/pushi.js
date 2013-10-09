@@ -84,8 +84,14 @@ Pushi.prototype.clone = function(base) {
 
     this.socket.subscriptions.push(this);
 
+    // in case the current state of the connection is
+    // connected must simulate the connection by calling
+    // the appropriate handler with the correct data
     if (this.state == "connected") {
-        this.onoconnect();
+        var data = {
+            socket_id : this.socketId
+        };
+        this.onoconnect(data);
     }
 };
 

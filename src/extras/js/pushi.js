@@ -47,7 +47,7 @@ var Pushi = function(appKey, options) {
     }
 
     this.socket = null;
-    this.timeoutT = timeout;
+    this.timeout = timeout;
     this.url = baseURL + appKey;
 
     this.appKey = appKey;

@@ -129,6 +129,25 @@ class PushiApp(appier.App, appier.Mongo):
         self.state.trigger(app_id, "ping", "ping")
 
     @appier.private
+    @appier.route("/apps/<app_id>/subscriptions", "GET")
+    def subscriptions(self, app_id, user_id = None, event = None):
+        if not app_id == self.request.session["app_id"]:
+            raise RuntimeError("Not allowed for app id")
+
+        db = self.get_db("pushi")
+        subscription = dict(
+            app_id = app_id
+        )
+        if user_id: subscription["user_id"] = user_id
+        if event: subscription["event"] = event
+        cursor = db.subs.find(subscription)
+        subscriptions = [subscription for subscription in cursor]
+        for subscription in subscriptions: del subscription["_id"]
+        return dict(
+            subscriptions = subscriptions
+        )
+
+    @appier.private
     @appier.route("/apps/<app_id>/subscribe", "GET")
     def subscribe(self, app_id, user_id, event):
         if not app_id == self.request.session["app_id"]:

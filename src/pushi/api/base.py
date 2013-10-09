@@ -95,6 +95,25 @@ class Pushi:
         self.token = result["token"]
         return self.token
 
+    def create(self, name):
+        # runs the ensure login call making sure that the login token
+        # is currently present in the environment, this is required
+        # to perform secured remote calls
+        token = self.ensure_login()
+
+        # runs the post call that will create the app with the provided
+        # name then returns the returning map to the caller methos, it
+        # should contain the generated information for the app
+        result = appier.post(
+            self.base_url + "/apps",
+            data_j = dict(
+                name = name
+            ),
+            params = dict(sid = token),
+            auth_callback = self.auth_callback
+        )
+        return result
+
     def trigger(self, channel, data, event = "message"):
         # runs the ensure login call making sure that the login token
         # is currently present in the environment, this is required
@@ -131,7 +150,8 @@ class Pushi:
                 sid = token,
                 user_id = user_id,
                 event = event
-            )
+            ),
+            auth_callback = self.auth_callback
         )
         return result
 
@@ -151,6 +171,7 @@ class Pushi:
                 sid = token,
                 user_id = user_id,
                 event = event
-            )
+            ),
+            auth_callback = self.auth_callback
         )
         return result

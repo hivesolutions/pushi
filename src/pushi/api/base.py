@@ -114,3 +114,43 @@ class Pushi:
             auth_callback = self.auth_callback
         )
         return result
+
+    def subscribe(self, user_id, event):
+        # runs the ensure login call making sure that the login token
+        # is currently present in the environment, this is required
+        # to perform secured remote calls
+        token = self.ensure_login()
+
+        # runs the subscription operation for the provided
+        # user id and event, this operation uses the currently
+        # defined app id for the operation, then returns the
+        # resulting dictionary to the caller method
+        result = appier.get(
+            self.base_url + "apps/%s/subscribe" % self.app_id,
+            params = dict(
+                sid = token,
+                user_id = user_id,
+                event = event
+            )
+        )
+        return result
+
+    def unsubscribe(self, user_id, event):
+        # runs the ensure login call making sure that the login token
+        # is currently present in the environment, this is required
+        # to perform secured remote calls
+        token = self.ensure_login()
+
+        # runs the unsubscription operation for the provided
+        # user id and event, this operation uses the currently
+        # defined app id for the operation, then returns the
+        # resulting dictionary to the caller method
+        result = appier.get(
+            self.base_url + "apps/%s/unsubscribe" % self.app_id,
+            params = dict(
+                sid = token,
+                user_id = user_id,
+                event = event
+            )
+        )
+        return result

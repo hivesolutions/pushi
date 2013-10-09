@@ -199,29 +199,14 @@ Pushi.prototype.onodisconnect = function(data) {
 };
 
 Pushi.prototype.onsubscribe = function(channel, data) {
-    var _channel = this.channels[channel];
-    if (!_channel) {
-        return
-    }
-
     this.trigger("subscribe", channel, data);
 };
 
 Pushi.prototype.onmemberadded = function(channel, member) {
-    var _channel = this.channels[channel];
-    if (!_channel) {
-        return
-    }
-
     this.trigger("member_added", channel, member);
 };
 
 Pushi.prototype.onmemberremoved = function(channel, member) {
-    var _channel = this.channels[channel];
-    if (!_channel) {
-        return
-    }
-
     this.trigger("member_removed", channel, member);
 };
 

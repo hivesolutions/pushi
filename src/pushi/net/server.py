@@ -45,13 +45,10 @@ import socket
 import select
 import logging
 import traceback
-import threading
 
 import observer
 
-CHUNK_SIZE = 4096
-""" The size of the chunk to be used while received
-data from the service socket """
+from conn import * #@UnusedWildImport
 
 WSAEWOULDBLOCK = 10035
 """ The wsa would block error code meant to be used on
@@ -75,14 +72,6 @@ SSL_VALID_ERRORS = (
 )
 """ The list containing the valid error in the handshake
 operation of the ssl connection establishment """
-
-OPEN = 1
-""" The open status value, meant to be used in situations
-where the status of the entity is open (opposite of closed) """
-
-CLOSED = 2
-""" Closed status value to be used in entities which have
-no pending structured opened and operations are limited """
 
 STATE_STOP = 1
 """ The stop state value, this value is set when the service
@@ -130,110 +119,6 @@ STATE_STRINGS = (
 """ Sequence that contains the various strings associated with
 the various states for the base service, this may be used to
 create an integer to string resolution mechanism """
-
-class Connection(object):
-
-    def __init__(self, server, socket, address):
-        self.status = CLOSED
-        self.server = server
-        self.socket = socket
-        self.address = address
-        self.pending = []
-        self.pending_lock = threading.RLock()
-
-    def open(self):
-        # in case the current status of the connection is not
-        # closed does not make sense to open it as it should
-        # already be open anyway (returns immediately)
-        if not self.status == CLOSED: return
-
-        server = self.server
-
-        server.read_l.append(self.socket)
-        server.error_l.append(self.socket)
-
-        server.connections.append(self)
-        server.connections_m[self.socket] = self
-
-        # sets the status of the current connection as open
-        # as all the internal structures have been correctly
-        # updated and not it's safe to perform operations
-        self.status = OPEN
-
-    def close(self):
-        # in case the current status of the connection is not open
-        # doen't make sense to close as it's already closed
-        if not self.status == OPEN: return
-
-        # immediately sets the status of the connection as closed
-        # so that no one else changed the current connection status
-        # this is relevant to avoid any erroneous situation
-        self.status = CLOSED
-
-        server = self.server
-
-        if self.socket in server.read_l: server.read_l.remove(self.socket)
-        if self.socket in server.write_l: server.write_l.remove(self.socket)
-        if self.socket in server.error_l: server.error_l.remove(self.socket)
-
-        if self in server.connections: server.connections.remove(self)
-        if self.socket in server.connections_m: del server.connections_m[self.socket]
-
-        try: self.socket.close()
-        except: pass
-
-    def ensure_write(self):
-        if not self.status == OPEN: return
-        if self.socket in self.server.write_l: return
-        self.server.write_l.append(self.socket)
-
-    def remove_write(self):
-        if not self.status == OPEN: return
-        if not self.socket in self.server.write_l: return
-        self.server.write_l.remove(self.socket)
-
-    def send(self, data):
-        """
-        The main send call to be used by a proxy connection and
-        from different threads.
-
-        Calling this method should be done with care as this can
-        create dead lock or socket corruption situations.
-
-        @type data: String
-        @param data: The buffer containing the data to be sent
-        through this connection to the other endpoint.
-        """
-
-        self.ensure_write()
-        self.pending_lock.acquire()
-        try: self.pending.insert(0, data)
-        finally: self.pending_lock.release()
-
-    def recv(self, size = CHUNK_SIZE):
-        return self._recv(size = size)
-
-    def is_open(self):
-        return self.status == OPEN
-
-    def is_closed(self):
-        return self.status == CLOSED
-
-    def _send(self):
-        self.pending_lock.acquire()
-        try:
-            while True:
-                if not self.pending: break
-                data = self.pending.pop()
-                try: self.socket.send(data)
-                except: self.pending.append(data)
-        finally:
-            self.pending_lock.release()
-
-        self.remove_write()
-
-    def _recv(self, size):
-        return self.socket.recv(size)
 
 class Server(observer.Observable):
 

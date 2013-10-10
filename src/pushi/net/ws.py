@@ -40,12 +40,12 @@ __license__ = "GNU General Public License (GPL), Version 3"
 import base64
 import hashlib
 
-import base
+import server
 
-class WSConnection(base.Connection):
+class WSConnection(server.Connection):
 
     def __init__(self, server, socket, address):
-        base.Connection.__init__(self, server, socket, address)
+        server.Connection.__init__(self, server, socket, address)
         self.handshake = False
         self.method = None
         self.path = None
@@ -57,7 +57,7 @@ class WSConnection(base.Connection):
         encoded = self._encode(data)
         return self.send(encoded)
 
-    def recv_ws(self, size = base.CHUNK_SIZE):
+    def recv_ws(self, size = server.CHUNK_SIZE):
         data = self.recv(size = size)
         decoded = self._decode(data)
         return decoded
@@ -191,17 +191,23 @@ class WSConnection(base.Connection):
         decoded = str(decoded_a)
         return decoded, data[i:]
 
-class WSServer(base.Server):
+class WSServer(server.Server):
+    """
+    Base class for the creation of websocket server, should
+    handle both the upgrading/handshaking of the connection
+    and together with the associated connection class the
+    encoding and decoding of the frames.
+    """
 
     MAGIC_VALUE = "258EAFA5-E914-47DA-95CA-C5AB0DC85B11"
     """ The magic value used by the websocket protocol as part
     of the key generation process in the handshake """
 
     def on_connection_c(self, connection):
-        base.Server.on_connection_c(self, connection)
+        server.Server.on_connection_c(self, connection)
 
     def on_data(self, connection, data):
-        base.Server.on_data(self, connection, data)
+        server.Server.on_data(self, connection, data)
 
         if connection.handshake:
             while data:

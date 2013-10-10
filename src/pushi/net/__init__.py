@@ -34,14 +34,18 @@ __copyright__ = "Copyright (c) 2008-2012 Hive Solutions Lda."
 __license__ = "GNU General Public License (GPL), Version 3"
 """ The license for the module """
 
-import base
+import client
+import conn
 import echo
 import observer
 import pushi
+import server
 import ws
 
-from base import *
+from client import *
+from conn import *
 from echo import *
 from observer import *
 from pushi import *
+from server import *
 from ws import *

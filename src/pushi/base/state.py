@@ -71,6 +71,19 @@ class AppState(object):
         self.channel_socket_data = {}
 
 class State(appier.Mongo):
+    """
+    Main logic of the pushi infra-structure, this class
+    should contain the main structures and operations that
+    control a system for push notifications.
+    
+    It should run in an asynchronous nonblocking fashion to
+    avoid the typical locking related problems (eg: dead locks)
+    and at the same time handle the c10k problem.
+    
+    The structure of the system is based on the encapsulation
+    of both the (async) server and the web based app that handles
+    the http based requests (rest api). 
+    """
 
     def __init__(self):
         appier.Mongo.__init__(self)
@@ -160,6 +173,9 @@ class State(appier.Mongo):
         is_subscribed = self.is_subscribed(app_key, socket_id, channel)
         if is_subscribed: self.unsubscribe(connection, app_key, socket_id, channel)
 
+        # retrieves the global state structure for the provided api key
+        # and also creates the tuple that encapsulates both the channel
+        # and the socket id (unique identification)
         state = self.get_state(app_key = app_key)
         channel_socket = (channel, socket_id)
 

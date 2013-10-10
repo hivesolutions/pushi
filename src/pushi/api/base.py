@@ -54,8 +54,8 @@ class Pushi:
     side of the pushi system.
 
     Should provide the various methods that enable
-    the developer to make operations in both read
-    and write ways.
+    the developer to make operations for both read
+    and write (create and read).
     """
 
     def __init__(self, app_id = None, app_key = None, app_secret = None, base_url = BASE_URL):

@@ -75,14 +75,14 @@ class State(appier.Mongo):
     Main logic of the pushi infra-structure, this class
     should contain the main structures and operations that
     control a system for push notifications.
-    
+
     It should run in an asynchronous nonblocking fashion to
     avoid the typical locking related problems (eg: dead locks)
     and at the same time handle the c10k problem.
-    
+
     The structure of the system is based on the encapsulation
     of both the (async) server and the web based app that handles
-    the http based requests (rest api). 
+    the http based requests (rest api).
     """
 
     def __init__(self):

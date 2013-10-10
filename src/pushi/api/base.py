@@ -48,6 +48,15 @@ BASE_URL = "https://puxiapp.com:9090"
 the remote endpoints, should not be changed """
 
 class Pushi:
+    """
+    Base class for the construction of the pushi
+    proxy object for interaction with the server
+    side of the pushi system.
+
+    Should provide the various methods that enable
+    the developer to make operations in both read
+    and write ways.
+    """
 
     def __init__(self, app_id = None, app_key = None, app_secret = None, base_url = BASE_URL):
         self.app_id = app_id or os.environ.get("PUSHI_ID", None)

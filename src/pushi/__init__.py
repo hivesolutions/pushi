@@ -37,11 +37,9 @@ __license__ = "GNU General Public License (GPL), Version 3"
 import api
 import app
 import base
-import client
 import server
 
 from api import *
 from app import *
 from base import *
-from client import *
 from server import *

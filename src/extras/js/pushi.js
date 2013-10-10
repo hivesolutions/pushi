@@ -266,11 +266,31 @@ Pushi.prototype.sendChannel = function(event, data, channel) {
     this.send(json);
 };
 
-Pushi.prototype.subscribe = function(channel) {
+Pushi.prototype.invalidate = function(channel) {
+    // in case the channel (name) value is provided
+    // removes its reference from the map associating
+    // the channel name with the channel info
+    if (channel) {
+        delete this.channels[channel];
+    }
+    // otherwise removes all the channel information from
+    // the channels map invalidating all of the elements
+    else {
+        this.channels = {};
+    }
+};
+
+Pushi.prototype.subscribe = function(channel, force) {
+    // sets the current context in the self variable to
+    // be used latter for the clojure functions
     var self = this;
 
+    // tries to retrieve the channel information for the
+    // provided channel name in case it's found returns
+    // the channel object immediately (avoids double
+    // registration of the channel)
     var _channel = this.channels[channel];
-    if (_channel) {
+    if (_channel && !force) {
         return _channel;
     }
 
@@ -281,7 +301,7 @@ Pushi.prototype.subscribe = function(channel) {
     // performed for such situations
     if (this._cloned) {
         var _channel = this._base.channels[channel];
-        if (_channel) {
+        if (_channel && !force) {
             setTimeout(function() {
                         self.onsubscribe(channel);
                     });

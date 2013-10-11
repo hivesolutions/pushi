@@ -44,8 +44,8 @@ import ws
 
 class PushiConnection(ws.WSConnection):
 
-    def __init__(self, server, socket, address):
-        ws.WSConnection.__init__(self, server, socket, address)
+    def __init__(self, owner, socket, address):
+        ws.WSConnection.__init__(self, owner, socket, address)
         self.app_key = None
         self.socket_id = str(uuid.uuid4())
         self.channels = []
@@ -55,7 +55,7 @@ class PushiConnection(ws.WSConnection):
         data = json.dumps(json_d)
         self.send_ws(data)
         self.count += 1
-        self.server.count += 1
+        self.owner.count += 1
 
     def load_app(self):
         self.app_key = self.path.rsplit("/", 1)[-1]

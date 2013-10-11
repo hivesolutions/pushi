@@ -44,8 +44,8 @@ import server
 
 class WSConnection(server.Connection):
 
-    def __init__(self, server, socket, address):
-        server.Connection.__init__(self, server, socket, address)
+    def __init__(self, owner, socket, address):
+        server.Connection.__init__(self, owner, socket, address)
         self.handshake = False
         self.method = None
         self.path = None

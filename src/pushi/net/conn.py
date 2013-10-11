@@ -63,11 +63,12 @@ class Connection(object):
     appropriate operations.
     """
 
-    def __init__(self, server, socket, address):
+    def __init__(self, owner, socket, address, ssl = False):
         self.status = CLOSED
-        self.server = server
+        self.owner = owner
         self.socket = socket
         self.address = address
+        self.ssl = ssl
         self.pending = []
         self.pending_lock = threading.RLock()
 
@@ -77,21 +78,21 @@ class Connection(object):
         # already be open anyway (returns immediately)
         if not self.status == CLOSED: return
 
-        # retrieves the reference to the owner server from the
+        # retrieves the reference to the owner object from the
         # current instance to be used to add the socket to the
         # proper pooling mechanisms (at least for reading)
-        server = self.server
+        owner = self.owner
 
         # registers the socket for the proper reading mechanisms
-        # in the polling infra-structure of the server
-        server.read_l.append(self.socket)
-        server.error_l.append(self.socket)
+        # in the polling infra-structure of the owner
+        owner.read_l.append(self.socket)
+        owner.error_l.append(self.socket)
 
         # adds the current connection object to the list of
-        # connections in the server and the registers it in
+        # connections in the owner and the registers it in
         # the map that associates the socket with the connection
-        server.connections.append(self)
-        server.connections_m[self.socket] = self
+        owner.connections.append(self)
+        owner.connections_m[self.socket] = self
 
         # sets the status of the current connection as open
         # as all the internal structures have been correctly
@@ -108,27 +109,27 @@ class Connection(object):
         # this is relevant to avoid any erroneous situation
         self.status = CLOSED
 
-        server = self.server
+        owner = self.owner
 
-        if self.socket in server.read_l: server.read_l.remove(self.socket)
-        if self.socket in server.write_l: server.write_l.remove(self.socket)
-        if self.socket in server.error_l: server.error_l.remove(self.socket)
+        if self.socket in owner.read_l: owner.read_l.remove(self.socket)
+        if self.socket in owner.write_l: owner.write_l.remove(self.socket)
+        if self.socket in owner.error_l: owner.error_l.remove(self.socket)
 
-        if self in server.connections: server.connections.remove(self)
-        if self.socket in server.connections_m: del server.connections_m[self.socket]
+        if self in owner.connections: owner.connections.remove(self)
+        if self.socket in owner.connections_m: del owner.connections_m[self.socket]
 
         try: self.socket.close()
         except: pass
 
     def ensure_write(self):
         if not self.status == OPEN: return
-        if self.socket in self.server.write_l: return
-        self.server.write_l.append(self.socket)
+        if self.socket in self.owner.write_l: return
+        self.owner.write_l.append(self.socket)
 
     def remove_write(self):
         if not self.status == OPEN: return
-        if not self.socket in self.server.write_l: return
-        self.server.write_l.remove(self.socket)
+        if not self.socket in self.owner.write_l: return
+        self.owner.write_l.remove(self.socket)
 
     def send(self, data):
         """

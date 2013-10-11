@@ -65,14 +65,15 @@ class Connection(object):
 
     def __init__(self, owner, socket, address, ssl = False):
         self.status = CLOSED
+        self.connecting = False
         self.owner = owner
         self.socket = socket
         self.address = address
         self.ssl = ssl
         self.pending = []
         self.pending_lock = threading.RLock()
-
-    def open(self):
+        
+    def open(self, connect = False):
         # in case the current status of the connection is not
         # closed does not make sense to open it as it should
         # already be open anyway (returns immediately)
@@ -87,7 +88,7 @@ class Connection(object):
         # in the polling infra-structure of the owner
         owner.read_l.append(self.socket)
         owner.error_l.append(self.socket)
-
+        
         # adds the current connection object to the list of
         # connections in the owner and the registers it in
         # the map that associates the socket with the connection
@@ -98,6 +99,11 @@ class Connection(object):
         # as all the internal structures have been correctly
         # updated and not it's safe to perform operations
         self.status = OPEN
+        
+        # in case the connect flag is set must set the current
+        # connection as connecting indicating that some extra
+        # steps are still required to complete the connection 
+        if connect: self.set_connecting()
 
     def close(self):
         # in case the current status of the connection is not open
@@ -109,17 +115,36 @@ class Connection(object):
         # this is relevant to avoid any erroneous situation
         self.status = CLOSED
 
+        # retrieves the reference to the owner object from the
+        # current instance to be used to removed the socket from the
+        # proper pooling mechanisms (at least for reading)
         owner = self.owner
 
+        # removes the socket from all the polling mechanisms so that
+        # interaction with it is no longer part of the selecting mechanism
         if self.socket in owner.read_l: owner.read_l.remove(self.socket)
         if self.socket in owner.write_l: owner.write_l.remove(self.socket)
         if self.socket in owner.error_l: owner.error_l.remove(self.socket)
 
+        # removes the current connection from the list of connection in the
+        # owner and also from the map that associates the socket with the
+        # proper connection (also in the owner)
         if self in owner.connections: owner.connections.remove(self)
         if self.socket in owner.connections_m: del owner.connections_m[self.socket]
 
+        # closes the socket, using the proper gracefully way so that
+        # operations are no longer allowed in the socket, in case there's
+        # an error in the operation fails silently (un purpose)
         try: self.socket.close()
         except: pass
+
+    def set_connecting(self):
+        self.connecting = True
+        self.ensure_write()
+        
+    def set_connected(self):
+        self.remove_write()
+        self.connecting = False
 
     def ensure_write(self):
         if not self.status == OPEN: return

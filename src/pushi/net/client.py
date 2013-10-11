@@ -50,23 +50,22 @@ class Client(Base):
 
     def ticks(self):
         self.set_state(STATE_TICK)
-
         if self.pendings: self._connects()
 
     def reads(self, reads):
         self.set_state(STATE_READ)
         for read in reads:
-            print "read -> " + str(read)
+            self.on_read(read)
 
     def writes(self, writes):
         self.set_state(STATE_WRITE)
         for write in writes:
-            print "write -> " + str(write)
+            self.on_write(write)
 
     def errors(self, errors):
         self.set_state(STATE_ERRROR)
         for error in errors:
-            print "error -> " + str(error)
+            self.on_error(error)
 
     def connect(self, host, port, ssl = False, key_file = None, cer_file = None):
         _socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -85,24 +84,47 @@ class Client(Base):
             _socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEPORT, 1) #@UndefinedVariable
 
         address = (host, port)
-        pending = (_socket, address)
-        self.pendings.append(pending)
+        
+        connection = self.new_connection(_socket, address)
+        self.pendings.append(connection)
+        
+        return connection
+
+    def on_read(self, _socket):
+        connection = self.connections_m.get(_socket, None)
+        if not connection: return
+        if not connection.status == OPEN: return
+
+    def on_write(self, socket):
+        connection = self.connections_m.get(socket, None)
+        if not connection: return
+        if not connection.status == OPEN: return
+
+        if connection.connecting:
+            connection.set_connected()
+            self.on_connect(connection)
+
+    def on_error(self, socket):
+        connection = self.connections_m.get(socket, None)
+        if not connection: return
+        if not connection.status == OPEN: return
+    
+    def on_connect(self, connection):
+        print "connectado"
+        print connection
 
     def _connects(self):
         self._pending_lock.acquire()
         try:
             while self.pendings:
-                _socket, address = self.pendings.pop()
-                self._connect(_socket, address)
+                connection = self.pendings.pop()
+                self._connect(connection)
         finally:
             self._pending_lock.release()
 
-    def _connect(self, _socket, address):
-        self.read_l.append(_socket)
-        self.write_l.append(_socket)
-        self.error_l.append(_socket)
-
-        try: _socket.connect(address)
+    def _connect(self, connection):
+        connection.open(connect = True)
+        try: connection.socket.connect(connection.address)
         except ssl.SSLError, error:
             error_v = error.args[0]
             if not error_v in SSL_VALID_ERRORS:

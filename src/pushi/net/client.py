@@ -168,6 +168,8 @@ class Client(Base):
         connection = self.connections_m.get(socket, None)
         if not connection: return
         if not connection.status == OPEN: return
+        
+        self.on_connection_d(connection)
 
     def on_connect(self, connection):
         connection.set_connected()

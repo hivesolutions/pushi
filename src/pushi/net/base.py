@@ -39,6 +39,7 @@ __license__ = "GNU General Public License (GPL), Version 3"
 
 import os
 import ssl
+import time
 import types
 import errno
 import select
@@ -91,17 +92,22 @@ STATE_SELECT = 4
 of the loop, this is the most frequent state in an idle service
 as the service "spends" most of its time in it """
 
-STATE_READ = 5
+STATE_TICK = 5
+""" Tick state representative of the situation where the loop
+tick operation is being started and all the pre tick handlers
+are going to be called for pre-operations """
+
+STATE_READ = 6
 """ Read state that is set when the connection are being read
 and the on data handlers are being called, this is the part
 where all the logic driven by incoming data is being called """
 
-STATE_WRITE = 6
+STATE_WRITE = 7
 """ The write state that is set on the writing of data to the
 connections, this is a pretty "fast" state as no logic is
 associated with it """
 
-STATE_ERRROR = 7
+STATE_ERRROR = 8
 """ The error state to be used when the connection is processing
 any error state coming from its main select operation and associated
 with a certain connection (very rare) """
@@ -111,6 +117,7 @@ STATE_STRINGS = (
     "START",
     "CONFIG",
     "SELECT",
+    "TICK",
     "READ",
     "WRITE",
     "ERROR"
@@ -186,9 +193,33 @@ class Base(observer.Observable):
     def stop(self):
         self._running = False
 
+    def is_empty(self):
+        return not self.read_l and not self.write_l and not self.error_l
+
     def loop(self):
+        # iterates continuously while the running flag
+        # is set, once it becomes unset the loop breaks
+        # at the next execution cycle
         while self._running:
+            # calls the base tick int handler indicating that a new
+            # tick loop iteration is going to be started, all the
+            # "in between loop" operation should be performed in this
+            # callback as this is the "space" they have for execution
+            self.ticks()
+
+            # updates the current state to select to indicate
+            # that the base service is selecting the connections
             self.set_state(STATE_SELECT)
+
+            # verifies if the current selection list is empty
+            # in case it's sleeps for a while and then continues
+            # the loop (this avoids error in empty selection)
+            is_empty = self.is_empty()
+            if is_empty: time.sleep(0.25); continue
+
+            # runs the main selection operation on the current set
+            # of connection for each of the three operations returning
+            # the resulting active sets for the callbacks
             reads, writes, errors = select.select(
                 self.read_l,
                 self.write_l,
@@ -196,9 +227,17 @@ class Base(observer.Observable):
                 0.25
             )
 
+            # calls the various callbacks with the selections lists,
+            # these are the main entry points for the logic to be executed
+            # each of this methods should be implemented in the underlying
+            # class instances as no behavior is defined at this inheritance
+            # level (abstract class)
             self.reads(reads)
             self.writes(writes)
             self.errors(errors)
+
+    def ticks(self):
+        self.set_state(STATE_TICK)
 
     def reads(self, reads):
         self.set_state(STATE_READ)

@@ -43,6 +43,31 @@ from base import * #@UnusedWildImport
 
 class Client(Base):
 
+    def __init__(self, name = None, handler = None, *args, **kwargs):
+        Base.__init__(self, name = name, hadler = handler, *args, **kwargs)
+        self.pendings = []
+        self._pending_lock = threading.RLock()
+
+    def ticks(self):
+        self.set_state(STATE_TICK)
+
+        if self.pendings: self._connects()
+
+    def reads(self, reads):
+        self.set_state(STATE_READ)
+        for read in reads:
+            print "read -> " + str(read)
+
+    def writes(self, writes):
+        self.set_state(STATE_WRITE)
+        for write in writes:
+            print "write -> " + str(write)
+
+    def errors(self, errors):
+        self.set_state(STATE_ERRROR)
+        for error in errors:
+            print "error -> " + str(error)
+
     def connect(self, host, port, ssl = False, key_file = None, cer_file = None):
         _socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         _socket.setblocking(0)
@@ -59,9 +84,39 @@ class Client(Base):
         hasattr(socket, "SO_REUSEPORT") and\
             _socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEPORT, 1) #@UndefinedVariable
 
+        address = (host, port)
+        pending = (_socket, address)
+        self.pendings.append(pending)
+
+    def _connects(self):
+        self._pending_lock.acquire()
+        try:
+            while self.pendings:
+                _socket, address = self.pendings.pop()
+                self._connect(_socket, address)
+        finally:
+            self._pending_lock.release()
+
+    def _connect(self, _socket, address):
         self.read_l.append(_socket)
         self.write_l.append(_socket)
         self.error_l.append(_socket)
 
-        address = (host, port)
-        _socket.connect(address)
+        try: _socket.connect(address)
+        except ssl.SSLError, error:
+            error_v = error.args[0]
+            if not error_v in SSL_VALID_ERRORS:
+                self.info(error)
+                lines = traceback.format_exc().splitlines()
+                for line in lines: self.debug(line)
+        except socket.error, error:
+            error_v = error.args[0]
+            if not error_v in VALID_ERRORS:
+                self.info(error)
+                lines = traceback.format_exc().splitlines()
+                for line in lines: self.debug(line)
+
+if __name__ == "__main__":
+    client = Client()
+    client.connect("google.com", 80)
+    client.start()

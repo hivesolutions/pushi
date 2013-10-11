@@ -37,7 +37,31 @@ __copyright__ = "Copyright (c) 2008-2012 Hive Solutions Lda."
 __license__ = "GNU General Public License (GPL), Version 3"
 """ The license for the module """
 
-import observer
+import socket
 
-class Client(observer.Observable):
-    pass
+from base import * #@UnusedWildImport
+
+class Client(Base):
+
+    def connect(self, host, port, ssl = False, key_file = None, cer_file = None):
+        _socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        _socket.setblocking(0)
+
+        if ssl: _socket = self._ssl_wrap(
+            _socket,
+            key_file = key_file,
+            cer_file = cer_file
+        )
+
+        _socket.setsockopt(socket.IPPROTO_TCP, socket.TCP_NODELAY, 1)
+        _socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+        _socket.setsockopt(socket.SOL_SOCKET, socket.SO_KEEPALIVE, 1)
+        hasattr(socket, "SO_REUSEPORT") and\
+            _socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEPORT, 1) #@UndefinedVariable
+
+        self.read_l.append(_socket)
+        self.write_l.append(_socket)
+        self.error_l.append(_socket)
+
+        address = (host, port)
+        _socket.connect(address)

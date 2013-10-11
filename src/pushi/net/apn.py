@@ -39,5 +39,13 @@ __license__ = "GNU General Public License (GPL), Version 3"
 
 import client
 
+TOKEN_STRING = "asdads"
+
 class ApnClient(client.Client):
-    pass
+
+    def send_message(self, token_string = TOKEN_STRING, *args, **kwargs):
+        message = kwargs.get("message", "Hello World")
+        sound = kwargs.get("sound", "default")
+        badge = kwargs.get("badge", 0)
+        sandbox = kwargs.get("sandbox", True)
+        wait = kwargs.get("wait", False)

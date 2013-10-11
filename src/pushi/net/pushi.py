@@ -70,9 +70,9 @@ class PushiServer(ws.WSServer):
         self.count = 0
 
     def info_dict(self):
-        info_dict = ws.WSServer.info_dict(self)
-        info_dict["count"] = self.count
-        return info_dict
+        info = ws.WSServer.info_dict(self)
+        info["count"] = self.count
+        return info
 
     def on_connection_c(self, connection):
         ws.WSServer.on_connection_c(self, connection)

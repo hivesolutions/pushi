@@ -50,6 +50,31 @@ class Server(Base):
         self.port = None
         self.ssl = False
 
+    def reads(self, reads):
+        self.set_state(STATE_READ)
+        for read in reads:
+            if read == self.socket: self.on_read_s(read)
+            else: self.on_read(read)
+
+    def writes(self, writes):
+        self.set_state(STATE_WRITE)
+        for write in writes:
+            if write == self.socket: self.on_write_s(write)
+            else: self.on_write(write)
+
+    def errors(self, errors):
+        self.set_state(STATE_ERRROR)
+        for error in errors:
+            if error == self.socket: self.on_error_s(error)
+            else: self.on_error(error)
+
+    def info_dict(self):
+        info = Base.info_dict(self)
+        info["host"] = self.host
+        info["port"] = self.port
+        info["ssl"] = self.ssl
+        return info
+
     def serve(self, host = "127.0.0.1", port = 9090, ssl = False, key_file = None, cer_file = None):
         self.set_state(STATE_CONFIG)
         self.host = host
@@ -71,24 +96,6 @@ class Server(Base):
         self.error_l.append(self.socket)
 
         self.start()
-
-    def reads(self, reads):
-        self.set_state(STATE_READ)
-        for read in reads:
-            if read == self.socket: self.on_read_s(read)
-            else: self.on_read(read)
-
-    def writes(self, writes):
-        self.set_state(STATE_WRITE)
-        for write in writes:
-            if write == self.socket: self.on_write_s(write)
-            else: self.on_write(write)
-
-    def errors(self, errors):
-        self.set_state(STATE_ERRROR)
-        for error in errors:
-            if error == self.socket: self.on_error_s(error)
-            else: self.on_error(error)
 
     def on_read_s(self, _socket):
         try:
@@ -203,10 +210,3 @@ class Server(Base):
 
     def on_connection_d(self, connection):
         connection.close()
-
-    def info_dict(self):
-        info = Base.info_dict(self)
-        info["host"] = self.host
-        info["port"] = self.port
-        info["ssl"] = self.ssl
-        return info

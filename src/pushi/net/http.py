@@ -94,8 +94,6 @@ class HttpClient(client.Client):
     def on_connect(self, connection):
         client.Client.on_connect(self, connection)
 
-        print "connected"
-
         method = connection.method
         path = connection.path
         version = connection.version
@@ -105,18 +103,20 @@ class HttpClient(client.Client):
     def on_data(self, connection, data):
         client.Client.on_data(self, connection, data)
 
-        print data
+        headers, message = data.split("\r\n\r\n")
+        self.on_data_http(headers, message)
 
     def on_connection_d(self, connection):
         client.Client.on_connection_d(self, connection)
 
-        print "connection droped"
-
     def new_connection(self, socket, address, ssl = False):
         return HttpConnection(self, socket, address, ssl = ssl)
 
+    def on_data_http(self, headers, message):
+        print message
+
 if __name__ == "__main__":
     http_client = HttpClient()
-    #http_client.get("https://servidor2.hive:9090/")
-    http_client.get("https://www.google.pt/")
+    http_client.get("https://servidor2.hive:9090/")
+    #http_client.get("https://www.google.pt/")
     http_client.start()

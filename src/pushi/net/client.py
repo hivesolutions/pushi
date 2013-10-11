@@ -68,6 +68,9 @@ class Client(Base):
             self.on_error(error)
 
     def connect(self, host, port, ssl = False, key_file = None, cer_file = None):
+        key_file = key_file or SSL_KEY_PATH
+        cer_file = cer_file or SSL_CER_PATH
+        
         _socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         _socket.setblocking(0)
 
@@ -202,7 +205,3 @@ class Client(Base):
                 lines = traceback.format_exc().splitlines()
                 for line in lines: self.debug(line)
 
-if __name__ == "__main__":
-    client = Client()
-    client.connect("google.com", 80)
-    client.start()

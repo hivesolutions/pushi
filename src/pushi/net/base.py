@@ -126,6 +126,14 @@ STATE_STRINGS = (
 the various states for the base service, this may be used to
 create an integer to string resolution mechanism """
 
+# initializes the various paths that are going to be used for
+# the base files configuration in the complete service infra
+# structure, these should include the ssl based files 
+BASE_PATH = os.path.dirname(__file__)
+EXTRAS_PATH = os.path.join(BASE_PATH, "extras")
+SSL_KEY_PATH = os.path.join(EXTRAS_PATH, "net.key")
+SSL_CER_PATH = os.path.join(EXTRAS_PATH, "net.cer")
+
 class Base(observer.Observable):
     """
     Base network structure to be used by all the network

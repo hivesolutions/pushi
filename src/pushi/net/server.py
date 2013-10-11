@@ -86,6 +86,12 @@ class Server(Base):
         self.host = host
         self.port = port
         self.ssl = ssl
+        
+        # defaults the provided ssl key and certificate paths to the
+        # ones statically defined (dummy certificates), please beware
+        # that using these certificates may create validation problems
+        key_file = key_file or SSL_KEY_PATH
+        cer_file = cer_file or SSL_CER_PATH
 
         # creates the socket that it's going to be used for the listening
         # of new connections (server socket) and sets it as non blocking

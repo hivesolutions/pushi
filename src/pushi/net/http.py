@@ -43,8 +43,8 @@ import client
 
 class HttpConnection(client.Connection):
 
-    def __init__(self, owner, socket, address):
-        client.Connection.__init__(self, owner, socket, address)
+    def __init__(self, owner, socket, address, ssl = False):
+        client.Connection.__init__(self, owner, socket, address, ssl = ssl)
         self.version = "HTTP/1.0"
         self.method = "GET"
         self.url = None
@@ -112,10 +112,11 @@ class HttpClient(client.Client):
 
         print "connection droped"
 
-    def new_connection(self, socket, address):
-        return HttpConnection(self, socket, address)
+    def new_connection(self, socket, address, ssl = False):
+        return HttpConnection(self, socket, address, ssl = ssl)
 
 if __name__ == "__main__":
     http_client = HttpClient()
-    http_client.get("http://servidor2.hive:9090/")
+    #http_client.get("https://servidor2.hive:9090/")
+    http_client.get("https://www.google.pt/")
     http_client.start()

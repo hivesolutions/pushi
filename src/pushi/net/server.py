@@ -203,3 +203,10 @@ class Server(Base):
 
     def on_connection_d(self, connection):
         connection.close()
+
+    def info_dict(self):
+        info = Base.info_dict(self)
+        info["host"] = self.host
+        info["port"] = self.port
+        info["ssl"] = self.ssl
+        return info

@@ -210,11 +210,11 @@ class Base(observer.Observable):
         self.set_state(STATE_ERRROR)
 
     def info_dict(self):
-        return dict(
-            loaded = self._loaded,
-            connections = len(self.connections),
-            state = self.get_state_s()
-        )
+        info = dict()
+        info["loaded"] = self._loaded
+        info["connections"] = len(self.connections)
+        info["state"] = self.get_state_s()
+        return info
 
     def new_connection(self, socket, address):
         """

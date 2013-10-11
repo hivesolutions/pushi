@@ -76,25 +76,55 @@ class Server(Base):
         return info
 
     def serve(self, host = "127.0.0.1", port = 9090, ssl = False, key_file = None, cer_file = None):
+        # updates the current service status to the configuration
+        # stage as the next steps is to configure the service socket
         self.set_state(STATE_CONFIG)
+
+        # populates the basic information on the currently running
+        # server like the host the port and the (is) ssl flag to be
+        # used latter for reference operations
         self.host = host
         self.port = port
         self.ssl = ssl
+
+        # creates the socket that it's going to be used for the listening
+        # of new connections (server socket) and sets it as non blocking
         self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.socket.setblocking(0)
-        if ssl: self.socket = self._ssl_wrap(self.socket, key_file = key_file, cer_file = cer_file)
+
+        # in case the server is meant to be used as ssl wraps the socket
+        # in suck fashion so that it becomes "secured"
+        if ssl: self.socket = self._ssl_wrap(
+            self.socket,
+            key_file = key_file,
+            cer_file = cer_file
+        )
+
+        # sets the various options in the service socket so that it becomes
+        # ready for the operation with the highest possible performance, these
+        # options include the reuse address to be able to re-bind to the port
+        # and address and the keep alive that drops connections after some time
+        # avoiding the leak of connections (operative system managed)
         self.socket.setsockopt(socket.IPPROTO_TCP, socket.TCP_NODELAY, 1)
         self.socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         self.socket.setsockopt(socket.SOL_SOCKET, socket.SO_KEEPALIVE, 1)
         hasattr(socket, "SO_REUSEPORT") and\
             self.socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEPORT, 1) #@UndefinedVariable
+
+        # binds the socket to the provided host and port and then start the
+        # listening in the socket with the maximum backlog as possible
         self.socket.bind((host, port))
         self.socket.listen(5)
 
+        # adds the socket to all of the pool lists so that it's ready to read
+        # write and handle error, this is the expected behavior of a service
+        # socket so that it can handle all of the expected operations
         self.read_l.append(self.socket)
         self.write_l.append(self.socket)
         self.error_l.append(self.socket)
 
+        # starts the base system so that the event loop gets started and the
+        # the servers gets ready to accept new connections (starts service)
         self.start()
 
     def on_read_s(self, _socket):

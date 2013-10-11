@@ -70,14 +70,15 @@ class Client(Base):
     def connect(self, host, port, ssl = False, key_file = None, cer_file = None):
         key_file = key_file or SSL_KEY_PATH
         cer_file = cer_file or SSL_CER_PATH
-        
+
         _socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         _socket.setblocking(0)
 
         if ssl: _socket = self._ssl_wrap(
             _socket,
             key_file = key_file,
-            cer_file = cer_file
+            cer_file = cer_file,
+            server = False
         )
 
         _socket.setsockopt(socket.IPPROTO_TCP, socket.TCP_NODELAY, 1)
@@ -88,7 +89,7 @@ class Client(Base):
 
         address = (host, port)
 
-        connection = self.new_connection(_socket, address)
+        connection = self.new_connection(_socket, address, ssl = ssl)
         self.pendings.append(connection)
 
         return connection
@@ -97,8 +98,6 @@ class Client(Base):
         connection = self.connections_m.get(_socket, None)
         if not connection: return
         if not connection.status == OPEN: return
-
-        print "on_read"
 
         try:
             # verifies if there's any pending operations in the
@@ -139,7 +138,9 @@ class Client(Base):
         if not connection: return
         if not connection.status == OPEN: return
 
-        if connection.connecting: self.on_connect(connection)
+        if connection.connecting:
+            if connection.ssl: self._ssl_handshake(connection.socket)
+            else: self.on_connect(connection)
 
         try:
             connection._send()
@@ -190,8 +191,16 @@ class Client(Base):
             self._pending_lock.release()
 
     def _connect(self, connection):
+        # retrieves the socket associated with the connection
+        # and call the on connection created handler to set the
+        # connection ready for the connect operation
+        _socket = connection.socket
         self.on_connection_c(connection)
-        try: connection.socket.connect(connection.address)
+
+        # tries to run the non blocking connection it should
+        # fail and the connection should only be considered as
+        # open when a write event is raised for the connection
+        try: _socket.connect(connection.address)
         except ssl.SSLError, error:
             error_v = error.args[0]
             if not error_v in SSL_VALID_ERRORS:
@@ -205,3 +214,26 @@ class Client(Base):
                 lines = traceback.format_exc().splitlines()
                 for line in lines: self.debug(line)
 
+        # in case the connection is not of type ssl the method
+        # may returns as there's nothing left to be done, as the
+        # rest of the method is dedicated to ssl tricks
+        if not connection.ssl: return
+
+        # creates the ssl object for the socket as it may have been
+        # destroyed by the underlying ssl library (as an error) because
+        # the socket is of type non blocking and raises an error
+        _socket._sslobj = _socket._sslobj or ssl._ssl.sslwrap(
+            _socket._sock,
+            False,
+            _socket.keyfile,
+            _socket.certfile,
+            _socket.cert_reqs,
+            _socket.ssl_version,
+            _socket.ca_certs
+        )
+
+    def _ssl_handshake(self, _socket):
+        Base._ssl_handshake(self, _socket)
+        if _socket._pending: return
+        connection = self.connections_m.get(_socket, None)
+        connection and self.on_connect(connection)

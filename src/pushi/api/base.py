@@ -58,11 +58,11 @@ class Pushi:
     and write (create and read).
     """
 
-    def __init__(self, app_id = None, app_key = None, app_secret = None, base_url = BASE_URL):
+    def __init__(self, app_id = None, app_key = None, app_secret = None, base_url = None):
         self.app_id = app_id or os.environ.get("PUSHI_ID", None)
         self.app_key = app_key or os.environ.get("PUSHI_KEY", None)
         self.app_secret = app_secret or os.environ.get("PUSHI_SECRET", None)
-        self.base_url = base_url or os.environ.get("PUSHI_URL", None)
+        self.base_url = base_url or os.environ.get("PUSHI_URL", BASE_URL)
         self.token = None
 
     def authenticate(self, channel, socket_id):

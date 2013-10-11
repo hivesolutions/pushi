@@ -41,8 +41,81 @@ import urlparse
 
 import client
 
+class HttpConnection(client.Connection):
+
+    def __init__(self, owner, socket, address):
+        client.Connection.__init__(self, owner, socket, address)
+        self.version = "HTTP/1.0"
+        self.method = "GET"
+        self.url = None
+        self.ssl = False
+        self.host = None
+        self.port = None
+        self.path = None
+
+    def set_http(
+        self,
+        version = "HTTP/1.0",
+        method = "GET",
+        url = None,
+        host = None,
+        port = None,
+        path = None,
+        ssl = False
+    ):
+        self.method = method.upper()
+        self.version = version
+        self.url = url
+        self.host = host
+        self.port = port
+        self.path = path
+        self.ssl = ssl
+
 class HttpClient(client.Client):
 
     def get(self, url):
-        parsed = urlparse(url)
-        print parsed
+        parsed = urlparse.urlparse(url)
+        ssl = parsed.scheme == "https"
+        host = parsed.hostname
+        port = parsed.port or (ssl and 443 or 80)
+        path = parsed.path
+
+        connection = self.connect(host, port, ssl = ssl)
+        connection.set_http(
+            version = "HTTP/1.0",
+            method = "GET",
+            url = url,
+            host = host,
+            port = port,
+            path = path,
+            ssl = ssl
+        )
+
+    def on_connect(self, connection):
+        client.Client.on_connect(self, connection)
+
+        print "connected"
+
+        method = connection.method
+        path = connection.path
+        version = connection.version
+
+        connection.send("%s %s %s\r\n\r\n" % (method, path, version))
+
+    def on_data(self, connection, data):
+        client.Client.on_data(self, connection, data)
+
+        print data
+
+    def on_connection_d(self, connection):
+        client.Client.on_connection_d(self, connection)
+
+        print "connection droped"
+
+    def new_connection(self, socket, address):
+        return HttpConnection(self, socket, address)
+
+if __name__ == "__main__":
+    http_client = HttpClient()
+    http_client.get("http://servidor2.hive:9090/")
+    http_client.start()

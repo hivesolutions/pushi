@@ -72,7 +72,7 @@ class Connection(object):
         self.ssl = ssl
         self.pending = []
         self.pending_lock = threading.RLock()
-        
+
     def open(self, connect = False):
         # in case the current status of the connection is not
         # closed does not make sense to open it as it should
@@ -88,7 +88,7 @@ class Connection(object):
         # in the polling infra-structure of the owner
         owner.read_l.append(self.socket)
         owner.error_l.append(self.socket)
-        
+
         # adds the current connection object to the list of
         # connections in the owner and the registers it in
         # the map that associates the socket with the connection
@@ -99,10 +99,10 @@ class Connection(object):
         # as all the internal structures have been correctly
         # updated and not it's safe to perform operations
         self.status = OPEN
-        
+
         # in case the connect flag is set must set the current
         # connection as connecting indicating that some extra
-        # steps are still required to complete the connection 
+        # steps are still required to complete the connection
         if connect: self.set_connecting()
 
     def close(self):
@@ -141,7 +141,7 @@ class Connection(object):
     def set_connecting(self):
         self.connecting = True
         self.ensure_write()
-        
+
     def set_connected(self):
         self.remove_write()
         self.connecting = False

@@ -84,10 +84,10 @@ class Client(Base):
             _socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEPORT, 1) #@UndefinedVariable
 
         address = (host, port)
-        
+
         connection = self.new_connection(_socket, address)
         self.pendings.append(connection)
-        
+
         return connection
 
     def on_read(self, _socket):
@@ -95,23 +95,87 @@ class Client(Base):
         if not connection: return
         if not connection.status == OPEN: return
 
+        print "on_read"
+
+        try:
+            # verifies if there's any pending operations in the
+            # socket (eg: ssl handshaking) and performs them trying
+            # to finish them, in they are still pending at the current
+            # state returns immediately (waits for next loop)
+            if self._pending(_socket): return
+
+            # iterates continuously trying to read as much data as possible
+            # when there's a failure to read more data it should raise an
+            # exception that should be handled properly
+            while True:
+                data = _socket.recv(CHUNK_SIZE)
+                if data: self.on_data(connection, data)
+                else: self.on_connection_d(connection); break
+        except ssl.SSLError, error:
+            error_v = error.args[0]
+            if not error_v in SSL_VALID_ERRORS:
+                self.info(error)
+                lines = traceback.format_exc().splitlines()
+                for line in lines: self.debug(line)
+                self.on_connection_d(connection)
+        except socket.error, error:
+            error_v = error.args[0]
+            if not error_v in VALID_ERRORS:
+                self.info(error)
+                lines = traceback.format_exc().splitlines()
+                for line in lines: self.debug(line)
+                self.on_connection_d(connection)
+        except BaseException, exception:
+            self.info(exception)
+            lines = traceback.format_exc().splitlines()
+            for line in lines: self.debug(line)
+            self.on_connection_d(connection)
+
     def on_write(self, socket):
         connection = self.connections_m.get(socket, None)
         if not connection: return
         if not connection.status == OPEN: return
 
-        if connection.connecting:
-            connection.set_connected()
-            self.on_connect(connection)
+        if connection.connecting: self.on_connect(connection)
+
+        try:
+            connection._send()
+        except ssl.SSLError, error:
+            error_v = error.args[0]
+            if not error_v in SSL_VALID_ERRORS:
+                self.info(error)
+                lines = traceback.format_exc().splitlines()
+                for line in lines: self.debug(line)
+                self.on_connection_d(connection)
+        except socket.error, error:
+            error_v = error.args[0]
+            if not error_v in VALID_ERRORS:
+                self.info(error)
+                lines = traceback.format_exc().splitlines()
+                for line in lines: self.debug(line)
+                self.on_connection_d(connection)
+        except BaseException, exception:
+            self.info(exception)
+            lines = traceback.format_exc().splitlines()
+            for line in lines: self.debug(line)
+            self.on_connection_d(connection)
 
     def on_error(self, socket):
         connection = self.connections_m.get(socket, None)
         if not connection: return
         if not connection.status == OPEN: return
-    
+
     def on_connect(self, connection):
-        print "connectado"
-        print connection
+        connection.set_connected()
+
+    def on_data(self, connection, data):
+        pass
+
+    def on_connection_c(self, connection):
+        connection.open(connect = True)
+
+    def on_connection_d(self, connection):
+        connection.close()
 
     def _connects(self):
         self._pending_lock.acquire()
@@ -123,7 +187,7 @@ class Client(Base):
             self._pending_lock.release()
 
     def _connect(self, connection):
-        connection.open(connect = True)
+        self.on_connection_c(connection)
         try: connection.socket.connect(connection.address)
         except ssl.SSLError, error:
             error_v = error.args[0]

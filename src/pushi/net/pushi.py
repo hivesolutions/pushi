@@ -40,12 +40,12 @@ __license__ = "GNU General Public License (GPL), Version 3"
 import uuid
 import json
 
-import ws
+import netius.servers
 
-class PushiConnection(ws.WSConnection):
+class PushiConnection(netius.servers.WSConnection):
 
     def __init__(self, owner, socket, address, ssl = False):
-        ws.WSConnection.__init__(self, owner, socket, address, ssl = ssl)
+        netius.servers.WSConnection.__init__(self, owner, socket, address, ssl = ssl)
         self.app_key = None
         self.socket_id = str(uuid.uuid4())
         self.channels = []
@@ -61,21 +61,21 @@ class PushiConnection(ws.WSConnection):
         self.app_key = self.path.rsplit("/", 1)[-1]
         if not self.app_key: raise RuntimeError("Invalid app key loaded")
 
-class PushiServer(ws.WSServer):
+class PushiServer(netius.servers.WSServer):
 
-    def __init__(self, state, *args, **kwargs):
-        ws.WSServer.__init__(self, *args, **kwargs)
+    def __init__(self, state = None, *args, **kwargs):
+        netius.servers.WSServer.__init__(self, *args, **kwargs)
         self.state = state
         self.sockets = {}
         self.count = 0
 
     def info_dict(self):
-        info = ws.WSServer.info_dict(self)
+        info = netius.servers.WSServer.info_dict(self)
         info["count"] = self.count
         return info
 
     def on_connection_c(self, connection):
-        ws.WSServer.on_connection_c(self, connection)
+        netius.servers.WSServer.on_connection_c(self, connection)
         self.sockets[connection.socket_id] = connection
         self.trigger(
             "connect",
@@ -85,7 +85,7 @@ class PushiServer(ws.WSServer):
         )
 
     def on_connection_d(self, connection):
-        ws.WSServer.on_connection_d(self, connection)
+        netius.servers.WSServer.on_connection_d(self, connection)
         del self.sockets[connection.socket_id]
         self.trigger(
             "disconnect",
@@ -98,7 +98,7 @@ class PushiServer(ws.WSServer):
         return PushiConnection(self, socket, address, ssl = ssl)
 
     def on_handshake(self, connection):
-        ws.WSServer.on_handshake(self, connection)
+        netius.servers.WSServer.on_handshake(self, connection)
         connection.load_app()
 
         json_d = dict(
@@ -110,7 +110,7 @@ class PushiServer(ws.WSServer):
         connection.send_pushi(json_d)
 
     def on_data_ws(self, connection, data):
-        ws.WSServer.on_data_ws(self, connection, data)
+        netius.servers.WSServer.on_data_ws(self, connection, data)
 
         json_d = json.loads(data)
 
@@ -139,6 +139,8 @@ class PushiServer(ws.WSServer):
             channel_data = channel_data
         )
 
+        if not self.state: return
+
         data = self.state.get_channel(connection.app_key, channel)
         json_d = dict(
             event = "pusher_internal:subscription_succeeded",
@@ -151,6 +153,8 @@ class PushiServer(ws.WSServer):
         data = json_d["data"]
         event = json_d["event"]
         channel = json_d["channel"]
+
+        if not self.state: return
 
         app_id = self.state.app_key_to_app_id(connection.app_key)
         self.state.trigger(

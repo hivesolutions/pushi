@@ -44,8 +44,8 @@ import server
 
 class WSConnection(server.Connection):
 
-    def __init__(self, owner, socket, address):
-        server.Connection.__init__(self, owner, socket, address)
+    def __init__(self, owner, socket, address, ssl = False):
+        server.Connection.__init__(self, owner, socket, address, ssl = ssl)
         self.handshake = False
         self.method = None
         self.path = None
@@ -224,8 +224,8 @@ class WSServer(server.Server):
             connection.send(response)
             self.on_handshake(connection)
 
-    def new_connection(self, socket, address):
-        return WSConnection(self, socket, address)
+    def new_connection(self, socket, address, ssl = False):
+        return WSConnection(self, socket, address, ssl = ssl)
 
     def send_ws(self, connection, data):
         encoded = self._encode(data)

@@ -111,17 +111,17 @@ class Server(Base):
         hasattr(socket, "SO_REUSEPORT") and\
             self.socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEPORT, 1) #@UndefinedVariable
 
-        # binds the socket to the provided host and port and then start the
-        # listening in the socket with the maximum backlog as possible
-        self.socket.bind((host, port))
-        self.socket.listen(5)
-
         # adds the socket to all of the pool lists so that it's ready to read
         # write and handle error, this is the expected behavior of a service
         # socket so that it can handle all of the expected operations
         self.read_l.append(self.socket)
         self.write_l.append(self.socket)
         self.error_l.append(self.socket)
+
+        # binds the socket to the provided host and port and then start the
+        # listening in the socket with the maximum backlog as possible
+        self.socket.bind((host, port))
+        self.socket.listen(5)
 
         # starts the base system so that the event loop gets started and the
         # the servers gets ready to accept new connections (starts service)

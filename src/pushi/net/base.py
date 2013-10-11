@@ -128,7 +128,7 @@ create an integer to string resolution mechanism """
 
 # initializes the various paths that are going to be used for
 # the base files configuration in the complete service infra
-# structure, these should include the ssl based files 
+# structure, these should include the ssl based files
 BASE_PATH = os.path.dirname(__file__)
 EXTRAS_PATH = os.path.join(BASE_PATH, "extras")
 SSL_KEY_PATH = os.path.join(EXTRAS_PATH, "net.key")
@@ -263,7 +263,7 @@ class Base(observer.Observable):
         info["state"] = self.get_state_s()
         return info
 
-    def new_connection(self, socket, address):
+    def new_connection(self, socket, address, ssl = False):
         """
         Creates a new connection for the provided socket
         object and string based address, the returned
@@ -275,12 +275,15 @@ class Base(observer.Observable):
         @type address: String
         @param address: The address as a string to be used to
         describe the connection object to be created.
+        @type ssl: bool
+        @param ssl: If the connection to be created is meant to
+        be secured using the ssl framework for encryption.
         @rtype: Connection
         @return: The connection object that encapsulates the
         provided socket and address values.
         """
 
-        return Connection(self, socket, address)
+        return Connection(self, socket, address, ssl = ssl)
 
     def debug(self, object):
         self.log(object, level = logging.DEBUG)
@@ -348,17 +351,17 @@ class Base(observer.Observable):
         # and that the value is valid, in case it's not there's
         # no pending operation (method call) to be performed, and
         # as such must return immediately with no pending value
-        if not hasattr(_socket, "pending") or\
-            not _socket.pending: return False
+        if not hasattr(_socket, "_pending") or\
+            not _socket._pending: return False
 
         # calls the pending callback method and verifies if the
         # pending value still persists in the socket if that the
         # case returns the is pending value to the caller method
-        _socket.pending(_socket)
-        is_pending = not _socket.pending == None
+        _socket._pending(_socket)
+        is_pending = not _socket._pending == None
         return is_pending
 
-    def _ssl_wrap(self, _socket, key_file = None, cer_file = None):
+    def _ssl_wrap(self, _socket, key_file = None, cer_file = None, server = True):
         dir_path = os.path.dirname(__file__)
         base_path = os.path.join(dir_path, "../../")
         base_path = os.path.normpath(base_path)
@@ -372,7 +375,7 @@ class Base(observer.Observable):
             _socket,
             keyfile = key_file,
             certfile = cer_file,
-            server_side = True,
+            server_side = server,
             do_handshake_on_connect = False
         )
         return socket_ssl
@@ -380,9 +383,9 @@ class Base(observer.Observable):
     def _ssl_handshake(self, _socket):
         try:
             _socket.do_handshake()
-            _socket.pending = None
+            _socket._pending = None
         except ssl.SSLError, error:
             error_v = error.args[0]
             if error_v in SSL_VALID_ERRORS:
-                _socket.pending = self._ssl_handshake
+                _socket._pending = self._ssl_handshake
             else: raise

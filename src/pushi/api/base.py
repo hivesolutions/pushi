@@ -62,7 +62,7 @@ class Pushi:
         self.app_id = app_id or os.environ.get("PUSHI_ID", None)
         self.app_key = app_key or os.environ.get("PUSHI_KEY", None)
         self.app_secret = app_secret or os.environ.get("PUSHI_SECRET", None)
-        self.base_url = base_url
+        self.base_url = base_url or os.environ.get("PUSHI_URL", None)
         self.token = None
 
     def authenticate(self, channel, socket_id):

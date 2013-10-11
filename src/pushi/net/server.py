@@ -86,7 +86,7 @@ class Server(Base):
         self.host = host
         self.port = port
         self.ssl = ssl
-        
+
         # defaults the provided ssl key and certificate paths to the
         # ones statically defined (dummy certificates), please beware
         # that using these certificates may create validation problems
@@ -103,7 +103,8 @@ class Server(Base):
         if ssl: self.socket = self._ssl_wrap(
             self.socket,
             key_file = key_file,
-            cer_file = cer_file
+            cer_file = cer_file,
+            server = True
         )
 
         # sets the various options in the service socket so that it becomes
@@ -234,7 +235,7 @@ class Server(Base):
 
         if self.ssl: self._ssl_handshake(socket_c)
 
-        connection = self.new_connection(socket_c, address)
+        connection = self.new_connection(socket_c, address, ssl = self.ssl)
         self.on_connection_c(connection)
 
     def on_socket_d(self, socket_c):

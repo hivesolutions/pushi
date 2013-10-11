@@ -102,8 +102,8 @@ class HttpClient(client.Client):
 
     def on_data(self, connection, data):
         client.Client.on_data(self, connection, data)
-
-        headers, message = data.split("\r\n\r\n")
+        
+        headers, message = data.split("\r\n\r\n", 1)
         self.on_data_http(headers, message)
 
     def on_connection_d(self, connection):
@@ -117,6 +117,7 @@ class HttpClient(client.Client):
 
 if __name__ == "__main__":
     http_client = HttpClient()
-    http_client.get("https://servidor2.hive:9090/")
+    http_client.get("https://localhost:9090/")
+    #http_client.get("https://servidor2.hive:9090/")
     #http_client.get("https://www.google.pt/")
     http_client.start()

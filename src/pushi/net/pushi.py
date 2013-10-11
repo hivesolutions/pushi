@@ -44,8 +44,8 @@ import ws
 
 class PushiConnection(ws.WSConnection):
 
-    def __init__(self, owner, socket, address):
-        ws.WSConnection.__init__(self, owner, socket, address)
+    def __init__(self, owner, socket, address, ssl = False):
+        ws.WSConnection.__init__(self, owner, socket, address, ssl = ssl)
         self.app_key = None
         self.socket_id = str(uuid.uuid4())
         self.channels = []
@@ -94,8 +94,8 @@ class PushiServer(ws.WSServer):
             socket_id = connection.socket_id
         )
 
-    def new_connection(self, socket, address):
-        return PushiConnection(self, socket, address)
+    def new_connection(self, socket, address, ssl = False):
+        return PushiConnection(self, socket, address, ssl = ssl)
 
     def on_handshake(self, connection):
         ws.WSServer.on_handshake(self, connection)

@@ -55,6 +55,8 @@ if not base_dir in sys.path: sys.path.insert(0, base_dir)
 import pushi
 import appier
 
+import apn
+
 class AppState(object):
     """
     The state object that defined the various state variables
@@ -89,6 +91,8 @@ class State(appier.Mongo):
         appier.Mongo.__init__(self)
         self.app = None
         self.server = None
+        self.apn_handler = None
+        self.handlers = []
         self.app_id_state = {}
         self.app_key_state = {}
 
@@ -148,6 +152,16 @@ class State(appier.Mongo):
         # the pushi server and then starts them with the proper arguments
         threading.Thread(target = self.app.serve, kwargs = app_kwargs).start()
         threading.Thread(target = self.server.serve, kwargs = server_kwargs).start()
+
+        # starts the loading process of the various (extra handlers) that are
+        # going to be used in the pushi infra-structure (eg: apn, gcm, etc.)
+        self.load_handlers()
+
+    def load_handlers(self):
+        self.apn_handler = apn.ApnHandler(self)
+        self.apn_handler.load()
+
+        self.handlers.append(self.apn_handler)
 
     def connect(self, connection, app_key, socket_id):
         pass
@@ -621,12 +635,8 @@ class State(appier.Mongo):
             if socket_id == owner_id: continue
             self.send_socket(socket_id, json_d)
 
-
-        for subscription in subscription:
-            # tenho de mandar com o tipo certo
-            pass
-
-
+        for handler in self.handlers:
+            handler.send(app_id, channel, json_d)
 
     def send_socket(self, socket_id, json_d):
         self.server.send_socket(socket_id, json_d)

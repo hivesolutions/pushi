@@ -85,7 +85,7 @@ and bind to the complete set of network interfaces in the host the following com
 To be able to run in using SSL encryption additional commands must be used, please note
 that the SSL port used by the app is not the default one:
 
-    APP_SERVER=tornado \
+    APP_SERVER=netius \
     APP_HOST=0.0.0.0 \
     APP_PORT=9090 \
     APP_SSL=1 \

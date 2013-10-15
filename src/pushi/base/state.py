@@ -654,6 +654,32 @@ class State(appier.Mongo):
         return app
 
     def verify(self, app_key, socket_id, channel, auth):
+        """
+        Verifies the provided auth (token) using the app
+        secret associated with the app with the provided
+        app key.
+
+        This operation is required for the private channels
+        so that only the authenticated user are allowed.
+
+        The verification operation will raise an exception in
+        the signature generated is not valid (verification has
+        failed for security reasons).
+
+        @type app_key: String
+        @param app_key: The app key for the app that is going
+        to be used as the base for the verification.
+        @type socket_id: String
+        @param socket_id: The identifier of the socket that is
+        going to be used in the process of verification.
+        @type channel: String
+        @param channel: The name of the channel that is going
+        to be used in the verification process.
+        @type auth: String
+        @param auth: The string that is going to be used for auth
+        this should be an hmac based token string.
+        """
+
         app = self.get_app(app_key = app_key)
         app_secret = app["secret"]
 

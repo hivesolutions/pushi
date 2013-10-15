@@ -184,3 +184,36 @@ class Pushi:
             auth_callback = self.auth_callback
         )
         return result
+
+    def subscribe_apn(self, token, event, auth = None):
+        # runs the apn subscription operation for the provided
+        # token and event, this operation uses the currently
+        # defined app id for the operation, then returns the
+        # resulting dictionary to the caller method
+        result = appier.get(
+            self.base_url + "/apps/%s/subscribe_apn" % self.app_id,
+            params = dict(
+                sid = token,
+                token = token,
+                event = event,
+                auth = auth
+            ),
+            auth_callback = self.auth_callback
+        )
+        return result
+
+    def unsubscribe_apn(self, token, event):
+        # runs the apn unsubscription operation for the provided
+        # token and event, this operation uses the currently
+        # defined app id for the operation, then returns the
+        # resulting dictionary to the caller method
+        result = appier.get(
+            self.base_url + "/apps/%s/unsubscribe_apn" % self.app_id,
+            params = dict(
+                sid = token,
+                token = token,
+                event = event
+            ),
+            auth_callback = self.auth_callback
+        )
+        return result

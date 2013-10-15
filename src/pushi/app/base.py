@@ -177,6 +177,37 @@ class PushiApp(appier.App, appier.Mongo):
         )
         db.subs.remove(subscription)
 
+    @appier.route("/apps/<app_id>/subscribe_apn", "GET")
+    def subscribe_apn(self, app_id, token, event, auth = None):
+        is_private = event.startswith("private-") or\
+            event.startswith("presence-") or event.startswith("peer-")
+
+        app = self.state.get_app(app_id = app_id)
+        app_key = app["key"]
+
+        is_private and self.verify(app_key, token, event, auth)
+
+        db = self.get_db("pushi")
+        subscription = dict(
+            app_id = app_id,
+            event = event,
+            token = token
+        )
+
+        cursor = db.subs.find(subscription)
+        values = [value for value in cursor]
+        not values and db.apn.insert(subscription)
+
+    @appier.route("/apps/<app_id>/unsubscribe_apn", "GET")
+    def unsubscribe_apn(self, app_id, token, event):
+        db = self.get_db("pushi")
+        subscription = dict(
+            app_id = app_id,
+            event = event,
+            token = token
+        )
+        db.apn.remove(subscription)
+
     @appier.private
     @appier.route("/apps/<app_id>/events", "GET")
     def list_events(self, app_id, count = 10):

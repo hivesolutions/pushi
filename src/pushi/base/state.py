@@ -93,6 +93,8 @@ class State(appier.Mongo):
         self.app_key_state = {}
 
     def load(self, app, server):
+        # sets the references to both the app and the server in the
+        # current instance, this values are going to be used latter
         self.app = app
         self.server = server
 
@@ -101,10 +103,16 @@ class State(appier.Mongo):
         handler = self.app.handler
         self.server.handler = handler
 
+        # registers for the various base events in the server so that
+        # it's able to properly update the current state of the application
+        # to the new state (according to the operation)
         self.server.bind("connect", self.connect)
         self.server.bind("disconnect", self.disconnect)
         self.server.bind("subscribe", self.subscribe)
 
+        # retrieves the various environment variable values that are going
+        # to be used in the starting of both the app server and the proper
+        # pushi server (most of the values have default values)
         APP_SERVER = os.environ.get("APP_SERVER", "waitress")
         APP_HOST = os.environ.get("APP_HOST", "127.0.0.1")
         APP_PORT = int(os.environ.get("APP_PORT", "8080"))
@@ -117,6 +125,9 @@ class State(appier.Mongo):
         SERVER_SSL_KEY = os.environ.get("SERVER_SSL_KEY", None)
         SERVER_SSL_CER = os.environ.get("SERVER_SSL_CER", None)
 
+        # creates the named argument for both the app server and the proper
+        # pushi server so that they are correctly initialized and bound to
+        # the proper ports (infinite loop)
         app_kwargs = dict(
             server = APP_SERVER,
             host = APP_HOST,
@@ -133,6 +144,8 @@ class State(appier.Mongo):
             cer_file = SERVER_SSL_CER,
         )
 
+        # creates the threads that will be used as containers for the app and
+        # the pushi server and then starts them with the proper arguments
         threading.Thread(target = self.app.serve, kwargs = app_kwargs).start()
         threading.Thread(target = self.server.serve, kwargs = server_kwargs).start()
 
@@ -292,7 +305,7 @@ class State(appier.Mongo):
         is_peer = channel_data.get("peer", False)
 
         # gather information on the channel from the global state object
-        # this would include the ammount of users the members, current
+        # this would include the amount of users the members, current
         # connections and more
         info = state.channel_info.get(channel, {})
         users = info.get("users", {})
@@ -607,6 +620,13 @@ class State(appier.Mongo):
         for socket_id in sockets:
             if socket_id == owner_id: continue
             self.send_socket(socket_id, json_d)
+
+
+        for subscription in subscription:
+            # tenho de mandar com o tipo certo
+            pass
+
+
 
     def send_socket(self, socket_id, json_d):
         self.server.send_socket(socket_id, json_d)

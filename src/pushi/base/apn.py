@@ -49,9 +49,9 @@ class ApnHandler(object):
         self.subs = {}
 
     def send(self, app_id, event, json_d):
-        message = json_d.get("event", None)
-        message = json_d.get("push_event", message)
-        message = json_d.get("apn_event", message)
+        message = json_d.get("data", None)
+        message = json_d.get("push_data", message)
+        message = json_d.get("apn_data", message)
         if not message: raise RuntimeError("No message defined")
 
         app = self.owner.get_app(app_id = app_id)

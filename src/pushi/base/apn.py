@@ -37,7 +37,11 @@ __copyright__ = "Copyright (c) 2008-2012 Hive Solutions Lda."
 __license__ = "GNU General Public License (GPL), Version 3"
 """ The license for the module """
 
+import os
 import json
+import tempfile
+
+import netius.clients
 
 class ApnHandler(object):
 
@@ -48,12 +52,37 @@ class ApnHandler(object):
     def send(self, app_id, event, json_d):
         data = json.dumps(json_d)
 
+        app = self.owner.get_app(app_id = app_id)
+        key_data = app.get("apn_key", None)
+        cer_data = app.get("apn_cer", None)
+
+        if not key_data: raise RuntimeError("No apn key defined")
+        if not cer_data: raise RuntimeError("No apn certificate defined")
+
+        path = tempfile.mkdtemp()
+        key_path = os.path.join(path, "apn.key")
+        cer_path = os.path.join(path, "apn.cer")
+
+        key_file = open(key_path, "wb")
+        try: key_file.write(key_data)
+        finally: key_file.close()
+
+        cer_file = open(cer_path, "wb")
+        try: cer_file.write(cer_data)
+        finally: cer_file.close()
+
         events = self.subs.get(app_id, {})
         tokens = events.get(event, [])
 
         for token in tokens:
-            print "vai enviar para " + token
-            print data
+            apn_client = netius.clients.APNClient()
+            apn_client.message(
+                token,
+                message = data,
+                sandbox = True,
+                key_file = key_path,
+                cer_file = cer_path
+            )
 
     def load(self):
         db = self.owner.get_db("pushi")

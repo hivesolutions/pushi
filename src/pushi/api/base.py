@@ -105,19 +105,29 @@ class Pushi:
         return self.token
 
     def create(self, name):
-        # runs the ensure login call making sure that the login token
-        # is currently present in the environment, this is required
-        # to perform secured remote calls
-        token = self.ensure_login()
-
         # runs the post call that will create the app with the provided
-        # name then returns the returning map to the caller methos, it
+        # name then returns the returning map to the caller method, it
         # should contain the generated information for the app
         result = appier.post(
             self.base_url + "/apps",
             data_j = dict(
                 name = name
-            ),
+            )
+        )
+        return result
+
+    def update(self, **kwargs):
+        # runs the ensure login call making sure that the login token
+        # is currently present in the environment, this is required
+        # to perform secured remote calls
+        token = self.ensure_login()
+
+        # runs the pit call that will create the app with the provided
+        # name then returns the returning map to the caller method, it
+        # should contain the newly updated information for the app
+        result = appier.put(
+            self.base_url + "/apps",
+            data_j = kwargs,
             params = dict(sid = token),
             auth_callback = self.auth_callback
         )

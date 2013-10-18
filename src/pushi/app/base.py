@@ -121,6 +121,24 @@ class PushiApp(appier.App, appier.Mongo):
         return app
 
     @appier.private
+    @appier.route("/apps/<app_id>", "PUT")
+    def update_app(self, app_id, data):
+        if not app_id == self.request.session["app_id"]:
+            raise RuntimeError("Not allowed for app id")
+
+        db = self.get_db("pushi")
+        app = db.app.find_one(dict(app_id = app_id))
+        if not app: raise RuntimeError("App not found")
+
+        del data["name"]
+        del data["app_id"]
+        del data["key"]
+        del data["secret"]
+
+        for key, value in data.items(): app[key] = value
+        db.app.save(app)
+
+    @appier.private
     @appier.route("/apps/<app_id>/ping", "GET")
     def ping_app(self, app_id):
         if not app_id == self.request.session["app_id"]:

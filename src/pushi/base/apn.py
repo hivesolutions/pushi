@@ -38,7 +38,6 @@ __license__ = "GNU General Public License (GPL), Version 3"
 """ The license for the module """
 
 import os
-import json
 import tempfile
 
 import netius.clients
@@ -50,7 +49,10 @@ class ApnHandler(object):
         self.subs = {}
 
     def send(self, app_id, event, json_d):
-        data = json.dumps(json_d)
+        message = json_d.get("event", None)
+        message = json_d.get("push_event", message)
+        message = json_d.get("apn_event", message)
+        if not message: raise RuntimeError("No message defined")
 
         app = self.owner.get_app(app_id = app_id)
         key_data = app.get("apn_key", None)
@@ -78,7 +80,7 @@ class ApnHandler(object):
             apn_client = netius.clients.APNClient()
             apn_client.message(
                 token,
-                message = data,
+                message = message,
                 sandbox = True,
                 key_file = key_path,
                 cer_file = cer_path

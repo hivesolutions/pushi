@@ -126,7 +126,7 @@ class Pushi:
         # name then returns the returning map to the caller method, it
         # should contain the newly updated information for the app
         result = appier.put(
-            self.base_url + "/apps",
+            self.base_url + "/apps/%s" % self.app_id,
             data_j = kwargs,
             params = dict(sid = token),
             auth_callback = self.auth_callback

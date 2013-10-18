@@ -130,10 +130,10 @@ class PushiApp(appier.App, appier.Mongo):
         app = db.app.find_one(dict(app_id = app_id))
         if not app: raise RuntimeError("App not found")
 
-        del data["name"]
-        del data["app_id"]
-        del data["key"]
-        del data["secret"]
+        if "name" in data: del data["name"]
+        if "app_id" in data: del data["app_id"]
+        if "key" in data: del data["key"]
+        if "secret" in data : del data["secret"]
 
         for key, value in data.items(): app[key] = value
         db.app.save(app)

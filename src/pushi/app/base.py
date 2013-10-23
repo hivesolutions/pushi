@@ -135,7 +135,7 @@ class PushiApp(appier.App, appier.Mongo):
         if "key" in data: del data["key"]
         if "secret" in data : del data["secret"]
 
-        for key, value in data.items(): app[key] = value
+        for key, value in data.iteritems(): app[key] = value
         db.app.save(app)
 
     @appier.private
@@ -243,7 +243,7 @@ class PushiApp(appier.App, appier.Mongo):
 
         sockets = []
 
-        for socket_id, channel in state.socket_channels.items():
+        for socket_id, channel in state.socket_channels.iteritems():
             socket = dict(socket_id = socket_id, channel = channel)
             sockets.append(socket)
 

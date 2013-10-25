@@ -204,11 +204,6 @@ class State(appier.Mongo):
         for channel in channels: self.unsubscribe(connection, app_key, socket_id, channel)
         if socket_id in state.socket_channels: del state.socket_channels[socket_id]
 
-    def subscriptions(self, connection, app_key, socket_id):
-        ## tenho de tentar saber se o gajo e o valido para saber as subscricoes dele
-        ## e depois subscrevo a elas
-        pass
-
     def subscribe(self, connection, app_key, socket_id, channel, auth = None, channel_data = None, force = False):
         # checks if the the channel to be registered is considered private
         # (either private, presence or peer) and in case it's private verifies

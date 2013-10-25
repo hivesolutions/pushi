@@ -145,7 +145,7 @@ class PushiServer(netius.servers.WSServer):
         json_d = dict(
             event = "pusher_internal:subscription_succeeded",
             data = json.dumps(data),
-            channel =  channel
+            channel = channel
         )
         connection.send_pushi(json_d)
 

@@ -315,7 +315,8 @@ Pushi.prototype.subscribe = function(channel, force) {
     // private way of subscription otherwise uses the public
     // way for subscription (no authentication process)
     var isPrivate = channel.startsWith("private-")
-            || channel.startsWith("presence-");
+            || channel.startsWith("presence-")
+            || channel.startsWith("personal-");
     if (isPrivate) {
         this.subscribePrivate(channel);
     } else {

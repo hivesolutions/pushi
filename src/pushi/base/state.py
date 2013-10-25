@@ -157,11 +157,31 @@ class State(appier.Mongo):
         # going to be used in the pushi infra-structure (eg: apn, gcm, etc.)
         self.load_handlers()
 
+        # loads the various alias relations for the current infra-structure so
+        # that the personal channels are able to correctly work
+        self.load_alias()
+
     def load_handlers(self):
         self.apn_handler = apn.ApnHandler(self)
         self.apn_handler.load()
 
         self.handlers.append(self.apn_handler)
+
+    def load_alias(self):
+        """
+        Loads the complete set of alias (channels that represent) the
+        same for the current context, this may be used for a variety
+        of reasons including the personal channels.
+        """
+
+        self.alias = {}
+
+        db = self.get_db("pushi")
+        subs = db.subs.find()
+        for sub in subs:
+            user_id = sub["user_id"]
+            event = sub["event"]
+            self.add_alias(event, "personal-" + user_id)
 
     def connect(self, connection, app_key, socket_id):
         pass
@@ -174,11 +194,20 @@ class State(appier.Mongo):
         if not app_key: return
         if not socket_id: return
 
+        # retrieves the current state of the app using the app key and
+        # then uses it to retrieve the complete set of channels that the
+        # socket is subscribed and then unsubscribe it from them then
+        # removes the reference of the socket in the socket channels map
         state = self.get_state(app_key = app_key)
         channels = state.socket_channels.get(socket_id, [])
         channels = copy.copy(channels)
         for channel in channels: self.unsubscribe(connection, app_key, socket_id, channel)
         if socket_id in state.socket_channels: del state.socket_channels[socket_id]
+
+    def subscriptions(self, connection, app_key, socket_id):
+        ## tenho de tentar saber se o gajo e o valido para saber as subscricoes dele
+        ## e depois subscrevo a elas
+        pass
 
     def subscribe(self, connection, app_key, socket_id, channel, auth = None, channel_data = None, force = False):
         # checks if the the channel to be registered is considered private
@@ -567,8 +596,36 @@ class State(appier.Mongo):
         is_subscribed = channel in channels if channels else False
         return is_subscribed
 
+    def add_alias(self, channel, alias):
+        alias_l = self.alias.get(channel, [])
+        if alias in alias_l: return
+
+        alias_l.append(alias)
+        self.alias[channel] = alias_l
+
+    def remove_alias(self, channel, alias):
+        alias_l = self.alias.get(channel, [])
+        if not alias in alias_l: return
+
+        alias_l.remove(alias)
+
+    def resolve_alias(self, channels):
+        alias = []
+
+        for channel in channels:
+            _alias = self.alias.get(channel, [])
+            alias.extend(_alias)
+
+        if not alias: return alias
+
+        alias_set = set(alias)
+        alias = list(alias_set)
+        return alias
+
     def trigger(self, app_id, event, data, channels = None, owner_id = None):
         if not channels: channels = ("global",)
+        alias = self.resolve_alias(channels)
+
         for channel in channels: self.trigger_c(
             app_id,
             channel,
@@ -576,8 +633,16 @@ class State(appier.Mongo):
             data,
             owner_id = owner_id
         )
+        for channel in alias: self.trigger_c(
+            app_id,
+            channel,
+            event,
+            data,
+            owner_id = owner_id,
+            verify = False
+        )
 
-    def trigger_c(self, app_id, channel, event, data, owner_id = None):
+    def trigger_c(self, app_id, channel, event, data, owner_id = None, verify = True):
         data_t = type(data)
         data = data if data_t in types.StringTypes else json.dumps(data)
 
@@ -586,8 +651,19 @@ class State(appier.Mongo):
             event = event,
             data = data
         )
-        self.log_channel(app_id, channel, json_d, owner_id = owner_id)
-        self.send_channel(app_id, channel, json_d, owner_id = owner_id)
+        self.log_channel(
+            app_id,
+            channel,
+            json_d,
+            owner_id = owner_id
+        )
+        self.send_channel(
+            app_id,
+            channel,
+            json_d,
+            owner_id = owner_id,
+            verify = verify
+        )
 
     def get_subscriptions(self, app_id, channel):
         db = self.get_db("pushi")
@@ -627,9 +703,9 @@ class State(appier.Mongo):
             )
             db.assoc.insert(assoc)
 
-    def send_channel(self, app_id, channel, json_d, owner_id = None):
+    def send_channel(self, app_id, channel, json_d, owner_id = None, verify = True):
         state = self.get_state(app_id = app_id)
-        if owner_id: self.verify_presence(app_id, owner_id, channel)
+        if owner_id and verify: self.verify_presence(app_id, owner_id, channel)
         sockets = state.channel_sockets.get(channel, [])
         for socket_id in sockets:
             if socket_id == owner_id: continue

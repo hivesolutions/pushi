@@ -181,6 +181,8 @@ class PushiApp(appier.App, appier.Mongo):
         values = [value for value in cursor]
         not values and db.subs.insert(subscription)
 
+        self.state.add_alias(event, "personal-" + user_id)
+
     @appier.private
     @appier.route("/apps/<app_id>/unsubscribe", "GET")
     def unsubscribe(self, app_id, event, user_id):
@@ -194,6 +196,8 @@ class PushiApp(appier.App, appier.Mongo):
             user_id = user_id
         )
         db.subs.remove(subscription)
+
+        self.state.remove_alias(event, "personal-" + user_id)
 
     @appier.route("/apps/<app_id>/subscribe_apn", "GET")
     def subscribe_apn(self, app_id, token, event, auth = None):

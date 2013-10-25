@@ -43,6 +43,13 @@ this approach it's possible to know when a new user connects to the channel and 
 one disconnect (no more connection with the same `user_id` are present). These channels
 are considered private and so are subject to validation from the server side.
 
+### Personal Channels
+
+This channels provide the capability to agregate a series of (personal) subscriptions
+into a single channel (for simplicity). This way it's easy to agregate a stream of
+notifications that arise from a group of channels. This channel must be used together
+with the publish subscribe model. A channel of this type should be named `personal-<user_id>`.
+
 ### Peer Channels
 
 Targeted at chat environment allows for the creation of automatic channels for the

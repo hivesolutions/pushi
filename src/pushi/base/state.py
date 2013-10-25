@@ -230,10 +230,16 @@ class State(appier.Mongo):
         state = self.get_state(app_key = app_key)
         channel_socket = (channel, socket_id)
 
+        # retrieves the complete set of channels for the socket id and
+        # adds the current channel to it (subscription) then updates the
+        # association between the socket id and the channels
         channels = state.socket_channels.get(socket_id, [])
         channels.append(channel)
         state.socket_channels[socket_id] = channels
 
+        # retrieves the complete set of sockets for the channels (inverted)
+        # association and adds the current socket id to the list then
+        # re-updates the inverted map with the sockets list
         sockets = state.channel_sockets.get(channel, [])
         sockets.append(socket_id)
         state.channel_sockets[channel] = sockets
@@ -705,7 +711,7 @@ class State(appier.Mongo):
         for socket_id in sockets:
             if socket_id == owner_id: continue
             self.send_socket(socket_id, json_d)
-        
+
         # iterates over the complete set of handler currently defined
         # to send the message also through these channels, in case there's
         # a failure the event is logged to avoid unwanted exceptions

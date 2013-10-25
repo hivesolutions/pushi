@@ -710,9 +710,18 @@ class State(appier.Mongo):
         for socket_id in sockets:
             if socket_id == owner_id: continue
             self.send_socket(socket_id, json_d)
-
+        
+        # iterates over the complete set of handler currently defined
+        # to send the message also through these channels, in case there's
+        # a failure the event is logged to avoid unwanted exceptions
         for handler in self.handlers:
-            handler.send(app_id, channel, json_d)
+            try:
+                handler.send(app_id, channel, json_d)
+            except BaseException, exception:
+                self.app.logger.info(
+                    "Problem using handler '%s' for sending - %s" %\
+                    (handler.name, unicode(exception))
+                )
 
     def send_socket(self, socket_id, json_d):
         self.server.send_socket(socket_id, json_d)

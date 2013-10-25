@@ -45,6 +45,7 @@ import netius.clients
 class ApnHandler(object):
 
     def __init__(self, owner):
+        self.name = "apn"
         self.owner = owner
         self.subs = {}
 

@@ -786,26 +786,45 @@ class State(appier.Mongo):
         self.server.send_socket(socket_id, json_d)
 
     def get_state(self, app_id = None, app_key = None):
+        # sets the initial value of the state value as invalid so
+        # that by default the returned value is invalid
         state = None
 
+        # in case no app id and no app key are provided there's no
+        # way to retrieve the app state (no identifier) and as such
+        # must raise an exception indicating the problem
         if not app_id and not app_key:
             raise RuntimeError("No app identifier was provided")
 
+        # retrieves the state object taking into account first the
+        # app id and then the app key (as an alternative) after this
+        # call the state object should be populated
         if app_id: state = self.app_id_state.get(app_id, None)
-        if app_key: state = self.app_key_state.get(app_key, None)
+        elif app_key: state = self.app_key_state.get(app_key, None)
 
+        # in case the state object is found (already created) returns
+        # the value immediately (to the caller method)
         if state: return state
 
+        # retrieves the app object for the provided parameters and in case
+        # the app is not found raises an exception indicating so
         app = self.get_app(app_id = app_id, app_key = app_key)
         if not app: raise RuntimeError("No app found for the provided parameters")
 
+        # unpacks both the app id and key values from the app object
+        # to be used in the construction of the app state object
         app_id = app["app_id"]
         app_key = app["key"]
 
+        # creates the (app) state object with the provided app id and key
+        # and the updates the associated dictionaries to access the app state
+        # from both the app id and key values
         state = AppState(app_id, app_key)
         self.app_id_state[app_id] = state
         self.app_key_state[app_key] = state
 
+        # returns the creates state object to the caller method, as requested
+        # (this state object has just been created)
         return state
 
     def get_channel(self, app_key, channel):

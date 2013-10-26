@@ -37,14 +37,21 @@ __copyright__ = "Copyright (c) 2008-2012 Hive Solutions Lda."
 __license__ = "GNU General Public License (GPL), Version 3"
 """ The license for the module """
 
-import handler
-
-class WebHandler(handler.Handler):
+class Handler(object):
     """
-    Event handler to be used for web based "hooks".
-    This handler provides the abstraction for the http
-    client based callbacks.
+    Top level abstract handler from which all the
+    (message) handlers should inherit.
+
+    This class provides the base implementation and
+    infra-structure for leveraging handling logic.
     """
 
-    def __init__(self, owner):
-        handler.Handler.__init__(self, owner, name = "web")
+    def __init__(self, owner, name = None):
+        self.owner = owner
+        self.name = name or self.__class__.__name__
+
+    def send(self, app_id, event, json_d):
+        pass
+
+    def load(self):
+        pass

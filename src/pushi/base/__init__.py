@@ -35,9 +35,11 @@ __license__ = "GNU General Public License (GPL), Version 3"
 """ The license for the module """
 
 import apn
+import handler
 import state
 import web
 
 from apn import *
+from handler import *
 from state import *
 from web import *

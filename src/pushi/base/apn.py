@@ -42,9 +42,9 @@ import tempfile
 
 import netius.clients
 
-import state
+import handler
 
-class ApnHandler(state.Handler):
+class ApnHandler(handler.Handler):
     """
     Pushi handler (adapter) for the apple push notification
     (apn) infra-structure, so that it's possible to send
@@ -52,8 +52,7 @@ class ApnHandler(state.Handler):
     """
 
     def __init__(self, owner):
-        state.Handler.__init__(self, name = "apn")
-        self.owner = owner
+        handler.Handler.__init__(self, owner, name = "apn")
         self.subs = {}
 
     def send(self, app_id, event, json_d):

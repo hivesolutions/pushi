@@ -177,10 +177,10 @@ class State(appier.Mongo):
         # creates the map that associates the alias with the
         # channels that it represents key to values association
         self.alias = {}
-        
+
         # retrieves the reference to the database and uses it to
         # find the complete set of subscriptions and then uses them
-        # to create the complete personal to proper channel relation 
+        # to create the complete personal to proper channel relation
         db = self.get_db("pushi")
         subs = db.subs.find()
         for sub in subs:
@@ -356,7 +356,7 @@ class State(appier.Mongo):
                     channel
                 )
             return
-        
+
         # uses the provided app key to retrieve the state of the
         # app and then creates the channel socket tuple that is
         # going to be used for unique identification

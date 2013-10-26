@@ -174,14 +174,21 @@ class State(appier.Mongo):
         of reasons including the personal channels.
         """
 
+        # creates the map that associates the alias with the
+        # channels that it represents key to values association
         self.alias = {}
-
+        
+        # retrieves the reference to the database and uses it to
+        # find the complete set of subscriptions and then uses them
+        # to create the complete personal to proper channel relation 
         db = self.get_db("pushi")
         subs = db.subs.find()
         for sub in subs:
+            app_id = sub["app_id"]
             user_id = sub["user_id"]
             event = sub["event"]
-            self.add_alias(event, "personal-" + user_id)
+            app_key = self.app_id_to_app_key(app_id)
+            self.add_alias(app_key, "personal-" + user_id, event)
 
     def connect(self, connection, app_key, socket_id):
         pass
@@ -209,8 +216,27 @@ class State(appier.Mongo):
         # (either private, presence or peer) and in case it's private verifies
         # if the correct credentials (including auth token) are valid
         is_private = channel.startswith("private-") or\
-            channel.startswith("presence-") or channel.startswith("peer-")
+            channel.startswith("presence-") or channel.startswith("peer-") or\
+            channel.startswith("personal-")
         if is_private and not force: self.verify(app_key, socket_id, channel, auth)
+
+        # verifies if the current channel is of type personal and in
+        # case it's retrieves it's alias (channels) and subscribes to
+        # all of them (as expected), then return immediately
+        is_personal = channel.startswith("personal-")
+        if is_personal:
+            channels = self.get_alias(app_key, channel)
+            for channel in channels:
+                self.subscribe(
+                    connection,
+                    app_key,
+                    socket_id,
+                    channel,
+                    auth = auth,
+                    channel_data = channel_data,
+                    force = True
+                )
+            return
 
         # verifies if the channel is of type presence (prefix based
         # verification) and in case it's not invalidate the channel
@@ -316,6 +342,21 @@ class State(appier.Mongo):
             )
 
     def unsubscribe(self, connection, app_key, socket_id, channel):
+        # checks if the current channel is a private one and in case
+        # it's runs the unsubscription operation for all of the alias
+        # channels associated with this personal one
+        is_personal = channel.startswith("personal-")
+        if is_personal:
+            channels = self.get_alias(app_key, channel)
+            for channel in channels:
+                self.unsubscribe(
+                    connection,
+                    app_key,
+                    socket_id,
+                    channel
+                )
+            return
+        
         # uses the provided app key to retrieve the state of the
         # app and then creates the channel socket tuple that is
         # going to be used for unique identification
@@ -597,35 +638,28 @@ class State(appier.Mongo):
         is_subscribed = channel in channels if channels else False
         return is_subscribed
 
-    def add_alias(self, channel, alias):
-        alias_l = self.alias.get(channel, [])
+    def add_alias(self, app_key, channel, alias):
+        alias_m = self.alias.get(app_key, {})
+        alias_l = alias_m.get(channel, [])
         if alias in alias_l: return
 
         alias_l.append(alias)
-        self.alias[channel] = alias_l
+        alias_m[channel] = alias_l
+        self.alias[app_key] = alias_m
 
-    def remove_alias(self, channel, alias):
-        alias_l = self.alias.get(channel, [])
+    def remove_alias(self, app_key, channel, alias):
+        alias_m = self.alias.get(app_key, {})
+        alias_l = alias_m.get(channel, [])
         if not alias in alias_l: return
 
         alias_l.remove(alias)
 
-    def resolve_alias(self, channels):
-        alias = []
-
-        for channel in channels:
-            _alias = self.alias.get(channel, [])
-            alias.extend(_alias)
-
-        if not alias: return alias
-
-        alias_set = set(alias)
-        alias = list(alias_set)
-        return alias
+    def get_alias(self, app_key, channel):
+        alias_m = self.alias.get(app_key, {})
+        return alias_m.get(channel, [])
 
     def trigger(self, app_id, event, data, channels = None, owner_id = None):
         if not channels: channels = ("global",)
-        alias = self.resolve_alias(channels)
 
         for channel in channels: self.trigger_c(
             app_id,
@@ -633,14 +667,6 @@ class State(appier.Mongo):
             event,
             data,
             owner_id = owner_id
-        )
-        for channel in alias: self.trigger_c(
-            app_id,
-            channel,
-            event,
-            data,
-            owner_id = owner_id,
-            verify = False
         )
 
     def trigger_c(self, app_id, channel, event, data, owner_id = None, verify = True):
@@ -752,9 +778,11 @@ class State(appier.Mongo):
 
     def get_channel(self, app_key, channel):
         members = self.get_members(app_key, channel)
+        alias = self.get_alias(app_key, channel)
         return dict(
             name = channel,
-            members = members
+            members = members,
+            alias = alias
         )
 
     def get_members(self, app_key, channel):

@@ -37,11 +37,14 @@ __copyright__ = "Copyright (c) 2008-2012 Hive Solutions Lda."
 __license__ = "GNU General Public License (GPL), Version 3"
 """ The license for the module """
 
-class WebHandler(object):
+import state
+
+class WebHandler(state.Handler):
     """
     Event handler to be used for web based "hooks".
     This handler provides the abstraction for the http
     client based callbacks.
     """
 
-    pass
+    def __init__(self):
+        state.Handler.__init__(self, name = "web")

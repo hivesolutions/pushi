@@ -57,6 +57,24 @@ import appier
 
 import apn
 
+class Handler(object):
+    """
+    Top level abstract handler from which all the
+    (message) handlers should inherit.
+
+    This class provides the base implementation and
+    infra-structure for leveraging handling logic.
+    """
+
+    def __init__(self, name = None):
+        self.name = name or self.__class__.__name__
+
+    def send(self, app_id, event, json_d):
+        pass
+
+    def load(self):
+        pass
+
 class AppState(object):
     """
     The state object that defined the various state variables

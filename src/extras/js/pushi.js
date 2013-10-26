@@ -222,8 +222,8 @@ Pushi.prototype.onodisconnect = function(data) {
 };
 
 Pushi.prototype.onsubscribe = function(channel, data) {
-    var channel = this.channels[channel];
-    channel.confirm(data);
+    var _channel = this.channels[channel];
+    _channel.confirm(data);
     this.trigger("subscribe", channel, data);
 };
 

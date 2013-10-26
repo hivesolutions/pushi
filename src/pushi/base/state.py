@@ -67,6 +67,7 @@ class AppState(object):
     def __init__(self, app_id, app_key):
         self.app_id = app_id
         self.app_key = app_key
+        self.alias = {}
         self.socket_channels = {}
         self.channel_sockets = {}
         self.channel_info = {}
@@ -174,10 +175,6 @@ class State(appier.Mongo):
         of reasons including the personal channels.
         """
 
-        # creates the map that associates the alias with the
-        # channels that it represents key to values association
-        self.alias = {}
-
         # retrieves the reference to the database and uses it to
         # find the complete set of subscriptions and then uses them
         # to create the complete personal to proper channel relation
@@ -191,17 +188,16 @@ class State(appier.Mongo):
             self.add_alias(app_key, "personal-" + user_id, event)
 
     def add_alias(self, app_key, channel, alias):
-        alias_m = self.alias.get(app_key, {})
-        alias_l = alias_m.get(channel, [])
+        state = self.get_state(app_key = app_key)
+        alias_l = state.alias.get(channel, [])
         if alias in alias_l: return
 
         alias_l.append(alias)
-        alias_m[channel] = alias_l
-        self.alias[app_key] = alias_m
+        state.alias[channel] = alias_l
 
     def remove_alias(self, app_key, channel, alias):
-        alias_m = self.alias.get(app_key, {})
-        alias_l = alias_m.get(channel, [])
+        state = self.get_state(app_key = app_key)
+        alias_l = state.alias.get(channel, [])
         if not alias in alias_l: return
 
         alias_l.remove(alias)
@@ -292,27 +288,44 @@ class State(appier.Mongo):
         # done in the subscription process
         if not channel_data: return
 
+        # unpacks the information from the channel data, defaulting
+        # some of the values to their fallback values
         user_id = channel_data["user_id"]
         is_peer = channel_data.get("peer", False)
 
+        # "saves" the channel data for the channel socket tuple in the
+        # appropriate data structure to be used latter
         state.channel_socket_data[channel_socket] = channel_data
 
+        # retrieves the channel info for the channel that is going to be
+        # subscribed and "unpacks" the complete state information from it
+        # so that it may be used and updated
         info = state.channel_info.get(channel, {})
         users = info.get("users", {})
         members = info.get("members", {})
         conns = info.get("conns", [])
         user_count = info.get("user_count", 0)
 
+        # adds the current connection to the list of connection for the
+        # the current channel (state information update)
         conns.append(connection)
 
+        # retrieves the list of connection to the current user id that is
+        # going to be used and adds the current connection, then re-updates
+        # the user connections list and the channel data
         user_conns = users.get(user_id, [])
         user_conns.append(connection)
         users[user_id] = user_conns
         members[user_id] = channel_data
 
+        # verifies if the current subscription is going to create a new user
+        # subscription (that must be logger) this is the case if the number
+        # of connection currently subscribed is one
         is_new = len(user_conns) == 1
         if is_new: user_count += 1
 
+        # updates the info dictionary with the new complete set of values for
+        # the channel information
         info["users"] = users
         info["members"] = members
         info["conns"] = conns
@@ -324,8 +337,13 @@ class State(appier.Mongo):
         # overhead but provides peer to peer communication
         is_peer and self.subscribe_peer_all(app_key, connection, channel)
 
+        # in case the connection does not represent a new user logging in must
+        # return immediately, because there's nothing remaining to be done
         if not is_new: return
 
+        # creates the json dictionary containing the event to be sent to all
+        # of the socket in the channel indicating the presence change for the
+        # "new" user that has just logged in (member added)
         json_d = dict(
             event = "pusher:member_added",
             member = json.dumps(channel_data),
@@ -352,6 +370,9 @@ class State(appier.Mongo):
             _channel_data = state.channel_socket_data.get(_channel_socket)
             if not _channel_data: continue
 
+            # retrives the user id of the current channel data for the user
+            # in iteration and the uses this value to subscribe it for the
+            # peer channel with the current member (that was just added)
             _user_id = _channel_data["user_id"]
             self.subscribe_peer(
                 app_key, _connection, channel, user_id, _user_id
@@ -791,8 +812,8 @@ class State(appier.Mongo):
         return members
 
     def get_alias(self, app_key, channel):
-        alias_m = self.alias.get(app_key, {})
-        return alias_m.get(channel, [])
+        state = self.get_state(app_key = app_key)
+        return state.alias.get(channel, [])
 
     def get_events(self, app_key, channel, count = 10):
         is_personal = channel.startswith("personal-")

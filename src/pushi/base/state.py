@@ -469,19 +469,31 @@ class State(appier.Mongo):
         # remain for the unsubscribe operation and so the function may return
         if not is_old: return
 
+        # verifies if the current set of connection is empty (count is zero) so that
+        # it's possible to know if the channel info for the channel should be removed
         is_empty = len(conns) == 0
         if is_empty: del state.channel_info[channel]
 
+        # creates the map that is giong to be used in the event to be sent to the set
+        # sockets subscribed to the channel indicating that the member has been removed
         json_d = dict(
             event = "pusher:member_removed",
             member = json.dumps(channel_data),
             channel =  channel
         )
 
+        # iterates over the complete set of connection subscribed to the channel to notify
+        # them about the member that has been removed from the channel
         for _connection in conns:
+            # in case the current connection in iteration is the same as the
+            # connection in subscription skips the current iteration otherwise
+            # send the "member removed" message to the connection
             if _connection == connection: continue
             _connection.send_pushi(json_d)
 
+            # in case the current subscription does not have the peer "mode" enabled
+            # there's no need to continue as the rest of the iteration is dedicated
+            # to the subscription of the peer channels
             if not is_peer: continue
 
             # retrieves the socket id of the current connection in iteration
@@ -494,6 +506,8 @@ class State(appier.Mongo):
             _channel_data = state.channel_socket_data.get(_channel_socket)
             if not _channel_data: continue
 
+            # retrieves the user id for the connection in iteration for the current
+            # channel and uses it to subscribe the connection to the peer channel
             _user_id = _channel_data["user_id"]
             self.unsubscribe_peer(
                 app_key, _connection, channel, user_id, _user_id

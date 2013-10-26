@@ -28,7 +28,24 @@ var PUSHI_CONNECTIONS = {}
 var Channel = function(pushi, name) {
     this.pushi = pushi;
     this.name = name;
+    this.data = null;
+    this.subscribed = false;
 };
+
+Channel.prototype.confirm = function(data) {
+    var alias = data.alias || [];
+    for (var index = 0; index < alias.length; index++) {
+        var name = alias[index];
+
+        var channel = new Channel(this.pushi, name);
+        this.pushi.channels[name] = channel;
+
+        this.pushi.onsubscribe(name, {});
+    }
+
+    this.data = data;
+    this.subscribed = true;
+}
 
 Channel.prototype.trigger = function(event, data) {
     this.pushi.sendChannel(event, data, this.name);
@@ -205,6 +222,8 @@ Pushi.prototype.onodisconnect = function(data) {
 };
 
 Pushi.prototype.onsubscribe = function(channel, data) {
+    var channel = this.channels[channel];
+    channel.confirm(data);
     this.trigger("subscribe", channel, data);
 };
 
@@ -303,7 +322,7 @@ Pushi.prototype.subscribe = function(channel, force) {
         var _channel = this._base.channels[channel];
         if (_channel && !force) {
             setTimeout(function() {
-                        self.onsubscribe(channel);
+                        self.onsubscribe(channel, _channel.data);
                     });
             this.channels[channel] = _channel;
             return _channel;
@@ -323,10 +342,15 @@ Pushi.prototype.subscribe = function(channel, force) {
         this.subscribePublic(channel);
     }
 
+    // retrieves the channel as the name value and then creates
+    // a channel object with the current contect and the name and
+    // then sets the channel in the channels map structure
     var name = channel;
     var channel = new Channel(this, name);
     this.channels[name] = channel;
 
+    // returns the channel structure as a result of this function
+    // to be used by the caller method or function
     return channel;
 };
 

@@ -658,6 +658,32 @@ class State(appier.Mongo):
         alias_m = self.alias.get(app_key, {})
         return alias_m.get(channel, [])
 
+    def get_events(self, app_key, channel, count = 10):
+        is_personal = channel.startswith("personal-")
+        if not is_personal: return []
+
+        user_id = channel[9:]
+        app_id = self.app_key_to_app_id(app_key)
+
+        db = self.get_db("pushi")
+        assoc = dict(
+            app_id = app_id,
+            user_id = user_id
+        )
+        cursor = db.assoc.find(
+            assoc,
+            limit = count,
+            sort = [("_id", -1)]
+        )
+        mids = [assoc["mid"] for assoc in cursor]
+
+        event = dict(mid = {"$in" : mids})
+        cursor = db.event.find(event, sort = [("_id", -1)])
+        events = [event for event in cursor]
+        for event in events: del event["_id"]
+
+        return events
+
     def trigger(self, app_id, event, data, channels = None, owner_id = None):
         if not channels: channels = ("global",)
 
@@ -725,6 +751,7 @@ class State(appier.Mongo):
         subscriptions = self.get_subscriptions(app_id, channel)
         for subscription in subscriptions:
             assoc = dict(
+                app_id = app_id,
                 mid = event["mid"],
                 user_id = subscription["user_id"]
             )
@@ -779,10 +806,12 @@ class State(appier.Mongo):
     def get_channel(self, app_key, channel):
         members = self.get_members(app_key, channel)
         alias = self.get_alias(app_key, channel)
+        events = self.get_events(app_key, channel)
         return dict(
             name = channel,
             members = members,
-            alias = alias
+            alias = alias,
+            events = events
         )
 
     def get_members(self, app_key, channel):

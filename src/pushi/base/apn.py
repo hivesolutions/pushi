@@ -43,6 +43,11 @@ import tempfile
 import netius.clients
 
 class ApnHandler(object):
+    """
+    Pushi handler (adapter) for the apple push notification
+    (apn) infra-structure, so that it's possible to send
+    push notification to ios/osx devices.
+    """
 
     def __init__(self, owner):
         self.name = "apn"

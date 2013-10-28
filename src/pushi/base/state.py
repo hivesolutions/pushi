@@ -768,8 +768,15 @@ class State(appier.Mongo):
             db.assoc.insert(assoc)
 
     def send_channel(self, app_id, channel, json_d, owner_id = None, verify = True):
+        # retrieves the state of the current app to be used in the sending and
+        # verifies that the owner (socket) identifier is present in the channel
+        # (but only in case the verify flag is present)
         state = self.get_state(app_id = app_id)
         if owner_id and verify: self.verify_presence(app_id, owner_id, channel)
+
+        # retrieves the complete set of sockets associated with the channel
+        # and sends the json data through the socket, avoiding sending the
+        # data through the same socket that originated the event
         sockets = state.channel_sockets.get(channel, [])
         for socket_id in sockets:
             if socket_id == owner_id: continue

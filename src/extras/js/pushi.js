@@ -33,7 +33,7 @@ var Channel = function(pushi, name) {
 };
 
 Channel.prototype.confirm = function(data) {
-    var alias = data.alias || [];
+    var alias = (data && data.alias) || [];
     for (var index = 0; index < alias.length; index++) {
         var name = alias[index];
 

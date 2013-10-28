@@ -239,6 +239,7 @@ class PushiApp(appier.App, appier.Mongo):
         _data = data.get("data", None)
         event = data.get("event", "message")
         channel = data.get("channel", "global")
+        print channel
         if not data: raise RuntimeError("No data set for event")
         self.state.trigger_c(app_id, channel, event, _data, verify = False)
 

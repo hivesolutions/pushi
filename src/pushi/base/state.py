@@ -875,6 +875,10 @@ class State(appier.Mongo):
         state = self.get_state(app_key = app_key)
         return state.alias.get(channel, [])
 
+    def get_channels(self, app_key, alias):
+        state = self.get_state(app_key = app_key)
+        return state.alias_i.get(alias, [])
+
     def get_events(self, app_key, channel, count = 10):
         is_personal = channel.startswith("personal-")
         if not is_personal: return []

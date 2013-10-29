@@ -80,9 +80,28 @@ class ApnHandler(handler.Handler):
         try: cer_file.write(cer_data)
         finally: cer_file.close()
 
-        events = self.subs.get(app_id, {})
-        tokens = events.get(event, [])
+        # resolves the complete set of (extra) channels for the provided
+        # event assuming that it may be associated with alias, then creates
+        # the complete list of event containing also the "extra" events
+        extra = self.owner.get_channels(event)
+        events = [event] + extra
 
+        # retrieves the complete set of subscriptions for the current apn
+        # infra-structure to be able to resolve the appropriate tokens
+        subs = self.subs.get(app_id, {})
+
+        # creates the initial list of tokens to be notified and then populates
+        # the list with the various token associated with the complete set of
+        # resolved events, note that a set is created at the end so that one
+        # token gets notified only once (no double notifications)
+        tokens = []
+        for event in events:
+            _tokens = subs.get(event, [])
+            tokens.extend(_tokens)
+        tokens = set(tokens)
+
+        # iterates over the complete set of tokens to be notified and notifies
+        # them using the current apn client infra-structure
         for token in tokens:
             apn_client = netius.clients.APNClient()
             apn_client.message(

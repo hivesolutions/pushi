@@ -116,17 +116,21 @@ class Pushi:
         )
         return result
 
-    def update(self, **kwargs):
+    def update(self, app_id = None, **kwargs):
         # runs the ensure login call making sure that the login token
         # is currently present in the environment, this is required
         # to perform secured remote calls
         token = self.ensure_login()
+        
+        # retrieves the proper app id to be used defaulting to the current
+        # defined app id in case none is provided
+        app_id = app_id or self.app_id
 
         # runs the pit call that will create the app with the provided
         # name then returns the returning map to the caller method, it
         # should contain the newly updated information for the app
         result = appier.put(
-            self.base_url + "/apps/%s" % self.app_id,
+            self.base_url + "/apps/%s" % app_id,
             data_j = kwargs,
             params = dict(sid = token),
             auth_callback = self.auth_callback
@@ -227,3 +231,6 @@ class Pushi:
             auth_callback = self.auth_callback
         )
         return result
+
+
+

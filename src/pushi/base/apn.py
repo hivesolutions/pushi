@@ -38,6 +38,7 @@ __license__ = "GNU General Public License (GPL), Version 3"
 """ The license for the module """
 
 import os
+import shutil
 import tempfile
 
 import netius.clients
@@ -64,21 +65,38 @@ class ApnHandler(handler.Handler):
         app = self.owner.get_app(app_id = app_id)
         key_data = app.get("apn_key", None)
         cer_data = app.get("apn_cer", None)
+        sandbox = app.get("apn_sandbox", True)
 
         if not key_data: raise RuntimeError("No apn key defined")
         if not cer_data: raise RuntimeError("No apn certificate defined")
 
+        # creates a new temporary directory that will be used to store
+        # the temporary key and certificate files for ssl
         path = tempfile.mkdtemp()
-        key_path = os.path.join(path, "apn.key")
-        cer_path = os.path.join(path, "apn.cer")
 
-        key_file = open(key_path, "wb")
-        try: key_file.write(key_data)
-        finally: key_file.close()
+        try:
+            # creates the full paths to both the key and certificate
+            # files using the temporary path as base
+            key_path = os.path.join(path, "apn.key")
+            cer_path = os.path.join(path, "apn.cer")
 
-        cer_file = open(cer_path, "wb")
-        try: cer_file.write(cer_data)
-        finally: cer_file.close()
+            # opens the ssl key file for writing (in binary mode) and
+            # then writes the current data into it so that it may be
+            # used by the encryption infra-structure
+            key_file = open(key_path, "wb")
+            try: key_file.write(key_data)
+            finally: key_file.close()
+
+            # opens the temporary certificate file and writes
+            # the retrieved certificate data into it, to be used
+            # temporarily by the ssl infra-structure
+            cer_file = open(cer_path, "wb")
+            try: cer_file.write(cer_data)
+            finally: cer_file.close()
+        finally:
+            # removes the temporary directory (all of the files) so that
+            # no extra files are stores in the curret machine (file leak)
+            shutil.rmtree(path, ignore_errors = True)
 
         # retrieves the app key for the retrieved app by unpacking the current
         # app structure into the appropriate values
@@ -107,11 +125,19 @@ class ApnHandler(handler.Handler):
         # iterates over the complete set of tokens to be notified and notifies
         # them using the current apn client infra-structure
         for token in tokens:
+            # prints a debug message about the apn message that
+            # is going to be sent (includes token)
+            self.logger.debug("Sending apn message to '%s'" % token)
+
+            self.logger.debug("Sending '%s'" % message)  # @todo remove this
+
+            # creates the new apn client to be used and uses it to
+            # send the new message (should be correctly serialized)
             apn_client = netius.clients.APNClient()
             apn_client.message(
                 token,
                 message = message,
-                sandbox = True,
+                sandbox = sandbox,
                 key_file = key_path,
                 cer_file = cer_path
             )

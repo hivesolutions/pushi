@@ -121,7 +121,7 @@ class Pushi:
         # is currently present in the environment, this is required
         # to perform secured remote calls
         token = self.ensure_login()
-        
+
         # retrieves the proper app id to be used defaulting to the current
         # defined app id in case none is provided
         app_id = app_id or self.app_id
@@ -231,6 +231,3 @@ class Pushi:
             auth_callback = self.auth_callback
         )
         return result
-
-
-

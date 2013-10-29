@@ -49,6 +49,7 @@ class Handler(object):
     def __init__(self, owner, name = None):
         self.owner = owner
         self.name = name or self.__class__.__name__
+        self.logger = owner.app.logger
 
     def send(self, app_id, event, json_d):
         pass

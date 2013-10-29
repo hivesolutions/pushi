@@ -354,6 +354,20 @@ Pushi.prototype.subscribe = function(channel, force) {
     return channel;
 };
 
+Pushi.prototype.unsubscribe = function(channel, force) {
+    // sends the event for the unsubscription of the channel through
+    // the current pushi socket so that no more messages are received
+    // regarding the provided channel
+    this.sendEvent("pusher:unsubscribe", {
+                channel : channel
+            });
+
+    // sets the current channel value as the name and then removed
+    // the channel stucture from the map of channels
+    var name = channel;
+    delete this.channels[name];
+};
+
 Pushi.prototype.subscribePublic = function(channel) {
     this.sendEvent("pusher:subscribe", {
                 channel : channel

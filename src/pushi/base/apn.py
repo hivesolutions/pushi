@@ -116,7 +116,8 @@ class ApnHandler(handler.Handler):
 
     def subscribe(self, app_id, token, event, auth = None):
         is_private = event.startswith("private-") or\
-            event.startswith("presence-") or event.startswith("peer-")
+            event.startswith("presence-") or event.startswith("peer-") or\
+            event.startswith("personal-")
 
         app = self.owner.get_app(app_id = app_id)
         app_key = app["key"]

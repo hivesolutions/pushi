@@ -137,21 +137,27 @@ class Pushi:
         )
         return result
 
-    def trigger(self, channel, data, event = "message"):
+    def trigger(self, channel, data, event = "message", **kwargs):
         # runs the ensure login call making sure that the login token
         # is currently present in the environment, this is required
         # to perform secured remote calls
         token = self.ensure_login()
 
+        # creates the initial json data structure to be used as the message
+        # and then "extends" it with the extra key word arguments passed
+        # to this methods as a method of extension
+        data_j = dict(
+            data = data,
+            event = event,
+            channel = channel
+        )
+        for key in kwargs: data_j[key] = kwargs[key]
+
         # performs the concrete event trigger operation creating an event
         # with the provided information using a secure channel
         result = appier.post(
             self.base_url + "/apps/%s/events" % self.app_id,
-            data_j = dict(
-                data = data,
-                event = event,
-                channel = channel
-            ),
+            data_j = data_j,
             params = dict(sid = token),
             auth_callback = self.auth_callback
         )

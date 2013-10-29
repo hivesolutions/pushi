@@ -69,6 +69,7 @@ class AppState(object):
         self.app_id = app_id
         self.app_key = app_key
         self.alias = {}
+        self.alias_i = {}
         self.socket_channels = {}
         self.channel_sockets = {}
         self.channel_info = {}
@@ -201,12 +202,25 @@ class State(appier.Mongo):
         alias_l.append(alias)
         state.alias[channel] = alias_l
 
+        alias_l = state.alias_i.get(alias, [])
+        if channel in alias_l: return
+
+        alias_l.append(channel)
+        state.alias_i[alias] = alias_l
+
     def remove_alias(self, app_key, channel, alias):
         state = self.get_state(app_key = app_key)
         alias_l = state.alias.get(channel, [])
         if not alias in alias_l: return
 
         alias_l.remove(alias)
+        if not alias_l: del state.alias[channel]
+
+        alias_l = state.alias_i.get(alias, [])
+        if not channel in alias_l: return
+
+        alias_l.remove(channel)
+        if not alias_l: del state.alias_i[alias]
 
     def connect(self, connection, app_key, socket_id):
         pass

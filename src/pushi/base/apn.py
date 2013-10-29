@@ -38,6 +38,7 @@ __license__ = "GNU General Public License (GPL), Version 3"
 """ The license for the module """
 
 import os
+import shutil
 import tempfile
 
 import netius.clients
@@ -116,6 +117,10 @@ class ApnHandler(handler.Handler):
             tokens.extend(_tokens)
         tokens = set(tokens)
 
+        # creates the cleanup function that will be called for
+        # the close operation of the apn client
+        def cleanup(service): shutil.rmtree(path, ignore_errors = True)
+
         # iterates over the complete set of tokens to be notified and notifies
         # them using the current apn client infra-structure
         for token in tokens:
@@ -133,6 +138,7 @@ class ApnHandler(handler.Handler):
                 key_file = key_path,
                 cer_file = cer_path
             )
+            apn_client.bind("close", cleanup)
 
     def load(self):
         db = self.owner.get_db("pushi")

@@ -149,6 +149,28 @@ class PushiServer(netius.servers.WSServer):
         )
         connection.send_pushi(json_d)
 
+    def handle_pusher_unsubscribe(self, connection, json_d):
+        data = json_d.get("data", {})
+        channel = data.get("channel", None)
+
+        self.trigger(
+            "unsubscribe",
+            connection = connection,
+            app_key = connection.app_key,
+            socket_id = connection.socket_id,
+            channel = channel
+        )
+
+        if not self.state: return
+
+        data = self.state.get_channel(connection.app_key, channel)
+        json_d = dict(
+            event = "pusher_internal:unsubscription_succeeded",
+            data = json.dumps(data),
+            channel = channel
+        )
+        connection.send_pushi(json_d)
+
     def handle_event(self, connection, json_d):
         data = json_d["data"]
         event = json_d["event"]

@@ -115,6 +115,7 @@ class State(appier.Mongo):
         self.server.bind("connect", self.connect)
         self.server.bind("disconnect", self.disconnect)
         self.server.bind("subscribe", self.subscribe)
+        self.server.bind("unsubscribe", self.unsubscribe)
 
         # retrieves the various environment variable values that are going
         # to be used in the starting of both the app server and the proper
@@ -375,7 +376,7 @@ class State(appier.Mongo):
             _channel_data = state.channel_socket_data.get(_channel_socket)
             if not _channel_data: continue
 
-            # retrives the user id of the current channel data for the user
+            # retrieves the user id of the current channel data for the user
             # in iteration and the uses this value to subscribe it for the
             # peer channel with the current member (that was just added)
             _user_id = _channel_data["user_id"]

@@ -80,10 +80,14 @@ class ApnHandler(handler.Handler):
         try: cer_file.write(cer_data)
         finally: cer_file.close()
 
+        # retrieves the app key for the retrieved app by unpacking the current
+        # app structure into the appropriate values
+        app_key = app["key"]
+
         # resolves the complete set of (extra) channels for the provided
         # event assuming that it may be associated with alias, then creates
         # the complete list of event containing also the "extra" events
-        extra = self.owner.get_channels(event)
+        extra = self.owner.get_channels(app_key, event)
         events = [event] + extra
 
         # retrieves the complete set of subscriptions for the current apn

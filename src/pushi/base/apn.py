@@ -58,8 +58,8 @@ class ApnHandler(handler.Handler):
 
     def send(self, app_id, event, json_d):
         message = json_d.get("data", None)
-        message = json_d.get("push_data", message)
-        message = json_d.get("apn_data", message)
+        message = json_d.get("push", message)
+        message = json_d.get("apn", message)
         if not message: raise RuntimeError("No message defined")
 
         app = self.owner.get_app(app_id = app_id)

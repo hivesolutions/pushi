@@ -93,54 +93,52 @@ class ApnHandler(handler.Handler):
             cer_file = open(cer_path, "wb")
             try: cer_file.write(cer_data)
             finally: cer_file.close()
+
+            # retrieves the app key for the retrieved app by unpacking the current
+            # app structure into the appropriate values
+            app_key = app["key"]
+
+            # resolves the complete set of (extra) channels for the provided
+            # event assuming that it may be associated with alias, then creates
+            # the complete list of event containing also the "extra" events
+            extra = self.owner.get_channels(app_key, event)
+            events = [event] + extra
+
+            # retrieves the complete set of subscriptions for the current apn
+            # infra-structure to be able to resolve the appropriate tokens
+            subs = self.subs.get(app_id, {})
+
+            # creates the initial list of tokens to be notified and then populates
+            # the list with the various token associated with the complete set of
+            # resolved events, note that a set is created at the end so that one
+            # token gets notified only once (no double notifications)
+            tokens = []
+            for event in events:
+                _tokens = subs.get(event, [])
+                tokens.extend(_tokens)
+            tokens = set(tokens)
+
+            # iterates over the complete set of tokens to be notified and notifies
+            # them using the current apn client infra-structure
+            for token in tokens:
+                # prints a debug message about the apn message that
+                # is going to be sent (includes token)
+                self.logger.debug("Sending apn message to '%s'" % token)
+
+                # creates the new apn client to be used and uses it to
+                # send the new message (should be correctly serialized)
+                apn_client = netius.clients.APNClient()
+                apn_client.message(
+                    token,
+                    message = message,
+                    sandbox = sandbox,
+                    key_file = key_path,
+                    cer_file = cer_path
+                )
         finally:
             # removes the temporary directory (all of the files) so that
             # no extra files are stores in the current machine (file leak)
             shutil.rmtree(path, ignore_errors = True)
-
-        # retrieves the app key for the retrieved app by unpacking the current
-        # app structure into the appropriate values
-        app_key = app["key"]
-
-        # resolves the complete set of (extra) channels for the provided
-        # event assuming that it may be associated with alias, then creates
-        # the complete list of event containing also the "extra" events
-        extra = self.owner.get_channels(app_key, event)
-        events = [event] + extra
-
-        # retrieves the complete set of subscriptions for the current apn
-        # infra-structure to be able to resolve the appropriate tokens
-        subs = self.subs.get(app_id, {})
-
-        # creates the initial list of tokens to be notified and then populates
-        # the list with the various token associated with the complete set of
-        # resolved events, note that a set is created at the end so that one
-        # token gets notified only once (no double notifications)
-        tokens = []
-        for event in events:
-            _tokens = subs.get(event, [])
-            tokens.extend(_tokens)
-        tokens = set(tokens)
-
-        # iterates over the complete set of tokens to be notified and notifies
-        # them using the current apn client infra-structure
-        for token in tokens:
-            # prints a debug message about the apn message that
-            # is going to be sent (includes token)
-            self.logger.debug("Sending apn message to '%s'" % token)
-
-            self.logger.debug("Sending '%s'" % message)  # @todo remove this
-
-            # creates the new apn client to be used and uses it to
-            # send the new message (should be correctly serialized)
-            apn_client = netius.clients.APNClient()
-            apn_client.message(
-                token,
-                message = message,
-                sandbox = sandbox,
-                key_file = key_path,
-                cer_file = cer_path
-            )
 
     def load(self):
         db = self.owner.get_db("pushi")

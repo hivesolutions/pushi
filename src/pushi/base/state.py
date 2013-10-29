@@ -720,15 +720,15 @@ class State(appier.Mongo):
             owner_id = owner_id
         )
 
-    def trigger_c(self, app_id, channel, event, data, owner_id = None, verify = True):
+    def trigger_c(self, app_id, channel, event, data, json_d = None, owner_id = None, verify = True):
         data_t = type(data)
         data = data if data_t in types.StringTypes else json.dumps(data)
 
-        json_d = dict(
-            channel = channel,
-            event = event,
-            data = data
-        )
+        json_d = json_d or dict()
+        if channel: json_d["channel"] = channel
+        if event: json_d["event"] = event
+        if data: json_d["data"] = data
+
         self.log_channel(
             app_id,
             channel,

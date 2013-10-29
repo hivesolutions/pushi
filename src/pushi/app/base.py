@@ -240,7 +240,14 @@ class PushiApp(appier.App, appier.Mongo):
         event = data.get("event", "message")
         channel = data.get("channel", "global")
         if not data: raise RuntimeError("No data set for event")
-        self.state.trigger_c(app_id, channel, event, _data, verify = False)
+        self.state.trigger_c(
+            app_id,
+            channel,
+            event,
+            _data,
+            json_d = data,
+            verify = False
+        )
 
     @appier.private
     @appier.route("/apps/<app_id>/sockets", "GET")

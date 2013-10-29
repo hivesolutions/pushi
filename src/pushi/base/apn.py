@@ -119,7 +119,7 @@ class ApnHandler(handler.Handler):
 
         # creates the cleanup function that will be called for
         # the close operation of the apn client
-        def cleanup(service): shutil.rmtree(path, ignore_errors = True)
+        def cleanup(client): shutil.rmtree(path, ignore_errors = True)
 
         # iterates over the complete set of tokens to be notified and notifies
         # them using the current apn client infra-structure
@@ -138,7 +138,7 @@ class ApnHandler(handler.Handler):
                 key_file = key_path,
                 cer_file = cer_path
             )
-            apn_client.bind("close", cleanup)
+            apn_client.bind("stop", cleanup)
 
     def load(self):
         db = self.owner.get_db("pushi")

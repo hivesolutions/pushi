@@ -95,7 +95,7 @@ class ApnHandler(handler.Handler):
             finally: cer_file.close()
         finally:
             # removes the temporary directory (all of the files) so that
-            # no extra files are stores in the curret machine (file leak)
+            # no extra files are stores in the current machine (file leak)
             shutil.rmtree(path, ignore_errors = True)
 
         # retrieves the app key for the retrieved app by unpacking the current

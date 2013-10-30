@@ -57,16 +57,24 @@ class ApnHandler(handler.Handler):
         self.subs = {}
 
     def send(self, app_id, event, json_d):
+        # tries to retrieve the appropriate message starting from
+        # the most general values to the most specific values,
+        # be aware that the value may be a bit fuzzy
         message = json_d.get("data", None)
         message = json_d.get("push", message)
         message = json_d.get("apn", message)
         if not message: raise RuntimeError("No message defined")
 
+        # retrieves the reference to the app with the defined app id
+        # and extracts the apn specific values for it to be used in
+        # the process of authentication
         app = self.owner.get_app(app_id = app_id)
         key_data = app.get("apn_key", None)
         cer_data = app.get("apn_cer", None)
         sandbox = app.get("apn_sandbox", True)
 
+        # in case no key data or certificate data is present a runtime
+        # error is raised to indicate the problem
         if not key_data: raise RuntimeError("No apn key defined")
         if not cer_data: raise RuntimeError("No apn certificate defined")
 
@@ -116,7 +124,7 @@ class ApnHandler(handler.Handler):
             _tokens = subs.get(event, [])
             tokens.extend(_tokens)
         tokens = set(tokens)
-        
+
         # creates the counter that will be used by the cleanup function
         # to know exactly when to remove the ssl associated files
         pending = len(tokens)
@@ -127,7 +135,7 @@ class ApnHandler(handler.Handler):
         # to the "stop" of the last client
         def cleanup(client):
             pending -= 1
-            if not pending == 0: return 
+            if not pending == 0: return
             shutil.rmtree(path, ignore_errors = True)
 
         # iterates over the complete set of tokens to be notified and notifies

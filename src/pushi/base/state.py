@@ -741,14 +741,17 @@ class State(appier.Mongo):
             app_id,
             channel,
             json_d,
-            owner_id = owner_id
+            owner_id = owner_id,
+            verify = verify,
+            invalid = invalid
         )
         self.send_channel(
             app_id,
             channel,
             json_d,
             owner_id = owner_id,
-            verify = verify
+            verify = verify,
+            invalid = invalid
         )
 
     def get_subscriptions(self, app_id, channel):
@@ -761,7 +764,11 @@ class State(appier.Mongo):
         subscriptions = [subscription for subscription in cursor]
         return subscriptions
 
-    def log_channel(self, app_id, channel, json_d, owner_id = None, has_date = True):
+    def log_channel(self, app_id, channel, json_d, owner_id = None, verify = True, invalid = {}, has_date = True):
+        # verifies that the owner (socket) identifier is present in the channel
+        # (but only in case the verify flag is present)
+        if owner_id and verify: self.verify_presence(app_id, owner_id, channel)
+
         # retrieves the reference to the pushi database that is going
         # to be used for the operation in the logging
         db = self.get_db("pushi")
@@ -778,17 +785,24 @@ class State(appier.Mongo):
         )
         db.event.insert(event)
 
+        # extracts the mid from the event so that it's does not need
+        # to be extracted in every iteration
+        mid = event["mid"]
+
         # retrieves the complete set of subscription for the
         # provided channel and under the current app id to be
         # able to create the proper associations
         subscriptions = self.get_subscriptions(app_id, channel)
         for subscription in subscriptions:
+            user_id = subscription["user_id"]
+            if user_id in invalid: continue
             assoc = dict(
                 app_id = app_id,
-                mid = event["mid"],
-                user_id = subscription["user_id"]
+                mid = mid,
+                user_id = user_id
             )
             db.assoc.insert(assoc)
+            invalid[user_id] = True
 
     def send_channel(self, app_id, channel, json_d, owner_id = None, verify = True, invalid = {}):
         # retrieves the state of the current app to be used in the sending and

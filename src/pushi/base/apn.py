@@ -116,10 +116,19 @@ class ApnHandler(handler.Handler):
             _tokens = subs.get(event, [])
             tokens.extend(_tokens)
         tokens = set(tokens)
+        
+        # creates the counter that will be used by the cleanup function
+        # to know exactly when to remove the ssl associated files
+        pending = len(tokens)
 
         # creates the cleanup function that will be called for
-        # the close operation of the apn client
-        def cleanup(client): shutil.rmtree(path, ignore_errors = True)
+        # the close operation of the apn client, this function
+        # will remove the temporary path when called as a response
+        # to the "stop" of the last client
+        def cleanup(client):
+            pending -= 1
+            if not pending == 0: return 
+            shutil.rmtree(path, ignore_errors = True)
 
         # iterates over the complete set of tokens to be notified and notifies
         # them using the current apn client infra-structure

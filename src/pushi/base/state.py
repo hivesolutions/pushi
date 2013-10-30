@@ -709,18 +709,26 @@ class State(appier.Mongo):
         is_subscribed = channel in channels if channels else False
         return is_subscribed
 
-    def trigger(self, app_id, event, data, channels = None, owner_id = None):
+    def trigger(self, app_id, event, data, channels = None, json_d = None, owner_id = None, verify = True):
         if not channels: channels = ("global",)
+
+        channels_t = type(channels)
+        if not channels_t in (types.ListType, types.TupleType): channels = (channels,)
+
+        invalid = dict()
 
         for channel in channels: self.trigger_c(
             app_id,
             channel,
             event,
             data,
-            owner_id = owner_id
+            json_d = json_d,
+            owner_id = owner_id,
+            verify = verify,
+            invalid = invalid
         )
 
-    def trigger_c(self, app_id, channel, event, data, json_d = None, owner_id = None, verify = True):
+    def trigger_c(self, app_id, channel, event, data, json_d = None, owner_id = None, verify = True, invalid = {}):
         data_t = type(data)
         data = data if data_t in types.StringTypes else json.dumps(data)
 
@@ -782,7 +790,7 @@ class State(appier.Mongo):
             )
             db.assoc.insert(assoc)
 
-    def send_channel(self, app_id, channel, json_d, owner_id = None, verify = True):
+    def send_channel(self, app_id, channel, json_d, owner_id = None, verify = True, invalid = {}):
         # retrieves the state of the current app to be used in the sending and
         # verifies that the owner (socket) identifier is present in the channel
         # (but only in case the verify flag is present)
@@ -794,8 +802,10 @@ class State(appier.Mongo):
         # data through the same socket that originated the event
         sockets = state.channel_sockets.get(channel, [])
         for socket_id in sockets:
+            if socket_id in invalid: continue
             if socket_id == owner_id: continue
             self.send_socket(socket_id, json_d)
+            invalid[socket_id] = True
 
         # iterates over the complete set of handler currently defined
         # to send the message also through these channels, in case there's

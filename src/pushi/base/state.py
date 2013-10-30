@@ -826,7 +826,7 @@ class State(appier.Mongo):
         # a failure the event is logged to avoid unwanted exceptions
         for handler in self.handlers:
             try:
-                handler.send(app_id, channel, json_d)
+                handler.send(app_id, channel, json_d, invalid = invalid)
             except BaseException, exception:
                 self.app.logger.info(
                     "Problem using handler '%s' for sending - %s" %\

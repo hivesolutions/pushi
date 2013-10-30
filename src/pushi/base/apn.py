@@ -56,7 +56,7 @@ class ApnHandler(handler.Handler):
         handler.Handler.__init__(self, owner, name = "apn")
         self.subs = {}
 
-    def send(self, app_id, event, json_d):
+    def send(self, app_id, event, json_d, invalid = {}):
         # tries to retrieve the appropriate message starting from
         # the most general values to the most specific values,
         # be aware that the value may be a bit fuzzy
@@ -141,6 +141,11 @@ class ApnHandler(handler.Handler):
         # iterates over the complete set of tokens to be notified and notifies
         # them using the current apn client infra-structure
         for token in tokens:
+            # in case the current token is present in the current
+            # map of invalid items must skip iteration as the message
+            # has probably already been sent "to the token"
+            if token in invalid: continue
+
             # prints a debug message about the apn message that
             # is going to be sent (includes token)
             self.logger.debug("Sending apn message to '%s'" % token)
@@ -156,6 +161,10 @@ class ApnHandler(handler.Handler):
                 cer_file = cer_path
             )
             apn_client.bind("stop", cleanup)
+
+            # adds the current token to the list of invalid item for
+            # the current message sending stream
+            invalid[token] = True
 
     def load(self):
         db = self.owner.get_db("pushi")

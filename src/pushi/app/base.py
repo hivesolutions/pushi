@@ -202,14 +202,24 @@ class PushiApp(appier.App, appier.Mongo):
         self.state.remove_alias(app_key, "personal-" + user_id, event)
 
     @appier.route("/apps/<app_id>/subscribe_apn", "GET")
-    def subscribe_apn(self, app_id, token, event, auth = None):
+    def subscribe_apn(self, app_id, token, event, auth = None, unsubscribe = True):
         apn_handler = self.state.apn_handler
-        apn_handler.subscribe(app_id, token, event, auth = auth)
+        apn_handler.subscribe(
+            app_id,
+            token,
+            event,
+            auth = auth,
+            unsubscribe = unsubscribe
+        )
 
     @appier.route("/apps/<app_id>/unsubscribe_apn", "GET")
-    def unsubscribe_apn(self, app_id, token, event):
+    def unsubscribe_apn(self, app_id, token, event = None):
         apn_handler = self.state.apn_handler
-        apn_handler.unsubscribe(app_id, token, event)
+        apn_handler.unsubscribe(
+            app_id,
+            token,
+            event = event
+        )
 
     @appier.private
     @appier.route("/apps/<app_id>/events", "GET")

@@ -205,7 +205,7 @@ class Pushi:
         )
         return result
 
-    def subscribe_apn(self, token, event, auth = None):
+    def subscribe_apn(self, token, event, auth = None, unsubscribe = True):
         # runs the apn subscription operation for the provided
         # token and event, this operation uses the currently
         # defined app id for the operation, then returns the
@@ -216,7 +216,8 @@ class Pushi:
                 sid = token,
                 token = token,
                 event = event,
-                auth = auth
+                auth = auth,
+                unsubscribe = unsubscribe
             ),
             auth_callback = self.auth_callback
         )

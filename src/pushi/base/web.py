@@ -91,6 +91,9 @@ class WebHandler(handler.Handler):
             "content-type" : "application/json"
         }
 
+        # creates the on message function that is going to be used at the end of
+        # the request to be able to close the client, this is a clojure and so
+        # current local variables will be exposed to the method
         def on_message(client, parser, message):
             client.close()
 

@@ -128,13 +128,16 @@ class ApnHandler(handler.Handler):
         # creates the counter that will be used by the cleanup function
         # to know exactly when to remove the ssl associated files
         pending = len(tokens)
+        clojure = dict(pending = pending)
 
         # creates the cleanup function that will be called for
         # the close operation of the apn client, this function
         # will remove the temporary path when called as a response
         # to the "stop" of the last client
         def cleanup(client):
+            pending = clojure["pending"]
             pending -= 1
+            clojure["pending"] = pending
             if not pending == 0: return
             shutil.rmtree(path, ignore_errors = True)
 

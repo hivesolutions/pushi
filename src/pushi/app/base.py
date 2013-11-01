@@ -204,6 +204,9 @@ class PushiApp(appier.App, appier.Mongo):
     @appier.private
     @appier.route("/apps/<app_id>/subscribe_apn", "GET")
     def subscribe_apn(self, app_id, token, event, auth = None, unsubscribe = True):
+        if not app_id == self.request.session["app_id"]:
+            raise RuntimeError("Not allowed for app id")
+
         apn_handler = self.state.apn_handler
         apn_handler.subscribe(
             app_id,
@@ -216,6 +219,9 @@ class PushiApp(appier.App, appier.Mongo):
     @appier.private
     @appier.route("/apps/<app_id>/unsubscribe_apn", "GET")
     def unsubscribe_apn(self, app_id, token, event = None):
+        if not app_id == self.request.session["app_id"]:
+            raise RuntimeError("Not allowed for app id")
+
         apn_handler = self.state.apn_handler
         apn_handler.unsubscribe(
             app_id,
@@ -226,6 +232,9 @@ class PushiApp(appier.App, appier.Mongo):
     @appier.private
     @appier.route("/apps/<app_id>/subscribe_web", "GET")
     def subscribe_web(self, app_id, url, event, auth = None, unsubscribe = True):
+        if not app_id == self.request.session["app_id"]:
+            raise RuntimeError("Not allowed for app id")
+
         web_handler = self.state.web_handler
         web_handler.subscribe(
             app_id,
@@ -238,6 +247,9 @@ class PushiApp(appier.App, appier.Mongo):
     @appier.private
     @appier.route("/apps/<app_id>/unsubscribe_web", "GET")
     def unsubscribe_web(self, app_id, url, event = None):
+        if not app_id == self.request.session["app_id"]:
+            raise RuntimeError("Not allowed for app id")
+
         web_handler = self.state.web_handler
         web_handler.unsubscribe(
             app_id,

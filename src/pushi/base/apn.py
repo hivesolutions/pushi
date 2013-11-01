@@ -218,7 +218,7 @@ class ApnHandler(handler.Handler):
             app_id = app_id,
             token = token
         )
-        if token: subscription["event"] = event
+        if event: subscription["event"] = event
         db.apn.remove(subscription)
 
         self.remove(app_id, token, event)

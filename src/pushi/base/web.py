@@ -108,7 +108,7 @@ class WebHandler(handler.Handler):
 
             # prints a debug message about the web message that
             # is going to be sent (includes url)
-            self.logger.debug("Sending post request o '%s'" % url)
+            self.logger.debug("Sending post request to '%s'" % url)
 
             # creates the http client to be used in the post request and
             # sets the headers and the data then registers for the message

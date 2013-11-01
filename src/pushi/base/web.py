@@ -94,6 +94,9 @@ class WebHandler(handler.Handler):
         def on_message(client, parser, message):
             client.close()
 
+        # iterates over the complete set of urls that are going to
+        # be notified about the message, each of them is going to
+        # received an http post request with the data
         for url in urls:
             # in case the current token is present in the current
             # map of invalid items must skip iteration as the message

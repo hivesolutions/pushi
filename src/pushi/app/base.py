@@ -202,6 +202,15 @@ class PushiApp(appier.App, appier.Mongo):
         self.state.remove_alias(app_key, "personal-" + user_id, event)
 
     @appier.private
+    @appier.route("/apps/<app_id>/subscriptions_apn", "GET")
+    def subscriptions_apn(self, app_id, user_id = None, event = None):
+        if not app_id == self.request.session["app_id"]:
+            raise RuntimeError("Not allowed for app id")
+
+        apn_handler = self.state.apn_handler
+        return apn_handler.subscriptions(app_id)
+
+    @appier.private
     @appier.route("/apps/<app_id>/subscribe_apn", "GET")
     def subscribe_apn(self, app_id, token, event, auth = None, unsubscribe = True):
         if not app_id == self.request.session["app_id"]:

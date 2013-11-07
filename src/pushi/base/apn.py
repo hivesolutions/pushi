@@ -190,6 +190,19 @@ class ApnHandler(handler.Handler):
         tokens = events.get(event, [])
         if token in tokens: tokens.remove(token)
 
+    def subscriptions(self, app_id):
+        db = self.owner.get_db("pushi")
+        subscription = dict(
+            app_id = app_id
+        )
+
+        cursor = db.apn.find(subscription)
+        subscriptions = [subscription for subscription in cursor]
+        for subscription in subscriptions: del subscription["_id"]
+        return dict(
+            subscriptions = subscriptions
+        )
+
     def subscribe(self, app_id, token, event, auth = None, unsubscribe = True):
         is_private = event.startswith("private-") or\
             event.startswith("presence-") or event.startswith("peer-") or\

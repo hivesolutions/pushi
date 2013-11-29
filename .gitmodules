@@ -9,4 +9,4 @@
 	url = git@bitbucket.org:hivesolutions/pushi_js.git
 [submodule "src/netius"]
 	path = src/netius
-	url = https://joamag@bitbucket.org/hivesolutions/netius_bin.git
+	url = https://bitbucket.org/hivesolutions/netius_bin.git

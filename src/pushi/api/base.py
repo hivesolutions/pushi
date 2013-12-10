@@ -206,6 +206,11 @@ class Pushi:
         return result
 
     def subscribe_apn(self, token, event, auth = None, unsubscribe = True):
+        # runs the ensure login call making sure that the login token
+        # is currently present in the environment, this is required
+        # to perform secured remote calls
+        _token = self.ensure_login()
+
         # runs the apn subscription operation for the provided
         # token and event, this operation uses the currently
         # defined app id for the operation, then returns the
@@ -213,7 +218,7 @@ class Pushi:
         result = appier.get(
             self.base_url + "/apps/%s/subscribe_apn" % self.app_id,
             params = dict(
-                sid = token,
+                sid = _token,
                 token = token,
                 event = event,
                 auth = auth,
@@ -224,6 +229,11 @@ class Pushi:
         return result
 
     def unsubscribe_apn(self, token, event):
+        # runs the ensure login call making sure that the login token
+        # is currently present in the environment, this is required
+        # to perform secured remote calls
+        _token = self.ensure_login()
+
         # runs the apn unsubscription operation for the provided
         # token and event, this operation uses the currently
         # defined app id for the operation, then returns the
@@ -231,8 +241,52 @@ class Pushi:
         result = appier.get(
             self.base_url + "/apps/%s/unsubscribe_apn" % self.app_id,
             params = dict(
-                sid = token,
+                sid = _token,
                 token = token,
+                event = event
+            ),
+            auth_callback = self.auth_callback
+        )
+        return result
+
+    def subscribe_web(self, url, event, auth = None, unsubscribe = True):
+        # runs the ensure login call making sure that the login token
+        # is currently present in the environment, this is required
+        # to perform secured remote calls
+        token = self.ensure_login()
+
+        # runs the web subscription operation for the provided
+        # token and event, this operation uses the currently
+        # defined app id for the operation, then returns the
+        # resulting dictionary to the caller method
+        result = appier.get(
+            self.base_url + "/apps/%s/subscribe_web" % self.app_id,
+            params = dict(
+                sid = token,
+                url = url,
+                event = event,
+                auth = auth,
+                unsubscribe = unsubscribe
+            ),
+            auth_callback = self.auth_callback
+        )
+        return result
+
+    def unsubscribe_web(self, url, event):
+        # runs the ensure login call making sure that the login token
+        # is currently present in the environment, this is required
+        # to perform secured remote calls
+        token = self.ensure_login()
+
+        # runs the web unsubscription operation for the provided
+        # token and event, this operation uses the currently
+        # defined app id for the operation, then returns the
+        # resulting dictionary to the caller method
+        result = appier.get(
+            self.base_url + "/apps/%s/unsubscribe_web" % self.app_id,
+            params = dict(
+                sid = token,
+                url = url,
                 event = event
             ),
             auth_callback = self.auth_callback

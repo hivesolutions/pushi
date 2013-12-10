@@ -131,8 +131,8 @@ class Pushi:
         # should contain the newly updated information for the app
         result = appier.put(
             self.base_url + "/apps/%s" % app_id,
-            data_j = kwargs,
             params = dict(sid = token),
+            data_j = kwargs,
             auth_callback = self.auth_callback
         )
         return result
@@ -157,8 +157,8 @@ class Pushi:
         # with the provided information using a secure channel
         result = appier.post(
             self.base_url + "/apps/%s/events" % self.app_id,
-            data_j = data_j,
             params = dict(sid = token),
+            data_j = data_j,
             auth_callback = self.auth_callback
         )
         return result

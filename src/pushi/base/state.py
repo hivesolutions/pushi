@@ -133,7 +133,6 @@ class State(appier.Mongo):
         SERVER_SSL = bool(int(os.environ.get("SERVER_SSL", "0")))
         SERVER_SSL_KEY = os.environ.get("SERVER_SSL_KEY", None)
         SERVER_SSL_CER = os.environ.get("SERVER_SSL_CER", None)
-        SERVER_LEVEL = os.environ.get("SERVER_LEVEL", "DEBUG")
 
         # creates the named argument for both the app server and the proper
         # pushi server so that they are correctly initialized and bound to
@@ -152,8 +151,7 @@ class State(appier.Mongo):
             port = SERVER_PORT,
             ssl = SERVER_SSL,
             key_file = SERVER_SSL_KEY,
-            cer_file = SERVER_SSL_CER,
-            level = SERVER_LEVEL
+            cer_file = SERVER_SSL_CER
         )
 
         # creates the threads that will be used as containers for the app and

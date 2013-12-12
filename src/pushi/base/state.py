@@ -105,11 +105,11 @@ class State(appier.Mongo):
         self.app = app
         self.server = server
 
-        # "moves" the (in memory) logging handler of the app to the
+        # "moves" the (in memory) logging handlers of the app to the
         # server so that they share a common logging infrastructure
-        handler = self.app.handler
+        handlers = self.app.handlers
         level = self.app.level
-        self.server.handler = handler
+        self.server.handlers = handlers
         self.server.level = level
 
         # registers for the various base events in the server so that

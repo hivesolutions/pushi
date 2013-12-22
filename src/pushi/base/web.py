@@ -96,6 +96,11 @@ class WebHandler(handler.Handler):
         # current local variables will be exposed to the method
         def on_message(client, parser, message):
             client.close()
+            
+        # creates the on close function that will be responsible for the closing
+        # of the client as defined by the web implementation
+        def on_close(client, connection):
+            client.close()
 
         # iterates over the complete set of urls that are going to
         # be notified about the message, each of them is going to
@@ -116,6 +121,7 @@ class WebHandler(handler.Handler):
             http_client = netius.clients.HTTPClient()
             http_client.post(url, headers = headers, data = data)
             http_client.bind("message", on_message)
+            http_client.bind("close", on_close)
 
             # adds the current url to the list of invalid item for
             # the current message sending stream

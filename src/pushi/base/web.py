@@ -108,7 +108,7 @@ class WebHandler(handler.Handler):
         for url in urls:
             # in case the current token is present in the current
             # map of invalid items must skip iteration as the message
-            # has probably already been sent "to the token"
+            # has probably already been sent "to the target url"
             if url in invalid: continue
 
             # prints a debug message about the web message that

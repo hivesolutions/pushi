@@ -239,6 +239,15 @@ class PushiApp(appier.App, appier.Mongo):
         )
 
     @appier.private
+    @appier.route("/apps/<app_id>/subscriptions_web", "GET")
+    def subscriptions_web(self, app_id, user_id = None, event = None):
+        if not app_id == self.request.session["app_id"]:
+            raise RuntimeError("Not allowed for app id")
+
+        web_handler = self.state.web_handler
+        return web_handler.subscriptions(app_id)
+
+    @appier.private
     @appier.route("/apps/<app_id>/subscribe_web", "GET")
     def subscribe_web(self, app_id, url, event, auth = None, unsubscribe = True):
         if not app_id == self.request.session["app_id"]:

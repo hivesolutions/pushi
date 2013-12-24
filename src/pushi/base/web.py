@@ -96,7 +96,7 @@ class WebHandler(handler.Handler):
         # current local variables will be exposed to the method
         def on_message(client, parser, message):
             client.close()
-            
+
         # creates the on close function that will be responsible for the closing
         # of the client as defined by the web implementation
         def on_close(client, connection):
@@ -147,6 +147,19 @@ class WebHandler(handler.Handler):
         events = self.subs.get(app_id, {})
         urls = events.get(event, [])
         if url in urls: urls.remove(url)
+
+    def subscriptions(self, app_id):
+        db = self.owner.get_db("pushi")
+        subscription = dict(
+            app_id = app_id
+        )
+
+        cursor = db.web.find(subscription)
+        subscriptions = [subscription for subscription in cursor]
+        for subscription in subscriptions: del subscription["_id"]
+        return dict(
+            subscriptions = subscriptions
+        )
 
     def subscribe(self, app_id, url, event, auth = None, unsubscribe = True):
         is_private = event.startswith("private-") or\

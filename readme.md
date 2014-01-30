@@ -107,12 +107,15 @@ that the SSL port used by the app is not the default one:
 
 ## Quick Start
 
+### Client Side
+
 ```javascript
 var pushi = new Pushi("YOU_APP_KEY");
 pushi.bind("message", function(event, data) {
     jQuery("body").append("<div>" + data + "</div>");
 });
 ```
+### Server Side
 
 ```python
 import pushi

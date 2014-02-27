@@ -49,7 +49,7 @@ import hashlib
 import datetime
 import threading
 
-base_dir = (os.path.normpath(os.path.dirname(__file__) or ".") + "/../..")
+base_dir = os.path.normpath((os.path.dirname(__file__) or ".") + "/../..")
 if not base_dir in sys.path: sys.path.insert(0, base_dir)
 
 import pushi

@@ -34,14 +34,14 @@ __copyright__ = "Copyright (c) 2008-2012 Hive Solutions Lda."
 __license__ = "GNU General Public License (GPL), Version 3"
 """ The license for the module """
 
-import apn
-import handler
-import mail
-import state
-import web
+from . import apn
+from . import handler
+from . import mail
+from . import state
+from . import web
 
-from apn import *
-from handler import *
-from mail import *
-from state import *
-from web import *
+from .apn import *
+from .handler import *
+from .mail import *
+from .state import *
+from .web import *

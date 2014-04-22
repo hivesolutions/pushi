@@ -715,7 +715,7 @@ class State(appier.Mongo):
         if not channels: channels = ("global",)
 
         channels_t = type(channels)
-        if not channels_t in (types.ListType, types.TupleType): channels = (channels,)
+        if not channels_t in (list, tuple): channels = (channels,)
 
         invalid = dict()
 
@@ -829,7 +829,7 @@ class State(appier.Mongo):
         for handler in self.handlers:
             try:
                 handler.send(app_id, channel, json_d, invalid = invalid)
-            except BaseException, exception:
+            except BaseException as exception:
                 self.app.logger.info(
                     "Problem using handler '%s' for sending - %s" %\
                     (handler.name, unicode(exception))

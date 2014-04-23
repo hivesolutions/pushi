@@ -3,6 +3,8 @@
 	<name>pushi</name>
 	<comment></comment>
 	<projects>
+		<project>appier</project>
+		<project>netius</project>
 	</projects>
 	<buildSpec>
 		<buildCommand>

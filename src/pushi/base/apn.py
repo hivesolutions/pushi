@@ -78,6 +78,12 @@ class ApnHandler(handler.Handler):
         if not key_data: raise RuntimeError("No apn key defined")
         if not cer_data: raise RuntimeError("No apn certificate defined")
 
+        # ensures that the complete set of data is encoded as bytes, as
+        # this is required for the proper writing of the file, otherwise
+        # and invalid encoding would be raised for some platforms
+        key_data = netius.bytes(key_data)
+        cer_data = netius.bytes(cer_data)
+
         # creates a new temporary directory that will be used to store
         # the temporary key and certificate files for ssl
         path = tempfile.mkdtemp()

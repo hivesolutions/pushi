@@ -69,11 +69,13 @@ class Pushi:
         # creates the string to hashed using both the provided
         # socket id and channel (concatenation)
         string = "%s:%s" % (socket_id, channel)
+        string = appier.bytes(string)
 
         # runs the hmac encryption in the provided secret and
         # the constructed string and returns a string containing
         # both the key and the hexadecimal digest
-        structure = hmac.new(self.app_secret, string, hashlib.sha256)
+        app_secret = appier.bytes(self.app_secret)
+        structure = hmac.new(app_secret, string, hashlib.sha256)
         digest = structure.hexdigest()
         return "%s:%s" % (self.app_key, digest)
 

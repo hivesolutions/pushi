@@ -966,9 +966,11 @@ class State(appier.Mongo):
 
         app = self.get_app(app_key = app_key)
         app_secret = app["secret"]
+        app_secret = appier.bytes(app_secret)
 
         string = "%s:%s" % (socket_id, channel)
-        structure = hmac.new(str(app_secret), str(string), hashlib.sha256)
+        string = appier.bytes(string)
+        structure = hmac.new(app_secret, string, hashlib.sha256)
         digest = structure.hexdigest()
         auth_v = "%s:%s" % (app_key, digest)
 

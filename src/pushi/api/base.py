@@ -74,7 +74,7 @@ class Pushi:
         # runs the hmac encryption in the provided secret and
         # the constructed string and returns a string containing
         # both the key and the hexadecimal digest
-        app_secret = appier.BYTES(self.app_secret)
+        app_secret = appier.bytes(str(self.app_secret))
         structure = hmac.new(app_secret, string, hashlib.sha256)
         digest = structure.hexdigest()
         return "%s:%s" % (self.app_key, digest)

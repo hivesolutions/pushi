@@ -965,7 +965,7 @@ class State(appier.Mongo):
 
         app = self.get_app(app_key = app_key)
         app_secret = app["secret"]
-        app_secret = appier.BYTES(app_secret)
+        app_secret = appier.bytes(str(app_secret))
 
         string = "%s:%s" % (socket_id, channel)
         string = appier.bytes(string)

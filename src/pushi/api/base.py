@@ -66,6 +66,11 @@ class Pushi:
         self.token = None
 
     def authenticate(self, channel, socket_id):
+        # in case the app key is not defined for the current
+        # instance an exception must be raised as it's not possible
+        # to run the authentication process without an app key
+        if not self.app_key: raise RuntimeError("No app key defined")
+
         # creates the string to hashed using both the provided
         # socket id and channel (concatenation)
         string = "%s:%s" % (socket_id, channel)

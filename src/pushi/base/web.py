@@ -41,7 +41,7 @@ import json
 
 import netius.clients
 
-import handler
+from pushi.base import handler
 
 class WebHandler(handler.Handler):
     """

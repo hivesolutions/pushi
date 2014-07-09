@@ -830,7 +830,7 @@ class State(appier.Mongo):
                 handler.send(app_id, channel, json_d, invalid = invalid)
             except BaseException as exception:
                 self.app.logger.info(
-                    "Problem using handler '%s' for sending - %s" %\
+                    "Problem using handler '%s' for sending - %s" %
                     (handler.name, appier.UNICODE(exception))
                 )
 

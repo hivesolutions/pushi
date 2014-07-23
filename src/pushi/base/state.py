@@ -122,7 +122,7 @@ class State(appier.Mongo):
         # retrieves the various environment variable values that are going
         # to be used in the starting of both the app server and the proper
         # pushi server (most of the values have default values)
-        APP_SERVER = os.environ.get("APP_SERVER", "waitress")
+        APP_SERVER = os.environ.get("APP_SERVER", "netius")
         APP_HOST = os.environ.get("APP_HOST", "127.0.0.1")
         APP_PORT = int(os.environ.get("APP_PORT", "8080"))
         APP_SSL = bool(int(os.environ.get("APP_SSL", "0")))

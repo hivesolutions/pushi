@@ -7,17 +7,17 @@
 # This file is part of Hive Pushi System.
 #
 # Hive Pushi System is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
+# it under the terms of the Apache License as published by the Apache
+# Foundation, either version 2.0 of the License, or (at your option) any
+# later version.
 #
 # Hive Pushi System is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-# GNU General Public License for more details.
+# Apache License for more details.
 #
-# You should have received a copy of the GNU General Public License
-# along with Hive Pushi System. If not, see <http://www.gnu.org/licenses/>.
+# You should have received a copy of the Apache License along with
+# Hive Pushi System. If not, see <http://www.apache.org/licenses/>.
 
 __author__ = "João Magalhães <joamag@hive.pt>"
 """ The author(s) of the module """
@@ -34,7 +34,7 @@ __date__ = "$LastChangedDate$"
 __copyright__ = "Copyright (c) 2008-2014 Hive Solutions Lda."
 """ The copyright for the module """
 
-__license__ = "GNU General Public License (GPL), Version 3"
+__license__ = "Apache License, Version 2.0"
 """ The license for the module """
 
 import os
@@ -74,12 +74,12 @@ class Pushi:
         # creates the string to hashed using both the provided
         # socket id and channel (concatenation)
         string = "%s:%s" % (socket_id, channel)
-        string = appier.bytes(string)
+        string = appier.legacy.bytes(string)
 
         # runs the hmac encryption in the provided secret and
         # the constructed string and returns a string containing
         # both the key and the hexadecimal digest
-        app_secret = appier.bytes(str(self.app_secret))
+        app_secret = appier.legacy.bytes(str(self.app_secret))
         structure = hmac.new(app_secret, string, hashlib.sha256)
         digest = structure.hexdigest()
         return "%s:%s" % (self.app_key, digest)

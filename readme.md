@@ -1,4 +1,4 @@
-# Pushi Websockets
+# [![Pushi Websockets](res/logo.png)](http://appier.hive.pt)
 
 Simple yet powerfull infra-structure for handling of websocket connection.
 

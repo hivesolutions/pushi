@@ -54,8 +54,8 @@ if not base_dir in sys.path: sys.path.insert(0, base_dir)
 import pushi
 import appier
 
-from pushi.base import apn
-from pushi.base import web
+from . import apn
+from . import web
 
 class AppState(object):
     """

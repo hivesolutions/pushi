@@ -43,7 +43,7 @@ import tempfile
 
 import netius.clients
 
-from pushi.base import handler
+from . import handler
 
 class ApnHandler(handler.Handler):
     """

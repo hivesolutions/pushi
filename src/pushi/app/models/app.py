@@ -59,6 +59,18 @@ class App(appier_extras.admin.Base):
         index = True
     )
 
+    apn_key = appier.field(
+        meta = "text"
+    )
+
+    apn_cer = appier.field(
+        meta = "text"
+    )
+
+    apn_sandbox = appier.field(
+        type = bool
+    )
+
     @classmethod
     def validate(cls):
         return super(App, cls).validate() + [

@@ -55,3 +55,10 @@ class Event(appier_extras.admin.Base):
     has_date = appier.field(
         type = bool
     )
+
+    @classmethod
+    def validate(cls):
+        return super(Event, cls).validate() + [
+            appier.not_null("channel"),
+            appier.not_empty("channel")
+        ]

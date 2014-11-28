@@ -19,6 +19,9 @@
 # You should have received a copy of the Apache License along with
 # Hive Pushi System. If not, see <http://www.apache.org/licenses/>.
 
+__author__ = "João Magalhães <joamag@hive.pt>"
+""" The author(s) of the module """
+
 __version__ = "1.0.0"
 """ The version of the module """
 
@@ -34,16 +37,36 @@ __copyright__ = "Copyright (c) 2008-2014 Hive Solutions Lda."
 __license__ = "Apache License, Version 2.0"
 """ The license for the module """
 
-from . import apn
-from . import app
-from . import association
-from . import event
-from . import subscription
-from . import web
+import appier
+import appier_extras
 
-from .apn import Apn
-from .app import App
-from .association import Association
-from .event import Event
-from .subscription import Subscription
-from .web import Web
+from . import app
+
+class Web(appier_extras.admin.Base):
+
+    url = appier.field(
+        index = True
+    )
+
+    event = appier.field(
+        index = True
+    )
+
+    app_id = appier.field(
+        type = appier.reference(
+            app.App,
+            name = "app_id"
+        )
+    )
+
+    @classmethod
+    def validate(cls):
+        return super(Web, cls).validate() + [
+            appier.not_null("url"),
+            appier.not_empty("url"),
+
+            appier.not_null("event"),
+            appier.not_empty("event"),
+
+            appier.not_null("app_id")
+        ]

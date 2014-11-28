@@ -37,6 +37,9 @@ __copyright__ = "Copyright (c) 2008-2014 Hive Solutions Lda."
 __license__ = "Apache License, Version 2.0"
 """ The license for the module """
 
+import uuid
+import hashlib
+
 import appier
 import appier_extras
 
@@ -48,15 +51,21 @@ class App(appier_extras.admin.Base):
     )
 
     app_id = appier.field(
-        index = True
+        index = True,
+        safe = True,
+        immutable = True
     )
 
     key = appier.field(
-        index = True
+        index = True,
+        safe = True,
+        immutable = True
     )
 
     secret = appier.field(
-        index = True
+        index = True,
+        safe = True,
+        immutable = True
     )
 
     apn_key = appier.field(
@@ -76,13 +85,16 @@ class App(appier_extras.admin.Base):
         return super(App, cls).validate() + [
             appier.not_null("name"),
             appier.not_empty("name"),
-
-            appier.not_null("app_id"),
-            appier.not_empty("app_id"),
-
-            appier.not_null("key"),
-            appier.not_empty("key"),
-
-            appier.not_null("secret"),
-            appier.not_empty("secret")
+            appier.not_duplicate("name", cls._name())
         ]
+
+    def pre_create(self):
+        appier_extras.admin.Base.pre_create(self)
+
+        app_id = appier.legacy.bytes(str(uuid.uuid4()))
+        key = appier.legacy.bytes(str((uuid.uuid4())))
+        secret = appier.legacy.bytes(str(uuid.uuid4()))
+
+        self.app_id = hashlib.sha256(app_id).hexdigest()
+        self.key = hashlib.sha256(key).hexdigest()
+        self.secret = hashlib.sha256(secret).hexdigest()

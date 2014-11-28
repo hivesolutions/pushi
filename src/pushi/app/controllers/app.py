@@ -37,72 +37,40 @@ __copyright__ = "Copyright (c) 2008-2014 Hive Solutions Lda."
 __license__ = "Apache License, Version 2.0"
 """ The license for the module """
 
-import uuid
-import hashlib
-
 import appier
+
+import pushi.app.models
 
 class AppController(appier.Controller):
 
     @appier.private
     @appier.route("/apps", "GET")
     def list(self):
-        db = self.get_db("pushi")
-        apps = [app for app in db.app.find()]
-        for app in apps: del app["_id"]
+        apps = pushi.app.models.App.find(map = True)
         return dict(
             apps = apps
         )
 
     @appier.route("/apps", "POST")
-    def create(self, data):
-        name = data["name"]
-
-        db = self.get_db("pushi")
-        app = db.app.find_one(dict(name = name))
-        if app: raise RuntimeError("Duplicated app name")
-
-        app_id = str(uuid.uuid4())
-        key = str(uuid.uuid4())
-        secret = str(uuid.uuid4())
-
-        app_id = hashlib.sha256(app_id).hexdigest()
-        key = hashlib.sha256(key).hexdigest()
-        secret = hashlib.sha256(secret).hexdigest()
-
-        app = dict(
-            name = name,
-            app_id = app_id,
-            key = key,
-            secret = secret
-        )
-
-        db.app.insert(app)
-        del app["_id"]
-
-        return app
+    def create(self):
+        app = pushi.app.models.App.new()
+        app.save()
+        return app.map()
 
     @appier.private
     @appier.route("/apps/<app_id>", "PUT")
-    def update_app(self, app_id, data):
+    def update(self, app_id):
         if not app_id == self.request.session["app_id"]:
             raise RuntimeError("Not allowed for app id")
 
-        db = self.get_db("pushi")
-        app = db.app.find_one(dict(app_id = app_id))
-        if not app: raise RuntimeError("App not found")
-
-        if "name" in data: del data["name"]
-        if "app_id" in data: del data["app_id"]
-        if "key" in data: del data["key"]
-        if "secret" in data : del data["secret"]
-
-        for key, value in data.iteritems(): app[key] = value
-        db.app.save(app)
+        app = pushi.app.models.App.get(app_id = app_id)
+        app.apply()
+        app.save()
+        return app
 
     @appier.private
     @appier.route("/apps/<app_id>/ping", "GET")
-    def ping_app(self, app_id):
+    def ping(self, app_id):
         if not app_id == self.request.session["app_id"]:
             raise RuntimeError("Not allowed for app id")
 

@@ -64,6 +64,7 @@ class PushiApp(appier.App, appier.Mongo):
 
     def info(self, data = {}):
         info = appier.App.info(self, data)
+        if not self.state: return info
         server = self.state.server
         info["service"] = server.info_dict()
         return info

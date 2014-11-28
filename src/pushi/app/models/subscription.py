@@ -44,17 +44,11 @@ from . import app
 
 class Subscription(appier_extras.admin.Base):
 
-    name = appier.field(
-        index = True,
-        default = True
-    )
-
-    app_id = appier.field(
+    user_id = appier.field(
         index = True
     )
 
-    user_id = appier.field(
-        type = int,
+    event = appier.field(
         index = True
     )
 
@@ -68,15 +62,11 @@ class Subscription(appier_extras.admin.Base):
     @classmethod
     def validate(cls):
         return super(Subscription, cls).validate() + [
-            appier.not_null("name"),
-            appier.not_empty("name"),
+            appier.not_null("user_id"),
+            appier.not_empty("user_id"),
 
-            appier.not_null("app_id"),
-            appier.not_empty("app_id"),
+            appier.not_null("event"),
+            appier.not_empty("event"),
 
-            appier.not_null("key"),
-            appier.not_empty("key"),
-
-            appier.not_null("secret"),
-            appier.not_empty("secret")
+            appier.not_null("app_id")
         ]

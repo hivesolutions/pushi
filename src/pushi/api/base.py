@@ -47,7 +47,7 @@ BASE_URL = "https://puxiapp.com:9090"
 """ The base url to be used by the api to access
 the remote endpoints, should not be changed """
 
-class Pushi:
+class Pushi(object):
     """
     Base class for the construction of the pushi
     proxy object for interaction with the server

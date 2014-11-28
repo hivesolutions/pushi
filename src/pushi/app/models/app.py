@@ -69,11 +69,11 @@ class App(appier_extras.admin.Base):
     )
 
     apn_key = appier.field(
-        meta = "text"
+        meta = "longtext"
     )
 
     apn_cer = appier.field(
-        meta = "text"
+        meta = "longtext"
     )
 
     apn_sandbox = appier.field(
@@ -87,6 +87,10 @@ class App(appier_extras.admin.Base):
             appier.not_empty("name"),
             appier.not_duplicate("name", cls._name())
         ]
+
+    @classmethod
+    def list_names(cls):
+        return ["name", "app_id", "apn_sandbox"]
 
     def pre_create(self):
         appier_extras.admin.Base.pre_create(self)

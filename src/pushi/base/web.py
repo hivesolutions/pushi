@@ -86,7 +86,7 @@ class WebHandler(handler.Handler):
         # serializes the json message so that it's possible to send it using
         # the http client to the endpoints and then creates the map of headers
         # that is going to be used in the post messages to be sent
-        data = json.dumps(json_d);
+        data = json.dumps(json_d)
         headers = {
             "content-type" : "application/json"
         }

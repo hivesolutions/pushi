@@ -368,7 +368,7 @@ class State(appier.Mongo):
         json_d = dict(
             event = "pusher:member_added",
             member = json.dumps(channel_data),
-            channel =  channel
+            channel = channel
         )
 
         # iterates over the complete set of connections currently subscribed
@@ -500,7 +500,7 @@ class State(appier.Mongo):
         json_d = dict(
             event = "pusher:member_removed",
             member = json.dumps(channel_data),
-            channel =  channel
+            channel = channel
         )
 
         # iterates over the complete set of connection subscribed to the channel to notify

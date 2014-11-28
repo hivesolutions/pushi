@@ -1,0 +1,4 @@
+*.pyc
+
+/dist/
+/pushi.egg-info/

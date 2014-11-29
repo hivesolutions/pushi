@@ -40,7 +40,9 @@ __license__ = "Apache License, Version 2.0"
 import appier
 import appier_extras
 
-class PushiApp(appier.App, appier.Mongo):
+import pushi
+
+class PushiApp(appier.App):
 
     def __init__(self, state = None):
         appier.App.__init__(
@@ -50,16 +52,14 @@ class PushiApp(appier.App, appier.Mongo):
                 appier_extras.AdminPart,
             )
         )
-        appier.Mongo.__init__(self)
         self.state = state
 
     def auth(self, app_id, app_key, app_secret, **kwargs):
-        db = self.get_db("pushi")
-        app = db.app.find_one(dict(
+        app = pushi.App.get(
             app_id = app_id,
             key = app_key,
             secret = app_secret
-        ))
+        )
         if not app: raise RuntimeError("Invalid credentials provided")
 
     def info(self, data = {}):

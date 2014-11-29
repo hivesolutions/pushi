@@ -19,6 +19,9 @@
 # You should have received a copy of the Apache License along with
 # Hive Pushi System. If not, see <http://www.apache.org/licenses/>.
 
+__author__ = "João Magalhães <joamag@hive.pt>"
+""" The author(s) of the module """
+
 __version__ = "1.0.0"
 """ The version of the module """
 
@@ -34,10 +37,28 @@ __copyright__ = "Copyright (c) 2008-2014 Hive Solutions Lda."
 __license__ = "Apache License, Version 2.0"
 """ The license for the module """
 
-from . import app
-from . import base
-from . import subscription
+import appier
 
-from .app import AppController
-from .base import BaseController
-from .subscription import SubscriptionController
+import pushi
+
+class SubscriptionController(appier.Controller):
+
+    @appier.private
+    @appier.route("/subscriptions", "GET")
+    def list(self, user_id = None, event = None):
+        filter = dict()
+        if user_id: filter["user_id"] = user_id
+        if event: filter["event"] = event
+        subscriptions = pushi.Subscription.find(map = True, **filter)
+        return dict(
+            subscriptions = subscriptions
+        )
+
+    @appier.route("/subscriptions", "POST")
+    def create(self):
+        #@todo: must search for a previously existing
+        # subscription for the same characteristics
+        # if it extists must skip creation
+        subscription = pushi.Subscription.new()
+        subscription.save()
+        return subscription.map()

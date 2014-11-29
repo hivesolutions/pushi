@@ -80,20 +80,6 @@ class AppController(appier.Controller):
         self.state.trigger(app_id, "ping", "ping")
 
     @appier.private
-    @appier.route("/apps/<app_id>/subscriptions", "GET")
-    def subscriptions(self, app_id, user_id = None, event = None):
-        if not app_id == self.request.session["app_id"]:
-            raise RuntimeError("Not allowed for app id")
-
-        filter = dict(app_id = app_id)
-        if user_id: filter["user_id"] = user_id
-        if event: filter["event"] = event
-        subscriptions = pushi.Subscription.find(map = True, **filter)
-        return dict(
-            subscriptions = subscriptions
-        )
-
-    @appier.private
     @appier.route("/apps/<app_id>/subscribe", "GET")
     def subscribe(self, app_id, user_id, event):
         if not app_id == self.request.session["app_id"]:

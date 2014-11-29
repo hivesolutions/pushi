@@ -68,3 +68,9 @@ class PushiBase(appier_extras.admin.Base):
         if "app_id" in request.session:
             kwargs["instance"] = request.session["app_id"]
         return super(PushiBase, cls).count(cls, *args, **kwargs)
+
+    def pre_create(self):
+        appier_extras.admin.Base.pre_create(self)
+        request = appier.get_request()
+        if "app_id" in request.session:
+            self.instance = request.session["app_id"]

@@ -39,31 +39,34 @@ __license__ = "Apache License, Version 2.0"
 
 import appier
 
-import pushi.app.models
+import pushi
 
 class AppController(appier.Controller):
 
     @appier.private
     @appier.route("/apps", "GET")
     def list(self):
-        apps = pushi.app.models.App.find(map = True)
+        apps = pushi.App.find(map = True)
         return dict(
             apps = apps
         )
 
     @appier.route("/apps", "POST")
     def create(self):
-        app = pushi.app.models.App.new()
+        app = pushi.App.new()
         app.save()
         return app.map()
 
     @appier.private
+    @appier.route("/apps/<app_id>", "GET")
+    def show(self, app_id):
+        app = pushi.App.get(map = True, app_id = app_id)
+        return app
+
+    @appier.private
     @appier.route("/apps/<app_id>", "PUT")
     def update(self, app_id):
-        if not app_id == self.request.session["app_id"]:
-            raise RuntimeError("Not allowed for app id")
-
-        app = pushi.app.models.App.get(app_id = app_id)
+        app = pushi.App.get(app_id = app_id)
         app.apply()
         app.save()
         return app
@@ -82,15 +85,10 @@ class AppController(appier.Controller):
         if not app_id == self.request.session["app_id"]:
             raise RuntimeError("Not allowed for app id")
 
-        db = self.get_db("pushi")
-        subscription = dict(
-            app_id = app_id
-        )
-        if user_id: subscription["user_id"] = user_id
-        if event: subscription["event"] = event
-        cursor = db.subs.find(subscription)
-        subscriptions = [subscription for subscription in cursor]
-        for subscription in subscriptions: del subscription["_id"]
+        filter = dict(app_id = app_id)
+        if user_id: filter["user_id"] = user_id
+        if event: filter["event"] = event
+        subscriptions = pushi.Subscription.find(map = True, **filter)
         return dict(
             subscriptions = subscriptions
         )

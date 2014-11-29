@@ -38,9 +38,10 @@ __license__ = "Apache License, Version 2.0"
 """ The license for the module """
 
 import appier
-import appier_extras
 
-class Association(appier_extras.admin.Base):
+from . import base
+
+class Association(base.PushiBase):
 
     user_id = appier.field(
         index = True

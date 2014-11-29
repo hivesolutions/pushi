@@ -41,9 +41,10 @@ import uuid
 import hashlib
 
 import appier
-import appier_extras
 
-class App(appier_extras.admin.Base):
+from . import base
+
+class App(base.PushiBase):
 
     name = appier.field(
         index = True,
@@ -68,16 +69,16 @@ class App(appier_extras.admin.Base):
         immutable = True
     )
 
+    apn_sandbox = appier.field(
+        type = bool
+    )
+
     apn_key = appier.field(
         meta = "longtext"
     )
 
     apn_cer = appier.field(
         meta = "longtext"
-    )
-
-    apn_sandbox = appier.field(
-        type = bool
     )
 
     @classmethod
@@ -93,7 +94,7 @@ class App(appier_extras.admin.Base):
         return ["name", "app_id", "apn_sandbox"]
 
     def pre_create(self):
-        appier_extras.admin.Base.pre_create(self)
+        base.PushiBase.pre_create(self)
 
         app_id = appier.legacy.bytes(str(uuid.uuid4()))
         key = appier.legacy.bytes(str((uuid.uuid4())))

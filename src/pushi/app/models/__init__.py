@@ -37,6 +37,7 @@ __license__ = "Apache License, Version 2.0"
 from . import apn
 from . import app
 from . import association
+from . import base
 from . import event
 from . import subscription
 from . import web
@@ -44,6 +45,7 @@ from . import web
 from .apn import Apn
 from .app import App
 from .association import Association
+from .base import PushiBase
 from .event import Event
 from .subscription import Subscription
 from .web import Web

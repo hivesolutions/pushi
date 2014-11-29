@@ -38,11 +38,10 @@ __license__ = "Apache License, Version 2.0"
 """ The license for the module """
 
 import appier
-import appier_extras
 
-from . import app
+from . import base
 
-class Web(appier_extras.admin.Base):
+class Web(base.PushiBase):
 
     url = appier.field(
         index = True
@@ -52,13 +51,6 @@ class Web(appier_extras.admin.Base):
         index = True
     )
 
-    app_id = appier.field(
-        type = appier.reference(
-            app.App,
-            name = "app_id"
-        )
-    )
-
     @classmethod
     def validate(cls):
         return super(Web, cls).validate() + [
@@ -66,7 +58,5 @@ class Web(appier_extras.admin.Base):
             appier.not_empty("url"),
 
             appier.not_null("event"),
-            appier.not_empty("event"),
-
-            appier.not_null("app_id")
+            appier.not_empty("event")
         ]

@@ -37,11 +37,11 @@ __copyright__ = "Copyright (c) 2008-2014 Hive Solutions Lda."
 __license__ = "Apache License, Version 2.0"
 """ The license for the module """
 
-
 import appier
-import appier_extras
 
-class Event(appier_extras.admin.Base):
+from . import base
+
+class Event(base.PushiBase):
 
     channel = appier.field(
         index = True,

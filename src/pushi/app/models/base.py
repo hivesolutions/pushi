@@ -38,25 +38,33 @@ __license__ = "Apache License, Version 2.0"
 """ The license for the module """
 
 import appier
+import appier_extras
 
-from . import base
+class PushiBase(appier_extras.admin.Base):
 
-class Subscription(base.PushiBase):
-
-    user_id = appier.field(
-        index = True
-    )
-
-    event = appier.field(
-        index = True
+    instance = appier.field(
+        index = True,
+        safe = True,
+        immutable = True
     )
 
     @classmethod
-    def validate(cls):
-        return super(Subscription, cls).validate() + [
-            appier.not_null("user_id"),
-            appier.not_empty("user_id"),
+    def get(cls, *args, **kwargs):
+        request = appier.get_request()
+        if "app_id" in request.session:
+            kwargs["instance"] = request.session["app_id"]
+        return super(PushiBase, cls).get(cls, *args, **kwargs)
 
-            appier.not_null("event"),
-            appier.not_empty("event")
-        ]
+    @classmethod
+    def find(cls, *args, **kwargs):
+        request = appier.get_request()
+        if "app_id" in request.session:
+            kwargs["instance"] = request.session["app_id"]
+        return super(PushiBase, cls).find(cls, *args, **kwargs)
+
+    @classmethod
+    def count(cls, *args, **kwargs):
+        request = appier.get_request()
+        if "app_id" in request.session:
+            kwargs["instance"] = request.session["app_id"]
+        return super(PushiBase, cls).count(cls, *args, **kwargs)

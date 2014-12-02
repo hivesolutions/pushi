@@ -183,15 +183,14 @@ class State(appier.Mongo):
         of reasons including the personal channels.
         """
 
-        # retrieves the reference to the database and uses it to
-        # find the complete set of subscriptions and then uses them
-        # to create the complete personal to proper channel relation
-        db = self.get_db("pushi")
-        subs = db.subs.find()
+        # retrieves the complete set of subscriptions from the currently
+        # associated data source reference and then uses them to create
+        # the complete personal to proper channel relation
+        subs = pushi.Subscription.find()
         for sub in subs:
-            app_id = sub["app_id"]
-            user_id = sub["user_id"]
-            event = sub["event"]
+            app_id = sub.app_id
+            user_id = sub.user_id
+            event = sub.event
             app_key = self.app_id_to_app_key(app_id)
             self.add_alias(app_key, "personal-" + user_id, event)
 
@@ -756,23 +755,13 @@ class State(appier.Mongo):
         )
 
     def get_subscriptions(self, app_id, channel):
-        db = self.get_db("pushi")
-        subscription = dict(
-            app_id = app_id,
-            event = channel
-        )
-        cursor = db.subs.find(subscription)
-        subscriptions = [subscription for subscription in cursor]
+        subscriptions = pushi.Subscription.find(app_id = app_id, event = channel)
         return subscriptions
 
     def log_channel(self, app_id, channel, json_d, owner_id = None, verify = True, invalid = {}, has_date = True):
         # verifies that the owner (socket) identifier is present in the channel
         # (but only in case the verify flag is present)
         if owner_id and verify: self.verify_presence(app_id, owner_id, channel)
-
-        # retrieves the reference to the pushi database that is going
-        # to be used for the operation in the logging
-        db = self.get_db("pushi")
 
         # generates the proper event structure (includes identifiers
         # and timestamps) to the current event and then adds it to
@@ -784,25 +773,25 @@ class State(appier.Mongo):
             owner_id = owner_id,
             has_date = has_date
         )
-        db.event.insert(event)
+        event.save()
 
         # extracts the mid from the event so that it's does not need
         # to be extracted in every iteration
-        mid = event["mid"]
+        mid = event.mid
 
         # retrieves the complete set of subscription for the
         # provided channel and under the current app id to be
         # able to create the proper associations
         subscriptions = self.get_subscriptions(app_id, channel)
         for subscription in subscriptions:
-            user_id = subscription["user_id"]
+            user_id = subscription.user_id
             if user_id in invalid: continue
-            assoc = dict(
-                app_id = app_id,
+            assoc = pushi.Association(
+                instance = app_id,
                 mid = mid,
                 user_id = user_id
             )
-            db.assoc.insert(assoc)
+            assoc.save()
             invalid[user_id] = True
 
     def send_channel(self, app_id, channel, json_d, owner_id = None, verify = True, invalid = {}):
@@ -904,36 +893,32 @@ class State(appier.Mongo):
         state = self.get_state(app_key = app_key)
         return state.alias_i.get(alias, [])
 
-    def get_events(self, app_key, channel, count = 10):
+    def get_events(self, app_key, channel, count = 10, map = True):
         is_personal = channel.startswith("personal-")
         if not is_personal: return []
 
         user_id = channel[9:]
         app_id = self.app_key_to_app_id(app_key)
 
-        db = self.get_db("pushi")
-        assoc = dict(
-            app_id = app_id,
-            user_id = user_id
-        )
-        cursor = db.assoc.find(
-            assoc,
+        assocs = pushi.Association.find(
+            instance = app_id,
+            user_id = user_id,
             limit = count,
+            sort = [("_id", -1)],
+            map = map
+        )
+        mids = [assoc.mid for assoc in assocs]
+
+        events = pushi.Event.find(
+            mid = {"$in" : mids},
             sort = [("_id", -1)]
         )
-        mids = [assoc["mid"] for assoc in cursor]
-
-        event = dict(mid = {"$in" : mids})
-        cursor = db.event.find(event, sort = [("_id", -1)])
-        events = [event for event in cursor]
-        for event in events: del event["_id"]
 
         return events
 
     def get_app(self, app_id = None, app_key = None):
-        db = self.get_db("pushi")
-        if app_id: app = db.app.find_one(dict(app_id = app_id))
-        if app_key: app = db.app.find_one(dict(key = app_key))
+        if app_id: app = pushi.App.get(app_id = app_id)
+        if app_key: app = pushi.App.get(key = app_key)
         return app
 
     def verify(self, app_key, socket_id, channel, auth):
@@ -1013,7 +998,7 @@ class State(appier.Mongo):
         @type has_date: bool
         @param has_date: If the generates event structure should include
         the data in its structure, this account for more processing.
-        @rtype: Dictionary
+        @rtype: Event
         @return: The generated event structure that was created according
         to the provided details for generation.
         """
@@ -1031,9 +1016,9 @@ class State(appier.Mongo):
 
         # creates the proper dictionary of the event that includes all of the
         # main values of it, together with the ones that have been generated
-        event = dict(
+        event = pushi.Event(
             mid = mid,
-            app_id = app_id,
+            instance = app_id,
             channel = channel,
             owner_id = owner_id,
             timestamp = timestamp,
@@ -1045,7 +1030,7 @@ class State(appier.Mongo):
         if has_date:
             date = datetime.datetime.utcfromtimestamp(timestamp)
             date_s = date.strftime("%B %d, %Y %H:%M:%S UTC")
-            event["date"] = date_s
+            event.date = date_s
 
         # returns the "final" event structure to the caller method so that it
         # can be used as the complete event structure

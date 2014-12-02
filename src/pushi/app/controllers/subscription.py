@@ -45,7 +45,9 @@ class SubscriptionController(appier.Controller):
 
     @appier.private
     @appier.route("/subscriptions", "GET")
-    def list(self, user_id = None, event = None):
+    def list(self):
+        user_id = self.field("user_id", None)
+        event = self.field("event", None)
         filter = dict()
         if user_id: filter["user_id"] = user_id
         if event: filter["event"] = event

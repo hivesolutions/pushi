@@ -45,12 +45,16 @@ class ApnController(appier.Controller):
 
     @appier.private
     @appier.route("/apns", "GET")
-    def list(self, token = None, event = None):
+    def list(self):
+        token = self.field("token", None)
+        event = self.field("event", None)
         return self.state.apn_handler.subscriptions(token = token, event = event)
 
     @appier.private
     @appier.route("/apns", "POST")
-    def create(self, auth = None, unsubscribe = True):
+    def create(self):
+        auth = self.field("auth", None)
+        unsubscribe = self.field("unsubscribe", False, cast = bool)
         apn = pushi.Apn.new()
         apn = self.state.apn_handler.subscribe(
             apn,
@@ -61,8 +65,8 @@ class ApnController(appier.Controller):
 
     @appier.private
     @appier.route("/apns/<token>", "DELETE")
-    def deletes(self, token, event = None):
-        apns = self.state.apn_handler.unsubscribes(token, event = event)
+    def deletes(self, token):
+        apns = self.state.apn_handler.unsubscribes(token)
         return dict(
             subscriptions = [apn.map() for apn in apns]
         )

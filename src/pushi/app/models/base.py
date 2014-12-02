@@ -51,39 +51,43 @@ class PushiBase(appier_extras.admin.Base):
     @classmethod
     def get(cls, *args, **kwargs):
         request = appier.get_request()
-        if "app_id" in request.session:
+        if "app_id" in request.session and request.session["app_id"]:
             kwargs["instance"] = request.session["app_id"]
         return super(PushiBase, cls).get(cls, *args, **kwargs)
 
     @classmethod
     def find(cls, *args, **kwargs):
         request = appier.get_request()
-        if "app_id" in request.session:
+        if "app_id" in request.session and request.session["app_id"]:
             kwargs["instance"] = request.session["app_id"]
         return super(PushiBase, cls).find(cls, *args, **kwargs)
 
     @classmethod
     def count(cls, *args, **kwargs):
         request = appier.get_request()
-        if "app_id" in request.session:
+        if "app_id" in request.session and request.session["app_id"]:
             kwargs["instance"] = request.session["app_id"]
         return super(PushiBase, cls).count(cls, *args, **kwargs)
 
     @classmethod
     def exists(cls, *args, **kwargs):
         previous = cls.find(*args, **kwargs)
-        return True if previous else False
+        return previous[0] if previous else None
 
     def pre_create(self):
         appier_extras.admin.Base.pre_create(self)
-        request = appier.get_request()
-        if "app_id" in request.session:
-            self.instance = request.session["app_id"]
+        if self.app_id: self.instance = self.app_id
 
     @property
     def state(self):
         app = appier.get_app()
         return app.state
+
+    @property
+    def app_id(self):
+        request = appier.get_request()
+        if not "app_id" in request.session: return None
+        return request.session["app_id"]
 
     @property
     def app_key(self):

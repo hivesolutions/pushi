@@ -44,7 +44,7 @@ import pushi
 class ApnController(appier.Controller):
 
     @appier.private
-    @appier.route("/web", "GET")
+    @appier.route("/apn", "GET")
     def list(self, token = None, event = None):
         return self.state.apn_handler.subscriptions(token = token, event = event)
 

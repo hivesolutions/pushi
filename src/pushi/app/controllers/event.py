@@ -39,5 +39,35 @@ __license__ = "Apache License, Version 2.0"
 
 import appier
 
+import pushi
+
 class EventController(appier.Controller):
-    pass
+
+    @appier.private
+    @appier.route("/events", "GET")
+    def list(self):
+        count = self.field("count", 10, cast = int)
+        events = pushi.Event.find(
+            limit = count,
+            sort = [("_id", -1),],
+            map = True
+        )
+        return dict(
+            events = events
+        )
+
+    @appier.private
+    @appier.route("/events", "POST")
+    def create(self):
+        _data = self.field("data", None)
+        event = self.field("event", "message")
+        channel = self.field("channel", "global")
+        if not _data: raise RuntimeError("No data set for event")
+        self.state.trigger(
+            app_id,
+            event,
+            _data,
+            channels = channel,
+            json_d = data,
+            verify = False
+        )

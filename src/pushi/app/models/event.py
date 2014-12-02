@@ -65,6 +65,9 @@ class Event(base.PushiBase):
     @classmethod
     def validate(cls):
         return super(Event, cls).validate() + [
+            appier.not_null("mid"),
+            appier.not_empty("mid"),
+
             appier.not_null("channel"),
             appier.not_empty("channel")
         ]

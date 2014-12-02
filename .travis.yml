@@ -12,3 +12,5 @@ install:
   - pip install coveralls
 script: coverage run --source=pushi setup.py test
 after_success: coveralls
+git:
+  submodules: false

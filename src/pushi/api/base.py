@@ -72,14 +72,14 @@ class Api(
 
     def __init__(self, *args, **kwargs):
         appier.Api.__init__(self, *args, **kwargs)
-        self.app_id = kwargs.get("app_id", None)
-        self.app_key = kwargs.get("app_key", None)
-        self.app_secret = kwargs.get("app_secret", None)
-        self.base_url = kwargs.get("base_url", BASE_URL)
-        self.app_id = appier.conf("PUSHI_ID", self.app_id)
-        self.app_key = appier.conf("PUSHI_KEY", self.app_key)
-        self.app_secret = appier.conf("PUSHI_SECRET", self.app_secret)
-        self.base_url = appier.conf("PUSHI_URL", self.base_url)
+        self.app_id = appier.conf("PUSHI_ID", None)
+        self.app_key = appier.conf("PUSHI_KEY", None)
+        self.app_secret = appier.conf("PUSHI_SECRET", None)
+        self.base_url = appier.conf("PUSHI_URL", BASE_URL)
+        self.app_id = kwargs.get("app_id", self.app_id)
+        self.app_key = kwargs.get("app_key", self.app_key)
+        self.app_secret = kwargs.get("app_secret", self.app_secret)
+        self.base_url = kwargs.get("base_url", self.base_url)
         self.token = None
 
     def authenticate(self, channel, socket_id):

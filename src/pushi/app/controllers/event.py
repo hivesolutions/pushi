@@ -58,7 +58,8 @@ class EventController(appier.Controller):
 
     @appier.private
     @appier.route("/events", "POST")
-    def create(self, data):
+    def create(self):
+        data = self.request.get_json() or dict()
         app_id = self.session.get("app_id", None)
         _data = data.get("data", None)
         event = data.get("event", "message")

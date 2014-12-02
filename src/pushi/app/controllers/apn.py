@@ -60,8 +60,15 @@ class ApnController(appier.Controller):
         return apn.map()
 
     @appier.private
-    @appier.route("/apps/<token>", "DELETE")
-    @appier.route("/apps/<token>/<event>", "DELETE")
-    def delete(self, token, event = None):
+    @appier.route("/apn/<token>", "DELETE")
+    def deletes(self, token, event = None):
+        apns = self.state.apn_handler.unsubscribes(token, event = event)
+        return dict(
+            subscriptions = [apn.map() for apn in apns]
+        )
+
+    @appier.private
+    @appier.route("/apn/<token>/<event>", "DELETE")
+    def delete(self, token, event):
         apn = self.state.apn_handler.unsubscribe(token, event = event)
         return apn.map()

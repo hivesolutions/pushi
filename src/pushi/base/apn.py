@@ -178,12 +178,11 @@ class ApnHandler(handler.Handler):
             invalid[token] = True
 
     def load(self):
-        db = self.owner.get_db("pushi")
-        subs = db.apn.find()
+        subs = pushi.Apn.find()
         for sub in subs:
-            app_id = sub["app_id"]
-            token = sub["token"]
-            event = sub["event"]
+            app_id = sub.app_id
+            token = sub.token
+            event = sub.event
             self.add(app_id, token, event)
 
     def add(self, app_id, token, event):
@@ -213,7 +212,7 @@ class ApnHandler(handler.Handler):
             apn.event.startswith("personal-")
 
         is_private and self.owner.verify(apn.app_key, apn.token, apn.event, auth)
-        unsubscribe and self.unsubscribe(apn.app_id, apn.token)
+        unsubscribe and self.unsubscribe(apn.app_id, apn.token, force = False)
 
         exists = pushi.Apn.exists(
             token = apn.token,
@@ -226,8 +225,8 @@ class ApnHandler(handler.Handler):
 
         return apn
 
-    def unsubscribe(self, token, event = None):
-        kwargs = dict(token = token, raise_e = False)
+    def unsubscribe(self, token, event = None, force = True):
+        kwargs = dict(token = token, raise_e = force)
         if event: kwargs["event"] = event
 
         apn = pushi.Apn.get(**kwargs)
@@ -237,3 +236,15 @@ class ApnHandler(handler.Handler):
         self.remove(apn.app_id, apn.token, apn.event)
 
         return apn
+
+    def unsubscribes(self, token, event = None):
+        kwargs = dict(token = token)
+        if event: kwargs["event"] = event
+
+        apns = pushi.Apn.find(**kwargs)
+
+        for apn in apns:
+            apn.delete()
+            self.remove(apn.app_id, apn.token, apn.event)
+
+        return apns

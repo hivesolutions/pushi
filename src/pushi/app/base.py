@@ -71,16 +71,16 @@ class PushiApp(appier.App):
 
     def on_login(self, sid, secret, app_id, app_key, app_secret, **kwargs):
         appier.App.on_login(self, sid, secret, **kwargs)
-        self.request.session["app_id"] = app_id
-        self.request.session["app_key"] = app_key
-        self.request.session["app_secret"] = app_secret
+        self.session["app_id"] = app_id
+        self.session["app_key"] = app_key
+        self.session["app_secret"] = app_secret
 
     def on_logout(self):
         appier.App.on_logout(self)
-        if not self.request.session: return
-        del self.request.session["app_id"]
-        del self.request.session["app_key"]
-        del self.request.session["app_secret"]
+        if not self.session: return
+        if "app_id" in self.session: del self.session["app_id"]
+        if "app_key" in self.session: del self.session["app_key"]
+        if "app_secret" in self.session: del self.session["app_secret"]
 
 if __name__ == "__main__":
     app = PushiApp()

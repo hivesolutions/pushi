@@ -103,3 +103,5 @@ class App(base.PushiBase):
         self.app_id = hashlib.sha256(app_id).hexdigest()
         self.key = hashlib.sha256(key).hexdigest()
         self.secret = hashlib.sha256(secret).hexdigest()
+
+        self.instance = self.app_id

@@ -19,6 +19,9 @@
 # You should have received a copy of the Apache License along with
 # Hive Pushi System. If not, see <http://www.apache.org/licenses/>.
 
+__author__ = "João Magalhães <joamag@hive.pt>"
+""" The author(s) of the module """
+
 __version__ = "1.0.0"
 """ The version of the module """
 
@@ -34,18 +37,33 @@ __copyright__ = "Copyright (c) 2008-2014 Hive Solutions Lda."
 __license__ = "Apache License, Version 2.0"
 """ The license for the module """
 
-from . import apn
-from . import app
-from . import base
-from . import event
-from . import socket
-from . import subscription
-from . import web
+import appier
 
-from .apn import ApnController
-from .app import AppController
-from .base import BaseController
-from .event import EventController
-from .socket import SocketController
-from .subscription import SubscriptionController
-from .web import WebController
+class SocketController(appier.Controller):
+
+    @appier.private
+    @appier.route("/sockets", "GET")
+    def list(self):
+        app_id = self.session.get("app_id", None)
+        state = self.state.get_state(app_id = app_id)
+
+        sockets = []
+
+        for socket_id, channel in state.socket_channels.iteritems():
+            socket = dict(socket_id = socket_id, channel = channel)
+            sockets.append(socket)
+
+        return dict(
+            sockets = sockets
+        )
+
+    @appier.private
+    @appier.route("/sockets/<socket_id>", "POST")
+    def show(self, socket_id):
+        app_id = self.session.get("app_id", None)
+        state = self.state.get_state(app_id = app_id)
+        channels = state.socket_channels.get(socket_id, [])
+
+        return dict(
+            channels = channels
+        )

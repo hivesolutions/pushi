@@ -854,8 +854,8 @@ class State(appier.Mongo):
 
         # unpacks both the app id and key values from the app object
         # to be used in the construction of the app state object
-        app_id = app["app_id"]
-        app_key = app["key"]
+        app_id = app.ident
+        app_key = app.key
 
         # creates the (app) state object with the provided app id and key
         # and the updates the associated dictionaries to access the app state
@@ -949,7 +949,7 @@ class State(appier.Mongo):
         """
 
         app = self.get_app(app_key = app_key)
-        app_secret = app["secret"]
+        app_secret = app.secret
         app_secret = appier.legacy.bytes(str(app_secret))
 
         string = "%s:%s" % (socket_id, channel)

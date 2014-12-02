@@ -41,6 +41,8 @@ import json
 
 import netius.clients
 
+import pushi
+
 from . import handler
 
 class WebHandler(handler.Handler):
@@ -128,12 +130,11 @@ class WebHandler(handler.Handler):
             invalid[url] = True
 
     def load(self):
-        db = self.owner.get_db("pushi")
-        subs = db.web.find()
+        subs = pushi.Web.find()
         for sub in subs:
-            app_id = sub["app_id"]
-            url = sub["url"]
-            event = sub["event"]
+            app_id = sub.app_id
+            url = sub.url
+            event = sub.event
             self.add(app_id, url, event)
 
     def add(self, app_id, url, event):
@@ -148,51 +149,54 @@ class WebHandler(handler.Handler):
         urls = events.get(event, [])
         if url in urls: urls.remove(url)
 
-    def subscriptions(self, app_id):
-        db = self.owner.get_db("pushi")
-        subscription = dict(
-            app_id = app_id
-        )
-
-        cursor = db.web.find(subscription)
-        subscriptions = [subscription for subscription in cursor]
-        for subscription in subscriptions: del subscription["_id"]
+    def subscriptions(self, url = None, event = None):
+        filter = dict()
+        if url: filter["url"] = url
+        if event: filter["event"] = event
+        subscriptions = pushi.Web.find(map = True, **filter)
         return dict(
             subscriptions = subscriptions
         )
 
-    def subscribe(self, app_id, url, event, auth = None, unsubscribe = True):
-        is_private = event.startswith("private-") or\
-            event.startswith("presence-") or event.startswith("peer-") or\
-            event.startswith("personal-")
+    def subscribe(self, web, auth = None, unsubscribe = True):
+        is_private = web.event.startswith("private-") or\
+            web.event.startswith("presence-") or web.event.startswith("peer-") or\
+            web.event.startswith("personal-")
 
-        app = self.owner.get_app(app_id = app_id)
-        app_key = app["key"]
+        is_private and self.owner.verify(web.app_key, web.url, web.event, auth)
+        unsubscribe and self.unsubscribe(web.app_id, web.url, force = False)
 
-        is_private and self.owner.verify(app_key, url, event, auth)
-        unsubscribe and self.unsubscribe(app_id, url)
-
-        db = self.owner.get_db("pushi")
-        subscription = dict(
-            app_id = app_id,
-            event = event,
-            url = url
+        exists = pushi.Web.exists(
+            url = web.url,
+            event = web.event
         )
+        if exists: web = exists
+        else: web.save()
 
-        cursor = db.web.find(subscription)
-        values = [value for value in cursor]
-        if values: return
+        self.add(web.app_id, web.url, web.event)
 
-        db.web.insert(subscription)
-        self.add(app_id, url, event)
+        return web
 
-    def unsubscribe(self, app_id, url, event = None):
-        db = self.owner.get_db("pushi")
-        subscription = dict(
-            app_id = app_id,
-            url = url
-        )
-        if event: subscription["event"] = event
-        db.web.remove(subscription)
+    def unsubscribe(self, url, event = None, force = True):
+        kwargs = dict(url = url, raise_e = force)
+        if event: kwargs["event"] = event
 
-        self.remove(app_id, url, event)
+        web = pushi.Web.get(**kwargs)
+        if not web: return None
+
+        web.delete()
+        self.remove(web.app_id, web.url, web.event)
+
+        return web
+
+    def unsubscribes(self, url, event = None):
+        kwargs = dict(token = url)
+        if event: kwargs["event"] = event
+
+        webs = pushi.Web.find(**kwargs)
+
+        for web in webs:
+            web.delete()
+            self.remove(web.app_id, web.url, web.event)
+
+        return webs

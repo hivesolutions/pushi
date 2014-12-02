@@ -39,5 +39,36 @@ __license__ = "Apache License, Version 2.0"
 
 import appier
 
+import pushi
+
 class WebController(appier.Controller):
-    pass
+
+    @appier.private
+    @appier.route("/web", "GET")
+    def list(self, url = None, event = None):
+        return self.state.web_handler.subscriptions(url = url, event = event)
+
+    @appier.private
+    @appier.route("/web", "POST")
+    def create(self, auth = None, unsubscribe = True):
+        web = pushi.Web.new()
+        web = self.state.web_handler.subscribe(
+            web,
+            auth = auth,
+            unsubscribe = unsubscribe
+        )
+        return web.map()
+
+    @appier.private
+    @appier.route("/web/<url>", "DELETE")
+    def deletes(self, token, event = None):
+        webs = self.state.web_handler.unsubscribes(token, event = event)
+        return dict(
+            subscriptions = [web.map() for web in webs]
+        )
+
+    @appier.private
+    @appier.route("/web/<url>/<event>", "DELETE")
+    def delete(self, token, event):
+        web = self.state.web_handler.unsubscribe(token, event = event)
+        return web.map()

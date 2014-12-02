@@ -197,9 +197,9 @@ class ApnHandler(handler.Handler):
         tokens = events.get(event, [])
         if token in tokens: tokens.remove(token)
 
-    def subscriptions(self, user_id = None, event = None):
+    def subscriptions(self, token = None, event = None):
         filter = dict()
-        if user_id: filter["user_id"] = user_id
+        if token: filter["token"] = token
         if event: filter["event"] = event
         subscriptions = pushi.Apn.find(map = True, **filter)
         return dict(

@@ -40,11 +40,6 @@ __license__ = "Apache License, Version 2.0"
 class EventApi(object):
 
     def trigger(self, channel, data, event = "message", **kwargs):
-        # runs the ensure login call making sure that the login token
-        # is currently present in the environment, this is required
-        # to perform secured remote calls
-        token = self.ensure_login()
-
         # creates the initial json data structure to be used as the message
         # and then "extends" it with the extra key word arguments passed
         # to this methods as a method of extension
@@ -58,39 +53,7 @@ class EventApi(object):
         # performs the concrete event trigger operation creating an event
         # with the provided information using a secure channel
         result = self.post(
-            self.base_url + "/apps/%s/events" % self.app_id,
-            params = dict(sid = token),
-            data_j = data_j
-        )
-        return result
-
-    def create_event(self, user_id, event):
-        # runs the ensure login call making sure that the login token
-        # is currently present in the environment, this is required
-        # to perform secured remote calls
-        token = self.ensure_login()
-
-        # runs the subscription operation for the provided
-        # user id and event, this operation uses the currently
-        # defined app id for the operation, then returns the
-        # resulting dictionary to the caller method
-        result = self.post(
             self.base_url + "/events",
-            data_j = dict(
-                sid = token,
-                user_id = user_id,
-                event = event
-            ),
-            auth_callback = self.auth_callback  #@todo: check how this should work
-        )
-        return result
-
-    def delete_event(self, user_id, event):
-        # runs the unsubscription operation for the provided
-        # user id and event, this operation uses the currently
-        # defined app id for the operation, then returns the
-        # resulting dictionary to the caller method
-        result = self.delete(
-            self.base_url + "/events/%s/%s" % (user_id, event)
+            data_j = data_j
         )
         return result

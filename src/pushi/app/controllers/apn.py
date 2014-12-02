@@ -19,6 +19,9 @@
 # You should have received a copy of the Apache License along with
 # Hive Pushi System. If not, see <http://www.apache.org/licenses/>.
 
+__author__ = "João Magalhães <joamag@hive.pt>"
+""" The author(s) of the module """
+
 __version__ = "1.0.0"
 """ The version of the module """
 
@@ -34,16 +37,31 @@ __copyright__ = "Copyright (c) 2008-2014 Hive Solutions Lda."
 __license__ = "Apache License, Version 2.0"
 """ The license for the module """
 
-from . import apn
-from . import app
-from . import base
-from . import event
-from . import subscription
-from . import web
+import appier
 
-from .apn import ApnController
-from .app import AppController
-from .base import BaseController
-from .event import EventController
-from .subscription import SubscriptionController
-from .web import WebController
+import pushi
+
+class ApnController(appier.Controller):
+
+    @appier.private
+    @appier.route("/apn", "GET")
+    def list(self, user_id = None, event = None):
+        return self.state.apn_handler.subscriptions(user_id = user_id, event = event)
+
+    @appier.private
+    @appier.route("/apn", "POST")
+    def create(self, auth = None, unsubscribe = True):
+        apn = pushi.Apn.new()
+        apn = self.state.apn_handler.subscribe(
+            apn,
+            auth = auth,
+            unsubscribe = unsubscribe
+        )
+        return apn.map()
+
+    @appier.private
+    @appier.route("/apps/<token>", "DELETE")
+    @appier.route("/apps/<token>/<event>", "DELETE")
+    def delete(self, token, event = None):
+        apn = self.state.apn_handler.unsubscribe(token, event = event)
+        return apn.map()

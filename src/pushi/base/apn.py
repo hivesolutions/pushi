@@ -43,6 +43,8 @@ import tempfile
 
 import netius.clients
 
+import pushi
+
 from . import handler
 
 class ApnHandler(handler.Handler):
@@ -196,51 +198,42 @@ class ApnHandler(handler.Handler):
         tokens = events.get(event, [])
         if token in tokens: tokens.remove(token)
 
-    def subscriptions(self, app_id):
-        db = self.owner.get_db("pushi")
-        subscription = dict(
-            app_id = app_id
-        )
-
-        cursor = db.apn.find(subscription)
-        subscriptions = [subscription for subscription in cursor]
-        for subscription in subscriptions: del subscription["_id"]
+    def subscriptions(self, user_id = None, event = None):
+        filter = dict()
+        if user_id: filter["user_id"] = user_id
+        if event: filter["event"] = event
+        subscriptions = pushi.Apn.find(map = True, **filter)
         return dict(
             subscriptions = subscriptions
         )
 
-    def subscribe(self, app_id, token, event, auth = None, unsubscribe = True):
-        is_private = event.startswith("private-") or\
-            event.startswith("presence-") or event.startswith("peer-") or\
-            event.startswith("personal-")
+    def subscribe(self, apn, auth = None, unsubscribe = True):
+        is_private = apn.event.startswith("private-") or\
+            apn.event.startswith("presence-") or apn.event.startswith("peer-") or\
+            apn.event.startswith("personal-")
 
-        app = self.owner.get_app(app_id = app_id)
-        app_key = app["key"]
+        is_private and self.owner.verify(apn.app_key, apn.token, apn.event, auth)
+        unsubscribe and self.unsubscribe(apn.app_id, apn.token)
 
-        is_private and self.owner.verify(app_key, token, event, auth)
-        unsubscribe and self.unsubscribe(app_id, token)
-
-        db = self.owner.get_db("pushi")
-        subscription = dict(
-            app_id = app_id,
-            event = event,
-            token = token
+        exists = pushi.Apn.exists(
+            token = apn.token,
+            event = apn.event
         )
+        if exists: apn = exists
+        else: apn.save()
 
-        cursor = db.apn.find(subscription)
-        values = [value for value in cursor]
-        if values: return
+        self.add(apn.app_id, apn.token, apn.event)
 
-        db.apn.insert(subscription)
-        self.add(app_id, token, event)
+        return apn
 
-    def unsubscribe(self, app_id, token, event = None):
-        db = self.owner.get_db("pushi")
-        subscription = dict(
-            app_id = app_id,
-            token = token
-        )
-        if event: subscription["event"] = event
-        db.apn.remove(subscription)
+    def unsubscribe(self, token, event = None):
+        kwargs = dict(token = token, raise_e = False)
+        if event: kwargs["event"] = event
 
-        self.remove(app_id, token, event)
+        apn = pushi.Apn.get(**kwargs)
+        if not apn: return None
+
+        apn.delete()
+        self.remove(apn.app_id, apn.token, apn.event)
+
+        return apn

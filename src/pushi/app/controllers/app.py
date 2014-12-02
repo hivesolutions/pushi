@@ -80,42 +80,6 @@ class AppController(appier.Controller):
         self.state.trigger(app_id, "ping", "ping")
 
     @appier.private
-    @appier.route("/apps/<app_id>/subscribe", "GET")
-    def subscribe(self, app_id, user_id, event):
-        if not app_id == self.request.session["app_id"]:
-            raise RuntimeError("Not allowed for app id")
-
-        db = self.get_db("pushi")
-        subscription = dict(
-            app_id = app_id,
-            event = event,
-            user_id = user_id
-        )
-        cursor = db.subs.find(subscription)
-        values = [value for value in cursor]
-        not values and db.subs.insert(subscription)
-
-        app_key = self.state.app_id_to_app_key(app_id)
-        self.state.add_alias(app_key, "personal-" + user_id, event)
-
-    @appier.private
-    @appier.route("/apps/<app_id>/unsubscribe", "GET")
-    def unsubscribe(self, app_id, event, user_id):
-        if not app_id == self.request.session["app_id"]:
-            raise RuntimeError("Not allowed for app id")
-
-        db = self.get_db("pushi")
-        subscription = dict(
-            app_id = app_id,
-            event = event,
-            user_id = user_id
-        )
-        db.subs.remove(subscription)
-
-        app_key = self.state.app_id_to_app_key(app_id)
-        self.state.remove_alias(app_key, "personal-" + user_id, event)
-
-    @appier.private
     @appier.route("/apps/<app_id>/subscriptions_apn", "GET")
     def subscriptions_apn(self, app_id, user_id = None, event = None):
         if not app_id == self.request.session["app_id"]:

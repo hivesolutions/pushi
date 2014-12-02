@@ -42,11 +42,24 @@ import hashlib
 
 import appier
 
+from . import apn
+from . import app
+from . import web
+from . import event
+from . import subscription
+
 BASE_URL = "https://puxiapp.com:9090"
 """ The base url to be used by the api to access
 the remote endpoints, should not be changed """
 
-class Api(appier.Api):
+class Api(
+    appier.Api,
+    apn.ApnApi,
+    app.AppApi,
+    web.WebApi,
+    event.EventApi,
+    subscription.SubscriptionApi
+):
     """
     Base class for the construction of the pushi
     proxy object for interaction with the server

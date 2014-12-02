@@ -56,7 +56,7 @@ class PushiApp(appier.App):
 
     def auth(self, app_id, app_key, app_secret, **kwargs):
         app = pushi.App.get(
-            app_id = app_id,
+            identifier = app_id,
             key = app_key,
             secret = app_secret
         )

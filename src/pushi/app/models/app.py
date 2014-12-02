@@ -51,7 +51,7 @@ class App(base.PushiBase):
         default = True
     )
 
-    identifier = appier.field(
+    ident = appier.field(
         index = True,
         safe = True,
         immutable = True
@@ -91,17 +91,17 @@ class App(base.PushiBase):
 
     @classmethod
     def list_names(cls):
-        return ["name", "identifier", "apn_sandbox"]
+        return ["name", "ident", "apn_sandbox"]
 
     def pre_create(self):
         base.PushiBase.pre_create(self)
 
-        identifier = appier.legacy.bytes(str(uuid.uuid4()))
+        ident = appier.legacy.bytes(str(uuid.uuid4()))
         key = appier.legacy.bytes(str((uuid.uuid4())))
         secret = appier.legacy.bytes(str(uuid.uuid4()))
 
-        self.identifier = hashlib.sha256(identifier).hexdigest()
+        self.ident = hashlib.sha256(ident).hexdigest()
         self.key = hashlib.sha256(key).hexdigest()
         self.secret = hashlib.sha256(secret).hexdigest()
 
-        self.instance = self.app_id
+        self.instance = self.ident

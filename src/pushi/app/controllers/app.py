@@ -58,15 +58,15 @@ class AppController(appier.Controller):
         return app.map()
 
     @appier.private
-    @appier.route("/apps/<identifier>", "GET")
-    def show(self, identifier):
-        app = pushi.App.get(map = True, identifier = identifier)
+    @appier.route("/apps/<ident>", "GET")
+    def show(self, ident):
+        app = pushi.App.get(map = True, ident = ident)
         return app
 
     @appier.private
-    @appier.route("/apps/<id>", "PUT")
-    def update(self, identifier):
-        app = pushi.App.get(identifier = identifier)
+    @appier.route("/apps/<ident>", "PUT")
+    def update(self, ident):
+        app = pushi.App.get(ident = ident)
         app.apply()
         app.save()
         return app

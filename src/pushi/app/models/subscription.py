@@ -68,3 +68,11 @@ class Subscription(base.PushiBase):
             "personal-" + self.user_id,
             self.event
         )
+
+    def post_delete(self):
+        base.PushiBase.post_delete(self)
+        self.state and self.state.remove_alias(
+            self.app_key,
+            "personal-" + self.user_id,
+            self.event
+        )

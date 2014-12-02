@@ -65,3 +65,10 @@ class SubscriptionController(appier.Controller):
         if exists: subscription = exists
         else: subscription.save()
         return subscription.map()
+
+    @appier.private
+    @appier.route("/subscriptions/<user_id>/<event>", "DELETE")
+    def delete(self, user_id, event):
+        subscription = pushi.Subscription.get(user_id = user_id, event = event)
+        subscription.delete()
+        return subscription.map()

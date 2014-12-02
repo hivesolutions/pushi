@@ -58,17 +58,17 @@ class EventController(appier.Controller):
 
     @appier.private
     @appier.route("/events", "POST")
-    def create(self):
+    def create(self, data):
         app_id = self.session.get("app_id", None)
-        _data = self.field("data", None)
-        event = self.field("event", "message")
-        channel = self.field("channel", "global")
+        _data = data.get("data", None)
+        event = data.get("event", "message")
+        channel = data.get("channel", "global")
         if not _data: raise RuntimeError("No data set for event")
         self.state.trigger(
             app_id,
             event,
             _data,
             channels = channel,
-            json_d = self.data_j,
+            json_d = data,
             verify = False
         )

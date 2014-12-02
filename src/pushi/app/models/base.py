@@ -85,6 +85,7 @@ class PushiBase(appier_extras.admin.Base):
 
     @property
     def app_id(self):
+        if hasattr(self, "instance"): return self.instance
         request = appier.get_request()
         return request.session.get("app_id", None)
 

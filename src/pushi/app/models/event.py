@@ -43,17 +43,23 @@ from . import base
 
 class Event(base.PushiBase):
 
-    channel = appier.field(
+    mid = appier.field(
         index = True,
         default = True
     )
 
-    json_d = appier.field()
+    channel = appier.field(
+        index = True
+    )
 
     owner_id = appier.field()
 
-    has_date = appier.field(
-        type = bool
+    timestamp = appier.field(
+        type = float
+    )
+
+    data = appier.field(
+        type = dict
     )
 
     @classmethod

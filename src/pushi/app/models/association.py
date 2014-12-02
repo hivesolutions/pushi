@@ -60,3 +60,7 @@ class Association(base.PushiBase):
             appier.not_null("mid"),
             appier.not_empty("mid")
         ]
+
+    @classmethod
+    def list_names(cls):
+        return ["user_id", "mid"]

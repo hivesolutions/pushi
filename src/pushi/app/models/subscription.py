@@ -61,6 +61,10 @@ class Subscription(base.PushiBase):
             appier.not_empty("event")
         ]
 
+    @classmethod
+    def list_names(cls):
+        return ["user_id", "event"]
+
     def post_create(self):
         base.PushiBase.pre_create(self)
         self.state and self.state.add_alias(

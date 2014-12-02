@@ -60,3 +60,7 @@ class Apn(base.PushiBase):
             appier.not_null("event"),
             appier.not_empty("event")
         ]
+
+    @classmethod
+    def list_names(cls):
+        return ["token", "event"]

@@ -45,21 +45,28 @@ class Event(base.PushiBase):
 
     mid = appier.field(
         index = True,
+        immutable = True,
         default = True
     )
 
     channel = appier.field(
-        index = True
+        index = True,
+        immutable = True
     )
 
-    owner_id = appier.field()
+    owner_id = appier.field(
+        immutable = True
+    )
 
     timestamp = appier.field(
-        type = float
+        type = float,
+        immutable = True,
+        meta = "datetime"
     )
 
     data = appier.field(
-        type = dict
+        type = dict,
+        immutable = True
     )
 
     @classmethod
@@ -71,3 +78,7 @@ class Event(base.PushiBase):
             appier.not_null("channel"),
             appier.not_empty("channel")
         ]
+
+    @classmethod
+    def list_names(cls):
+        return ["mid", "channel", "owner_id", "timestamp"]

@@ -39,7 +39,7 @@ __license__ = "Apache License, Version 2.0"
 
 class EventApi(object):
 
-    def trigger(self, channel, data, event = "message", **kwargs):
+    def create_event(self, channel, data, event = "message", **kwargs):
         # creates the initial json data structure to be used as the message
         # and then "extends" it with the extra key word arguments passed
         # to this methods as a method of extension
@@ -57,3 +57,6 @@ class EventApi(object):
             data_j = data_j
         )
         return result
+
+    def trigger_event(self, *args, **kwargs):
+        return self.create_event(*args, **kwargs)

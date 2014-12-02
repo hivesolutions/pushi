@@ -755,7 +755,10 @@ class State(appier.Mongo):
         )
 
     def get_subscriptions(self, app_id, channel):
-        subscriptions = pushi.Subscription.find(app_id = app_id, event = channel)
+        subscriptions = pushi.Subscription.find(
+            instance = app_id,
+            event = channel
+        )
         return subscriptions
 
     def log_channel(self, app_id, channel, json_d, owner_id = None, verify = True, invalid = {}, has_date = True):
@@ -904,15 +907,17 @@ class State(appier.Mongo):
             instance = app_id,
             user_id = user_id,
             limit = count,
-            sort = [("_id", -1)],
-            map = map
+            sort = [("_id", -1)]
         )
         mids = [assoc.mid for assoc in assocs]
 
         events = pushi.Event.find(
+            instance = app_id,
             mid = {"$in" : mids},
-            sort = [("_id", -1)]
+            sort = [("_id", -1)],
+            map = map
         )
+        for event in events: del event["_id"]
 
         return events
 

@@ -43,7 +43,7 @@ from . import web
 
 from .apn import ApnApi
 from .app import AppApi
-from .base import Api
+from .base import BASE_URL, Api
 from .event import EventApi
 from .subscription import SubscriptionApi
 from .web import WebApi

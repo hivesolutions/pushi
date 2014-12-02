@@ -54,6 +54,7 @@ class SubscriptionController(appier.Controller):
             subscriptions = subscriptions
         )
 
+    @appier.private
     @appier.route("/subscriptions", "POST")
     def create(self):
         subscription = pushi.Subscription.new()

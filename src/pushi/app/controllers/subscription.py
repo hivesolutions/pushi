@@ -61,5 +61,6 @@ class SubscriptionController(appier.Controller):
             user_id = subscription.user_id,
             event = subscription.event
         )
-        not exists and subscription.save()
+        if exists: subscription = exists
+        else: subscription.save()
         return subscription.map()

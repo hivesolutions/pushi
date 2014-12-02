@@ -71,6 +71,12 @@ class SubscriptionController(appier.Controller):
     @appier.private
     @appier.route("/subscriptions/<user_id>/<regex('[\.\w-]+'):event>", "DELETE")
     def delete(self, user_id, event):
-        subscription = pushi.Subscription.get(user_id = user_id, event = event)
+        force = self.field("force", False, cast = bool)
+        subscription = pushi.Subscription.get(
+            user_id = user_id,
+            event = event,
+            raise_e = force
+        )
+        if not subscription: return None
         subscription.delete()
         return subscription.map()

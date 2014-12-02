@@ -64,3 +64,9 @@ class ApnApi(object):
             self.base_url + "/apns/%s/%s" % (token, event)
         )
         return result
+
+    def subscribe_apn(self, *args, **kwargs):
+        return self.create_apn(*args, **kwargs)
+
+    def unsubscribe_apn(self, *args, **kwargs):
+        return self.delete_apn(*args, **kwargs)

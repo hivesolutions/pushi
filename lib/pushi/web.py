@@ -64,3 +64,9 @@ class WebApi(object):
             self.base_url + "/webs/%s/%s" % (url, event)
         )
         return result
+
+    def subscribe_web(self, *args, **kwargs):
+        return self.create_web(*args, **kwargs)
+
+    def unsubscribe_web(self, *args, **kwargs):
+        return self.delete_web(*args, **kwargs)

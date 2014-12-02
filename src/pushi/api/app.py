@@ -45,6 +45,7 @@ class AppApi(object):
         # should contain the generated information for the app
         result = self.post(
             self.base_url + "/apps",
+            auth = False,
             data_j = dict(
                 name = name
             )

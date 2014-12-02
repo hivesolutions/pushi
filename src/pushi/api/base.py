@@ -82,6 +82,48 @@ class Api(
         self.base_url = kwargs.get("base_url", self.base_url)
         self.token = None
 
+    def build(self, method, url, headers, kwargs):
+        auth = kwargs.get("auth", True)
+        if auth: kwargs["sid"] = self.get_token()
+        if "auth" in kwargs: del kwargs["auth"]
+
+    def get_token(self):
+        if self.token: return self.token
+        return self.login()
+
+    def auth_callback(self, params):
+        token = self.login()
+        params["sid"] = token
+
+    def login(self):
+        # tries to login in the pushi infra-structure using the
+        # login route together with the full set of auth info
+        # retrieving the result map that should contain the
+        # session token, to be used in further calls
+        result = self.get(
+            self.base_url + "/login",
+            auth = False,
+            app_id = self.app_id,
+            app_key = self.app_key,
+            app_secret = self.app_secret
+        )
+
+        # unpacks the token value from the result map and then
+        # returns the token to the caller method
+        self.token = result["token"]
+        return self.token
+
+    def logout(self):
+        # runs the "simplistic" call to the logout operation so
+        # that the session is invalidated from the server side
+        self.get(
+            self.base_url + "/logout"
+        )
+
+        # invalidates the currently set token so that it's no longer
+        # going to be used for any kind of operation
+        self.token = None
+
     def authenticate(self, channel, socket_id):
         # in case the app key is not defined for the current
         # instance an exception must be raised as it's not possible
@@ -100,30 +142,3 @@ class Api(
         structure = hmac.new(app_secret, string, hashlib.sha256)
         digest = structure.hexdigest()
         return "%s:%s" % (self.app_key, digest)
-
-    def auth_callback(self, params):
-        token = self.login()
-        params["sid"] = token
-
-    def ensure_login(self):
-        if self.token: return self.token
-        return self.login()
-
-    def login(self):
-        # tries to login in the pushi infra-structure using the
-        # login route together with the full set of auth info
-        # retrieving the result map that should contain the
-        # session token, to be used in further calls
-        result = self.get(
-            self.base_url + "/login",
-            params = dict(
-                app_id = self.app_id,
-                app_key = self.app_key,
-                app_secret = self.app_secret
-            )
-        )
-
-        # unpacks the token value from the result map and then
-        # returns the token to the caller method
-        self.token = result["token"]
-        return self.token

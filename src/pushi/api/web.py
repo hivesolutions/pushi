@@ -46,10 +46,8 @@ class WebApi(object):
         # resulting dictionary to the caller method
         result = self.post(
             self.base_url + "/webs",
-            params = dict(
-                auth = auth,
-                unsubscribe = unsubscribe
-            ),
+            auth = auth,
+            unsubscribe = unsubscribe,
             data_j = dict(
                 url = url,
                 event = event

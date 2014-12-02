@@ -53,11 +53,6 @@ class AppApi(object):
         return result
 
     def update(self, app_id = None, **kwargs):
-        # runs the ensure login call making sure that the login token
-        # is currently present in the environment, this is required
-        # to perform secured remote calls
-        token = self.ensure_login()
-
         # retrieves the proper app id to be used defaulting to the current
         # defined app id in case none is provided
         app_id = app_id or self.app_id
@@ -67,7 +62,6 @@ class AppApi(object):
         # should contain the newly updated information for the app
         result = self.put(
             self.base_url + "/apps/%s" % app_id,
-            params = dict(sid = token),
             data_j = kwargs
         )
         return result

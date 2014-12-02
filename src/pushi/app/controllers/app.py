@@ -80,25 +80,6 @@ class AppController(appier.Controller):
         self.state.trigger(app_id, "ping", "ping")
 
     @appier.private
-    @appier.route("/apps/<app_id>/events", "GET")
-    def list_events(self, app_id, count = 10):
-        if not app_id == self.request.session["app_id"]:
-            raise RuntimeError("Not allowed for app id")
-
-        db = self.get_db("pushi")
-        limit = int(count)
-        cursor = db.event.find(
-            app_id = app_id,
-            limit = limit,
-            sort = [("_id", -1),]
-        )
-        events = [event for event in cursor]
-        for event in events: del event["_id"]
-        return dict(
-            events = events
-        )
-
-    @appier.private
     @appier.route("/apps/<app_id>/events", "POST")
     def new_event(self, app_id, data):
         if not app_id == self.request.session["app_id"]:
@@ -115,29 +96,4 @@ class AppController(appier.Controller):
             channels = channel,
             json_d = data,
             verify = False
-        )
-
-    @appier.private
-    @appier.route("/apps/<app_id>/sockets", "GET")
-    def list_sockets(self, app_id):
-        state = self.state.get_state(app_id = app_id)
-
-        sockets = []
-
-        for socket_id, channel in state.socket_channels.iteritems():
-            socket = dict(socket_id = socket_id, channel = channel)
-            sockets.append(socket)
-
-        return dict(
-            sockets = sockets
-        )
-
-    @appier.private
-    @appier.route("/apps/<app_id>/sockets/<socket_id>", "GET")
-    def show_socket(self, app_id, socket_id):
-        state = self.state.get_state(app_id = app_id)
-        channels = state.socket_channels.get(socket_id, [])
-
-        return dict(
-            channels = channels
         )

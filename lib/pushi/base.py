@@ -101,7 +101,7 @@ class Api(
         # retrieving the result map that should contain the
         # session token, to be used in further calls
         result = self.get(
-            self.base_url + "/login",
+            self.base_url + "login",
             auth = False,
             app_id = self.app_id,
             app_key = self.app_key,
@@ -117,7 +117,7 @@ class Api(
         # runs the "simplistic" call to the logout operation so
         # that the session is invalidated from the server side
         self.get(
-            self.base_url + "/logout"
+            self.base_url + "logout"
         )
 
         # invalidates the currently set token so that it's no longer

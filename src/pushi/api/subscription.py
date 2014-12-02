@@ -45,7 +45,7 @@ class SubscriptionApi(object):
         # defined app id for the operation, then returns the
         # resulting dictionary to the caller method
         result = self.post(
-            self.base_url + "/events",
+            self.base_url + "events",
             data_j = dict(
                 user_id = user_id,
                 event = event
@@ -59,7 +59,7 @@ class SubscriptionApi(object):
         # defined app id for the operation, then returns the
         # resulting dictionary to the caller method
         result = self.delete(
-            self.base_url + "/events/%s/%s" % (user_id, event)
+            self.base_url + "events/%s/%s" % (user_id, event)
         )
         return result
 

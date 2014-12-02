@@ -45,7 +45,7 @@ class ApnApi(object):
         # defined app id for the operation, then returns the
         # resulting dictionary to the caller method
         result = self.post(
-            self.base_url + "/apns",
+            self.base_url + "apns",
             auth = auth,
             unsubscribe = unsubscribe,
             data_j = dict(
@@ -61,7 +61,7 @@ class ApnApi(object):
         # defined app id for the operation, then returns the
         # resulting dictionary to the caller method
         result = self.delete(
-            self.base_url + "/apns/%s/%s" % (token, event)
+            self.base_url + "apns/%s/%s" % (token, event)
         )
         return result
 

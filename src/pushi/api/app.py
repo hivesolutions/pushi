@@ -44,7 +44,7 @@ class AppApi(object):
         # name then returns the returning map to the caller method, it
         # should contain the generated information for the app
         result = self.post(
-            self.base_url + "/apps",
+            self.base_url + "apps",
             auth = False,
             data_j = dict(
                 name = name
@@ -61,7 +61,7 @@ class AppApi(object):
         # name then returns the returning map to the caller method, it
         # should contain the newly updated information for the app
         result = self.put(
-            self.base_url + "/apps/%s" % app_id,
+            self.base_url + "apps/%s" % app_id,
             data_j = kwargs
         )
         return result

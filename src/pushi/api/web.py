@@ -45,7 +45,7 @@ class WebApi(object):
         # defined app id for the operation, then returns the
         # resulting dictionary to the caller method
         result = self.post(
-            self.base_url + "/webs",
+            self.base_url + "webs",
             auth = auth,
             unsubscribe = unsubscribe,
             data_j = dict(
@@ -61,7 +61,7 @@ class WebApi(object):
         # defined app id for the operation, then returns the
         # resulting dictionary to the caller method
         result = self.delete(
-            self.base_url + "/webs/%s/%s" % (url, event)
+            self.base_url + "webs/%s/%s" % (url, event)
         )
         return result
 

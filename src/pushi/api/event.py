@@ -53,7 +53,7 @@ class EventApi(object):
         # performs the concrete event trigger operation creating an event
         # with the provided information using a secure channel
         result = self.post(
-            self.base_url + "/events",
+            self.base_url + "events",
             data_j = data_j
         )
         return result

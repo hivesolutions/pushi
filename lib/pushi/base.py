@@ -37,17 +37,29 @@ __copyright__ = "Copyright (c) 2008-2014 Hive Solutions Lda."
 __license__ = "Apache License, Version 2.0"
 """ The license for the module """
 
-import os
 import hmac
 import hashlib
 
 import appier
 
+from . import apn
+from . import app
+from . import web
+from . import event
+from . import subscription
+
 BASE_URL = "https://puxiapp.com:9090"
 """ The base url to be used by the api to access
 the remote endpoints, should not be changed """
 
-class Pushi:
+class Api(
+    appier.Api,
+    apn.ApnApi,
+    app.AppApi,
+    web.WebApi,
+    event.EventApi,
+    subscription.SubscriptionApi
+):
     """
     Base class for the construction of the pushi
     proxy object for interaction with the server
@@ -58,11 +70,58 @@ class Pushi:
     and write (create and read).
     """
 
-    def __init__(self, app_id = None, app_key = None, app_secret = None, base_url = None):
-        self.app_id = app_id or os.environ.get("PUSHI_ID", None)
-        self.app_key = app_key or os.environ.get("PUSHI_KEY", None)
-        self.app_secret = app_secret or os.environ.get("PUSHI_SECRET", None)
-        self.base_url = base_url or os.environ.get("PUSHI_URL", BASE_URL)
+    def __init__(self, *args, **kwargs):
+        appier.Api.__init__(self, *args, **kwargs)
+        self.app_id = appier.conf("PUSHI_ID", None)
+        self.app_key = appier.conf("PUSHI_KEY", None)
+        self.app_secret = appier.conf("PUSHI_SECRET", None)
+        self.base_url = appier.conf("PUSHI_URL", BASE_URL)
+        self.app_id = kwargs.get("app_id", self.app_id)
+        self.app_key = kwargs.get("app_key", self.app_key)
+        self.app_secret = kwargs.get("app_secret", self.app_secret)
+        self.base_url = kwargs.get("base_url", self.base_url)
+        self.token = None
+
+    def build(self, method, url, headers, kwargs):
+        auth = kwargs.get("auth", True)
+        if auth: kwargs["sid"] = self.get_token()
+        if "auth" in kwargs: del kwargs["auth"]
+
+    def get_token(self):
+        if self.token: return self.token
+        return self.login()
+
+    def auth_callback(self, params):
+        token = self.login()
+        params["sid"] = token
+
+    def login(self):
+        # tries to login in the pushi infra-structure using the
+        # login route together with the full set of auth info
+        # retrieving the result map that should contain the
+        # session token, to be used in further calls
+        result = self.get(
+            self.base_url + "/login",
+            auth = False,
+            app_id = self.app_id,
+            app_key = self.app_key,
+            app_secret = self.app_secret
+        )
+
+        # unpacks the token value from the result map and then
+        # returns the token to the caller method
+        self.token = result["token"]
+        return self.token
+
+    def logout(self):
+        # runs the "simplistic" call to the logout operation so
+        # that the session is invalidated from the server side
+        self.get(
+            self.base_url + "/logout"
+        )
+
+        # invalidates the currently set token so that it's no longer
+        # going to be used for any kind of operation
         self.token = None
 
     def authenticate(self, channel, socket_id):
@@ -83,219 +142,3 @@ class Pushi:
         structure = hmac.new(app_secret, string, hashlib.sha256)
         digest = structure.hexdigest()
         return "%s:%s" % (self.app_key, digest)
-
-    def auth_callback(self, params):
-        token = self.login()
-        params["sid"] = token
-
-    def ensure_login(self):
-        if self.token: return self.token
-        return self.login()
-
-    def login(self):
-        # tries to login in the pushi infra-structure using the
-        # login route together with the full set of auth info
-        # retrieving the result map that should contain the
-        # session token, to be used in further calls
-        result = appier.get(
-            self.base_url + "/login",
-            params = dict(
-                app_id = self.app_id,
-                app_key = self.app_key,
-                app_secret = self.app_secret
-            )
-        )
-
-        # unpacks the token value from the result map and then
-        # returns the token to the caller method
-        self.token = result["token"]
-        return self.token
-
-    def create(self, name):
-        # runs the post call that will create the app with the provided
-        # name then returns the returning map to the caller method, it
-        # should contain the generated information for the app
-        result = appier.post(
-            self.base_url + "/apps",
-            data_j = dict(
-                name = name
-            )
-        )
-        return result
-
-    def update(self, app_id = None, **kwargs):
-        # runs the ensure login call making sure that the login token
-        # is currently present in the environment, this is required
-        # to perform secured remote calls
-        token = self.ensure_login()
-
-        # retrieves the proper app id to be used defaulting to the current
-        # defined app id in case none is provided
-        app_id = app_id or self.app_id
-
-        # runs the pit call that will create the app with the provided
-        # name then returns the returning map to the caller method, it
-        # should contain the newly updated information for the app
-        result = appier.put(
-            self.base_url + "/apps/%s" % app_id,
-            params = dict(sid = token),
-            data_j = kwargs,
-            auth_callback = self.auth_callback
-        )
-        return result
-
-    def trigger(self, channel, data, event = "message", **kwargs):
-        # runs the ensure login call making sure that the login token
-        # is currently present in the environment, this is required
-        # to perform secured remote calls
-        token = self.ensure_login()
-
-        # creates the initial json data structure to be used as the message
-        # and then "extends" it with the extra key word arguments passed
-        # to this methods as a method of extension
-        data_j = dict(
-            data = data,
-            event = event,
-            channel = channel
-        )
-        for key in kwargs: data_j[key] = kwargs[key]
-
-        # performs the concrete event trigger operation creating an event
-        # with the provided information using a secure channel
-        result = appier.post(
-            self.base_url + "/apps/%s/events" % self.app_id,
-            params = dict(sid = token),
-            data_j = data_j,
-            auth_callback = self.auth_callback
-        )
-        return result
-
-    def subscribe(self, user_id, event):
-        # runs the ensure login call making sure that the login token
-        # is currently present in the environment, this is required
-        # to perform secured remote calls
-        token = self.ensure_login()
-
-        # runs the subscription operation for the provided
-        # user id and event, this operation uses the currently
-        # defined app id for the operation, then returns the
-        # resulting dictionary to the caller method
-        result = appier.get(
-            self.base_url + "/apps/%s/subscribe" % self.app_id,
-            params = dict(
-                sid = token,
-                user_id = user_id,
-                event = event
-            ),
-            auth_callback = self.auth_callback
-        )
-        return result
-
-    def unsubscribe(self, user_id, event):
-        # runs the ensure login call making sure that the login token
-        # is currently present in the environment, this is required
-        # to perform secured remote calls
-        token = self.ensure_login()
-
-        # runs the unsubscription operation for the provided
-        # user id and event, this operation uses the currently
-        # defined app id for the operation, then returns the
-        # resulting dictionary to the caller method
-        result = appier.get(
-            self.base_url + "/apps/%s/unsubscribe" % self.app_id,
-            params = dict(
-                sid = token,
-                user_id = user_id,
-                event = event
-            ),
-            auth_callback = self.auth_callback
-        )
-        return result
-
-    def subscribe_apn(self, token, event, auth = None, unsubscribe = True):
-        # runs the ensure login call making sure that the login token
-        # is currently present in the environment, this is required
-        # to perform secured remote calls
-        _token = self.ensure_login()
-
-        # runs the apn subscription operation for the provided
-        # token and event, this operation uses the currently
-        # defined app id for the operation, then returns the
-        # resulting dictionary to the caller method
-        result = appier.get(
-            self.base_url + "/apps/%s/subscribe_apn" % self.app_id,
-            params = dict(
-                sid = _token,
-                token = token,
-                event = event,
-                auth = auth,
-                unsubscribe = unsubscribe
-            ),
-            auth_callback = self.auth_callback
-        )
-        return result
-
-    def unsubscribe_apn(self, token, event):
-        # runs the ensure login call making sure that the login token
-        # is currently present in the environment, this is required
-        # to perform secured remote calls
-        _token = self.ensure_login()
-
-        # runs the apn unsubscription operation for the provided
-        # token and event, this operation uses the currently
-        # defined app id for the operation, then returns the
-        # resulting dictionary to the caller method
-        result = appier.get(
-            self.base_url + "/apps/%s/unsubscribe_apn" % self.app_id,
-            params = dict(
-                sid = _token,
-                token = token,
-                event = event
-            ),
-            auth_callback = self.auth_callback
-        )
-        return result
-
-    def subscribe_web(self, url, event, auth = None, unsubscribe = True):
-        # runs the ensure login call making sure that the login token
-        # is currently present in the environment, this is required
-        # to perform secured remote calls
-        token = self.ensure_login()
-
-        # runs the web subscription operation for the provided
-        # token and event, this operation uses the currently
-        # defined app id for the operation, then returns the
-        # resulting dictionary to the caller method
-        result = appier.get(
-            self.base_url + "/apps/%s/subscribe_web" % self.app_id,
-            params = dict(
-                sid = token,
-                url = url,
-                event = event,
-                auth = auth,
-                unsubscribe = unsubscribe
-            ),
-            auth_callback = self.auth_callback
-        )
-        return result
-
-    def unsubscribe_web(self, url, event):
-        # runs the ensure login call making sure that the login token
-        # is currently present in the environment, this is required
-        # to perform secured remote calls
-        token = self.ensure_login()
-
-        # runs the web unsubscription operation for the provided
-        # token and event, this operation uses the currently
-        # defined app id for the operation, then returns the
-        # resulting dictionary to the caller method
-        result = appier.get(
-            self.base_url + "/apps/%s/unsubscribe_web" % self.app_id,
-            params = dict(
-                sid = token,
-                url = url,
-                event = event
-            ),
-            auth_callback = self.auth_callback
-        )
-        return result

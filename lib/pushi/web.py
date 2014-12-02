@@ -19,6 +19,9 @@
 # You should have received a copy of the Apache License along with
 # Hive Pushi System. If not, see <http://www.apache.org/licenses/>.
 
+__author__ = "João Magalhães <joamag@hive.pt>"
+""" The author(s) of the module """
+
 __version__ = "1.0.0"
 """ The version of the module """
 
@@ -34,16 +37,30 @@ __copyright__ = "Copyright (c) 2008-2014 Hive Solutions Lda."
 __license__ = "Apache License, Version 2.0"
 """ The license for the module """
 
-from . import apn
-from . import app
-from . import base
-from . import event
-from . import subscription
-from . import web
+class WebApi(object):
 
-from .apn import ApnApi
-from .app import AppApi
-from .base import Api
-from .event import EventApi
-from .subscription import SubscriptionApi
-from .web import WebApi
+    def create_web(self, url, event, auth = None, unsubscribe = True):
+        # runs the web subscription operation for the provided
+        # url and event, this operation uses the currently
+        # defined app id for the operation, then returns the
+        # resulting dictionary to the caller method
+        result = self.post(
+            self.base_url + "/webs",
+            auth = auth,
+            unsubscribe = unsubscribe,
+            data_j = dict(
+                url = url,
+                event = event
+            )
+        )
+        return result
+
+    def delete_web(self, url, event):
+        # runs the unsubscription operation for the provided
+        # user id and event, this operation uses the currently
+        # defined app id for the operation, then returns the
+        # resulting dictionary to the caller method
+        result = self.delete(
+            self.base_url + "/webs/%s/%s" % (url, event)
+        )
+        return result

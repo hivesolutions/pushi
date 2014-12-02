@@ -19,6 +19,9 @@
 # You should have received a copy of the Apache License along with
 # Hive Pushi System. If not, see <http://www.apache.org/licenses/>.
 
+__author__ = "João Magalhães <joamag@hive.pt>"
+""" The author(s) of the module """
+
 __version__ = "1.0.0"
 """ The version of the module """
 
@@ -34,16 +37,23 @@ __copyright__ = "Copyright (c) 2008-2014 Hive Solutions Lda."
 __license__ = "Apache License, Version 2.0"
 """ The license for the module """
 
-from . import apn
-from . import app
-from . import base
-from . import event
-from . import subscription
-from . import web
+class EventApi(object):
 
-from .apn import ApnApi
-from .app import AppApi
-from .base import Api
-from .event import EventApi
-from .subscription import SubscriptionApi
-from .web import WebApi
+    def trigger(self, channel, data, event = "message", **kwargs):
+        # creates the initial json data structure to be used as the message
+        # and then "extends" it with the extra key word arguments passed
+        # to this methods as a method of extension
+        data_j = dict(
+            data = data,
+            event = event,
+            channel = channel
+        )
+        for key in kwargs: data_j[key] = kwargs[key]
+
+        # performs the concrete event trigger operation creating an event
+        # with the provided information using a secure channel
+        result = self.post(
+            self.base_url + "/events",
+            data_j = data_j
+        )
+        return result

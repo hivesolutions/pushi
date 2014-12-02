@@ -19,6 +19,9 @@
 # You should have received a copy of the Apache License along with
 # Hive Pushi System. If not, see <http://www.apache.org/licenses/>.
 
+__author__ = "João Magalhães <joamag@hive.pt>"
+""" The author(s) of the module """
+
 __version__ = "1.0.0"
 """ The version of the module """
 
@@ -34,16 +37,31 @@ __copyright__ = "Copyright (c) 2008-2014 Hive Solutions Lda."
 __license__ = "Apache License, Version 2.0"
 """ The license for the module """
 
-from . import apn
-from . import app
-from . import base
-from . import event
-from . import subscription
-from . import web
+class AppApi(object):
 
-from .apn import ApnApi
-from .app import AppApi
-from .base import Api
-from .event import EventApi
-from .subscription import SubscriptionApi
-from .web import WebApi
+    def create_app(self, name):
+        # runs the post call that will create the app with the provided
+        # name then returns the returning map to the caller method, it
+        # should contain the generated information for the app
+        result = self.post(
+            self.base_url + "/apps",
+            auth = False,
+            data_j = dict(
+                name = name
+            )
+        )
+        return result
+
+    def update(self, app_id = None, **kwargs):
+        # retrieves the proper app id to be used defaulting to the current
+        # defined app id in case none is provided
+        app_id = app_id or self.app_id
+
+        # runs the pit call that will create the app with the provided
+        # name then returns the returning map to the caller method, it
+        # should contain the newly updated information for the app
+        result = self.put(
+            self.base_url + "/apps/%s" % app_id,
+            data_j = kwargs
+        )
+        return result

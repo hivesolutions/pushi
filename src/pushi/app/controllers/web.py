@@ -44,12 +44,12 @@ import pushi
 class WebController(appier.Controller):
 
     @appier.private
-    @appier.route("/web", "GET")
+    @appier.route("/webs", "GET")
     def list(self, url = None, event = None):
         return self.state.web_handler.subscriptions(url = url, event = event)
 
     @appier.private
-    @appier.route("/web", "POST")
+    @appier.route("/webs", "POST")
     def create(self, auth = None, unsubscribe = True):
         web = pushi.Web.new()
         web = self.state.web_handler.subscribe(
@@ -60,7 +60,7 @@ class WebController(appier.Controller):
         return web.map()
 
     @appier.private
-    @appier.route("/web/<url>", "DELETE")
+    @appier.route("/webs/<url>", "DELETE")
     def deletes(self, token, event = None):
         webs = self.state.web_handler.unsubscribes(token, event = event)
         return dict(
@@ -68,7 +68,7 @@ class WebController(appier.Controller):
         )
 
     @appier.private
-    @appier.route("/web/<url>/<event>", "DELETE")
+    @appier.route("/webs/<url>/<event>", "DELETE")
     def delete(self, token, event):
         web = self.state.web_handler.unsubscribe(token, event = event)
         return web.map()

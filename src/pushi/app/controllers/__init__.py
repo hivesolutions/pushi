@@ -36,8 +36,12 @@ __license__ = "Apache License, Version 2.0"
 
 from . import app
 from . import base
+from . import event
 from . import subscription
+from . import web
 
 from .app import AppController
 from .base import BaseController
+from .event import EventController
 from .subscription import SubscriptionController
+from .web import WebController

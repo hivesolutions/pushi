@@ -39,26 +39,5 @@ __license__ = "Apache License, Version 2.0"
 
 import appier
 
-import pushi
-
-class SubscriptionController(appier.Controller):
-
-    @appier.private
-    @appier.route("/subscriptions", "GET")
-    def list(self, user_id = None, event = None):
-        filter = dict()
-        if user_id: filter["user_id"] = user_id
-        if event: filter["event"] = event
-        subscriptions = pushi.Subscription.find(map = True, **filter)
-        return dict(
-            subscriptions = subscriptions
-        )
-
-    @appier.route("/subscriptions", "POST")
-    def create(self):
-        #@todo: must search for a previously existing
-        # subscription for the same characteristics
-        # if it exists must skip creation
-        subscription = pushi.Subscription.new()
-        subscription.save()
-        return subscription.map()
+class WebController(appier.Controller):
+    pass

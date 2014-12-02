@@ -917,7 +917,7 @@ class State(appier.Mongo):
         return events
 
     def get_app(self, app_id = None, app_key = None):
-        if app_id: app = pushi.App.get(app_id = app_id)
+        if app_id: app = pushi.App.get(ident = app_id)
         if app_key: app = pushi.App.get(key = app_key)
         return app
 

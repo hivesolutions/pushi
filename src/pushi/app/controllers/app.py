@@ -80,43 +80,6 @@ class AppController(appier.Controller):
         self.state.trigger(app_id, "ping", "ping")
 
     @appier.private
-    @appier.route("/apps/<app_id>/subscriptions_web", "GET")
-    def subscriptions_web(self, app_id, user_id = None, event = None):
-        if not app_id == self.request.session["app_id"]:
-            raise RuntimeError("Not allowed for app id")
-
-        web_handler = self.state.web_handler
-        return web_handler.subscriptions(app_id)
-
-    @appier.private
-    @appier.route("/apps/<app_id>/subscribe_web", "GET")
-    def subscribe_web(self, app_id, url, event, auth = None, unsubscribe = True):
-        if not app_id == self.request.session["app_id"]:
-            raise RuntimeError("Not allowed for app id")
-
-        web_handler = self.state.web_handler
-        web_handler.subscribe(
-            app_id,
-            url,
-            event,
-            auth = auth,
-            unsubscribe = unsubscribe
-        )
-
-    @appier.private
-    @appier.route("/apps/<app_id>/unsubscribe_web", "GET")
-    def unsubscribe_web(self, app_id, url, event = None):
-        if not app_id == self.request.session["app_id"]:
-            raise RuntimeError("Not allowed for app id")
-
-        web_handler = self.state.web_handler
-        web_handler.unsubscribe(
-            app_id,
-            url,
-            event = event
-        )
-
-    @appier.private
     @appier.route("/apps/<app_id>/events", "GET")
     def list_events(self, app_id, count = 10):
         if not app_id == self.request.session["app_id"]:

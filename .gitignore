@@ -1,3 +1,7 @@
 *.pyc
 
 *.shelve*
+
+/dist
+/build
+/src/pushi_service.egg-info

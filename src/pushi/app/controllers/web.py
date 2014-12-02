@@ -74,5 +74,6 @@ class WebController(appier.Controller):
     @appier.private
     @appier.route("/webs/<url>/<regex('[\.\w-]+'):event>", "DELETE")
     def delete(self, url, event):
-        web = self.state.web_handler.unsubscribe(url, event = event)
+        force = self.field("force", False, cast = bool)
+        web = self.state.web_handler.unsubscribe(url, event = event, force = force)
         return web.map()

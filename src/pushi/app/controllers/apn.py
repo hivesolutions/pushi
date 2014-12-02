@@ -74,5 +74,6 @@ class ApnController(appier.Controller):
     @appier.private
     @appier.route("/apns/<token>/<regex('[\.\w-]+'):event>", "DELETE")
     def delete(self, token, event):
-        apn = self.state.apn_handler.unsubscribe(token, event = event)
+        force = self.field("force", False, cast = bool)
+        apn = self.state.apn_handler.unsubscribe(token, event = event, force = force)
         return apn.map()

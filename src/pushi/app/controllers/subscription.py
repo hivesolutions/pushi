@@ -56,11 +56,10 @@ class SubscriptionController(appier.Controller):
 
     @appier.route("/subscriptions", "POST")
     def create(self):
-        #@todo: must search for a previously existing
-        # subscription for the same characteristics
-        # if it exists must skip creation, to verify
-        # duplicates a proper method should exist at
-        # the top level base class
         subscription = pushi.Subscription.new()
-        subscription.save()
+        exists = pushi.Subscription.exists(
+            user_id = subscription.user_id,
+            event = subscription.event
+        )
+        not exists and subscription.save()
         return subscription.map()

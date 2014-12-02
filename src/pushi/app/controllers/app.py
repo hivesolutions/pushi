@@ -58,42 +58,21 @@ class AppController(appier.Controller):
         return app.map()
 
     @appier.private
-    @appier.route("/apps/<app_id>", "GET")
-    def show(self, app_id):
-        app = pushi.App.get(map = True, app_id = app_id)
+    @appier.route("/apps/<id>", "GET")
+    def show(self, id):
+        app = pushi.App.get(map = True, id = id)
         return app
 
     @appier.private
-    @appier.route("/apps/<app_id>", "PUT")
-    def update(self, app_id):
-        app = pushi.App.get(app_id = app_id)
+    @appier.route("/apps/<id>", "PUT")
+    def update(self, id):
+        app = pushi.App.get(id = id)
         app.apply()
         app.save()
         return app
 
     @appier.private
-    @appier.route("/apps/<app_id>/ping", "GET")
-    def ping(self, app_id):
-        if not app_id == self.request.session["app_id"]:
-            raise RuntimeError("Not allowed for app id")
-
-        self.state.trigger(app_id, "ping", "ping")
-
-    @appier.private
-    @appier.route("/apps/<app_id>/events", "POST")
-    def new_event(self, app_id, data):
-        if not app_id == self.request.session["app_id"]:
-            raise RuntimeError("Not allowed for app id")
-
-        _data = data.get("data", None)
-        event = data.get("event", "message")
-        channel = data.get("channel", "global")
-        if not data: raise RuntimeError("No data set for event")
-        self.state.trigger(
-            app_id,
-            event,
-            _data,
-            channels = channel,
-            json_d = data,
-            verify = False
-        )
+    @appier.route("/apps/ping", "GET")
+    def ping(self):
+        app = pushi.App.get()
+        self.state.trigger(app.id, "ping", "ping")

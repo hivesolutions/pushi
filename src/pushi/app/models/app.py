@@ -51,7 +51,7 @@ class App(base.PushiBase):
         default = True
     )
 
-    app_id = appier.field(
+    id = appier.field(
         index = True,
         safe = True,
         immutable = True

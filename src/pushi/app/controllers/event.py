@@ -69,6 +69,6 @@ class EventController(appier.Controller):
             event,
             _data,
             channels = channel,
-            json_d = data,
+            json_d = self.data_j,
             verify = False
         )

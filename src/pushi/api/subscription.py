@@ -62,3 +62,9 @@ class SubscriptionApi(object):
             self.base_url + "/events/%s/%s" % (user_id, event)
         )
         return result
+
+    def subscribe(self, *args, **kwargs):
+        return self.create_subscription(*args, **kwargs)
+
+    def unsubscribe(self, *args, **kwargs):
+        return self.delete_subscription(*args, **kwargs)

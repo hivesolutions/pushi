@@ -71,9 +71,9 @@ class ApnHandler(handler.Handler):
         # and extracts the apn specific values for it to be used in
         # the process of authentication
         app = self.owner.get_app(app_id = app_id)
-        key_data = app.get("apn_key", None)
-        cer_data = app.get("apn_cer", None)
-        sandbox = app.get("apn_sandbox", True)
+        key_data = app.apn_key
+        cer_data = app.apn_cer
+        sandbox = app.apn_sandbox
 
         # in case no key data or certificate data is present a runtime
         # error is raised to indicate the problem
@@ -111,7 +111,7 @@ class ApnHandler(handler.Handler):
 
         # retrieves the app key for the retrieved app by unpacking the current
         # app structure into the appropriate values
-        app_key = app["key"]
+        app_key = app.key
 
         # resolves the complete set of (extra) channels for the provided
         # event assuming that it may be associated with alias, then creates

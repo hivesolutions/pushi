@@ -63,7 +63,7 @@ class WebHandler(handler.Handler):
 
         # retrieves the app key for the retrieved app by unpacking the current
         # app structure into the appropriate values
-        app_key = app["key"]
+        app_key = app.key
 
         # resolves the complete set of (extra) channels for the provided
         # event assuming that it may be associated with alias, then creates

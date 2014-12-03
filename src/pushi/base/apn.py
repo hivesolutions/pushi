@@ -122,11 +122,6 @@ class ApnHandler(handler.Handler):
         # retrieves the complete set of subscriptions for the current apn
         # infra-structure to be able to resolve the appropriate tokens
         subs = self.subs.get(app_id, {})
-        count = len(subs)
-
-        # prints a logging message about the various (web) subscriptions
-        # that were found for the event that was triggered
-        self.logger.debug("Found '%d' apn subscription(s) for '%s" % (count, event))
 
         # creates the initial list of tokens to be notified and then populates
         # the list with the various token associated with the complete set of
@@ -137,6 +132,11 @@ class ApnHandler(handler.Handler):
             _tokens = subs.get(event, [])
             tokens.extend(_tokens)
         tokens = set(tokens)
+        count = len(tokens)
+
+        # prints a logging message about the various (web) subscriptions
+        # that were found for the event that was triggered
+        self.logger.debug("Found '%d' apn subscription(s) for '%s" % (count, event))
 
         # creates the counter that will be used by the cleanup function
         # to know exactly when to remove the ssl associated files

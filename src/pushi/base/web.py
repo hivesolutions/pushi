@@ -74,11 +74,6 @@ class WebHandler(handler.Handler):
         # retrieves the complete set of subscriptions for the current web
         # infra-structure to be able to resolve the appropriate urls
         subs = self.subs.get(app_id, {})
-        count = len(subs)
-
-        # prints a logging message about the various (web) subscriptions
-        # that were found for the event that was triggered
-        self.logger.debug("Found '%d' web subscription(s) for '%s" % (count, event))
 
         # creates the initial list of urls to be notified and then populates
         # the list with the various url associated with the complete set of
@@ -89,6 +84,11 @@ class WebHandler(handler.Handler):
             _urls = subs.get(event, [])
             urls.extend(_urls)
         urls = set(urls)
+        count = len(urls)
+
+        # prints a logging message about the various (web) subscriptions
+        # that were found for the event that was triggered
+        self.logger.debug("Found '%d' web subscription(s) for '%s" % (count, event))
 
         # serializes the json message so that it's possible to send it using
         # the http client to the endpoints and then creates the map of headers

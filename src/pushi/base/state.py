@@ -964,6 +964,27 @@ class State(appier.Mongo):
         if app_key: app = pushi.App.get(key = app_key)
         return app
 
+    def invalidate(self, app_id = None, app_key = None):
+        """
+        Invalidates the state of the app for the provided identifier
+        and key values. Note that the invalidated partials are only
+        affected when the provided identification and key parts are
+        properly provided.
+
+        This method should be used with extreme care as unwanted results
+        may emerge from wreckless usage of this method.
+
+        @type app_id: String
+        @param app_id: The identifier of the application that is going
+        to be invalidated for the current state.
+        @type app_key: String
+        @param app_key: The key of the application that is going
+        to be invalidated for the current state.
+        """
+
+        if app_id and app_id in self.app_id_state: del self.app_id_state[app_id]
+        if app_key and app_key in self.app_id_state: del self.app_id_state[app_key]
+
     def verify(self, app_key, socket_id, channel, auth):
         """
         Verifies the provided auth (token) using the app

@@ -63,6 +63,9 @@ setuptools.setup(
     package_dir = {
         "" : os.path.normpath("src")
     },
+    install_requires = [
+        "appier"
+    ],
     classifiers = [
         "Development Status :: 5 - Production/Stable",
         "Topic :: Utilities",

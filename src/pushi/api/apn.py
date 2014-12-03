@@ -46,8 +46,10 @@ class ApnApi(object):
         # resulting dictionary to the caller method
         result = self.post(
             self.base_url + "apns",
-            auth = auth,
-            unsubscribe = unsubscribe,
+            params = dict(
+                auth = auth,
+                unsubscribe = unsubscribe
+            ),
             data_j = dict(
                 token = token,
                 event = event

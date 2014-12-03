@@ -76,7 +76,9 @@ class Event(base.PushiBase):
             appier.not_empty("mid"),
 
             appier.not_null("channel"),
-            appier.not_empty("channel")
+            appier.not_empty("channel"),
+
+            appier.not_null("timestamp")
         ]
 
     @classmethod

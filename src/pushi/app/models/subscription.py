@@ -65,8 +65,24 @@ class Subscription(base.PushiBase):
     def list_names(cls):
         return ["user_id", "event"]
 
+    def pre_update(self):
+        base.PushiBase.pre_update(self)
+        self.state and self.state.remove_alias(
+            self.app_key,
+            "personal-" + self.user_id,
+            self.event
+        )
+
     def post_create(self):
         base.PushiBase.pre_create(self)
+        self.state and self.state.add_alias(
+            self.app_key,
+            "personal-" + self.user_id,
+            self.event
+        )
+
+    def post_update(self):
+        base.PushiBase.post_update(self)
         self.state and self.state.add_alias(
             self.app_key,
             "personal-" + self.user_id,

@@ -195,6 +195,11 @@ class State(appier.Mongo):
             self.add_alias(app_key, "personal-" + user_id, event)
 
     def add_alias(self, app_key, channel, alias):
+        self.app.logger.debug(
+            "Adding '%s' into '%s' for app key '%s'" %
+            (alias, channel, app_key)
+        )
+
         state = self.get_state(app_key = app_key)
         alias_l = state.alias.get(channel, [])
         if alias in alias_l: return
@@ -209,6 +214,11 @@ class State(appier.Mongo):
         state.alias_i[alias] = alias_l
 
     def remove_alias(self, app_key, channel, alias):
+        self.app.logger.debug(
+            "Removing '%s' from '%s' for app key '%s'" %
+            (alias, channel, app_key)
+        )
+
         state = self.get_state(app_key = app_key)
         alias_l = state.alias.get(channel, [])
         if not alias in alias_l: return

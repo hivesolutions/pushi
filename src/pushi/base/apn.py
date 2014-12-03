@@ -216,6 +216,8 @@ class ApnHandler(handler.Handler):
         )
 
     def subscribe(self, apn, auth = None, unsubscribe = True):
+        self.logger.debug("Subscribing '%s' for '%s'" % (apn.token, apn.event))
+
         is_private = apn.event.startswith("private-") or\
             apn.event.startswith("presence-") or apn.event.startswith("peer-") or\
             apn.event.startswith("personal-")
@@ -233,6 +235,8 @@ class ApnHandler(handler.Handler):
         return apn
 
     def unsubscribe(self, token, event = None, force = True):
+        self.logger.debug("Unsubscribing '%s' from '%s'" % (token, event or "*"))
+
         kwargs = dict(token = token, raise_e = force)
         if event: kwargs["event"] = event
 

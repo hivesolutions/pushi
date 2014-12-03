@@ -168,6 +168,8 @@ class WebHandler(handler.Handler):
         )
 
     def subscribe(self, web, auth = None, unsubscribe = True):
+        self.logger.debug("Subscribing '%s' for '%s'" % (web.url, web.event))
+
         is_private = web.event.startswith("private-") or\
             web.event.startswith("presence-") or web.event.startswith("peer-") or\
             web.event.startswith("personal-")
@@ -185,6 +187,8 @@ class WebHandler(handler.Handler):
         return web
 
     def unsubscribe(self, url, event = None, force = True):
+        self.logger.debug("Unsubscribing '%s' from '%s'" % (url, event or "*"))
+
         kwargs = dict(url = url, raise_e = force)
         if event: kwargs["event"] = event
 

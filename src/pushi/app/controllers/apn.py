@@ -55,11 +55,6 @@ class ApnController(appier.Controller):
     def create(self):
         auth = self.field("auth", None)
         unsubscribe = self.field("unsubscribe", False, cast = bool)
-
-        print("----------------------------------------------------------------")
-        print(auth)
-        print(unsubscribe)
-        print("----------------------------------------------------------------")
         apn = pushi.Apn.new()
         apn = self.state.apn_handler.subscribe(
             apn,

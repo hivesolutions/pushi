@@ -175,7 +175,7 @@ class WebHandler(handler.Handler):
             web.event.startswith("personal-")
 
         is_private and self.owner.verify(web.app_key, web.url, web.event, auth)
-        unsubscribe and self.unsubscribe(web.app_id, web.url, force = False)
+        unsubscribe and self.unsubscribe(web.url, force = False)
 
         exists = pushi.Web.exists(
             url = web.url,

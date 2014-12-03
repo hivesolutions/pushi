@@ -39,7 +39,7 @@ __license__ = "Apache License, Version 2.0"
 
 import appier
 
-import pushi.app.models
+import pushi
 
 class WebController(appier.Controller):
 
@@ -55,7 +55,7 @@ class WebController(appier.Controller):
     def create(self):
         auth = self.field("auth", None)
         unsubscribe = self.field("unsubscribe", False, cast = bool)
-        web = pushi.app.models.Web.new()
+        web = pushi.Web.new()
         web = self.state.web_handler.subscribe(
             web,
             auth = auth,

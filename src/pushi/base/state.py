@@ -253,7 +253,16 @@ class State(appier.Mongo):
         for channel in channels: self.unsubscribe(connection, app_key, socket_id, channel)
         if socket_id in state.socket_channels: del state.socket_channels[socket_id]
 
-    def subscribe(self, connection, app_key, socket_id, channel, auth = None, channel_data = None, force = False):
+    def subscribe(
+        self,
+        connection,
+        app_key,
+        socket_id,
+        channel,
+        auth = None,
+        channel_data = None,
+        force = False
+    ):
         # checks if the the channel to be registered is considered private
         # (either private, presence or peer) and in case it's private verifies
         # if the correct credentials (including auth token) are valid
@@ -719,7 +728,16 @@ class State(appier.Mongo):
         is_subscribed = channel in channels if channels else False
         return is_subscribed
 
-    def trigger(self, app_id, event, data, channels = None, json_d = None, owner_id = None, verify = True):
+    def trigger(
+        self,
+        app_id,
+        event,
+        data,
+        channels = None,
+        json_d = None,
+        owner_id = None,
+        verify = True
+    ):
         if not channels: channels = ("global",)
 
         channels_t = type(channels)
@@ -738,7 +756,17 @@ class State(appier.Mongo):
             invalid = invalid
         )
 
-    def trigger_c(self, app_id, channel, event, data, json_d = None, owner_id = None, verify = True, invalid = {}):
+    def trigger_c(
+        self,
+        app_id,
+        channel,
+        event,
+        data,
+        json_d = None,
+        owner_id = None,
+        verify = True,
+        invalid = {}
+    ):
         data_t = type(data)
         data = data if data_t in appier.legacy.STRINGS else json.dumps(data)
 

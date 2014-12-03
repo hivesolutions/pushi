@@ -39,7 +39,7 @@ __license__ = "Apache License, Version 2.0"
 
 import appier
 
-import pushi.app
+import pushi.app.models
 
 class EventController(appier.Controller):
 
@@ -47,7 +47,7 @@ class EventController(appier.Controller):
     @appier.route("/events", "GET")
     def list(self):
         count = self.field("count", 10, cast = int)
-        events = pushi.app.Event.find(
+        events = pushi.app.models.Event.find(
             limit = count,
             sort = [("_id", -1),],
             map = True

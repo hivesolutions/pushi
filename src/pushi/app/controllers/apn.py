@@ -39,7 +39,7 @@ __license__ = "Apache License, Version 2.0"
 
 import appier
 
-import pushi.app
+import pushi.app.models
 
 class ApnController(appier.Controller):
 
@@ -55,7 +55,7 @@ class ApnController(appier.Controller):
     def create(self):
         auth = self.field("auth", None)
         unsubscribe = self.field("unsubscribe", False, cast = bool)
-        apn = pushi.app.Apn.new()
+        apn = pushi.app.models.Apn.new()
         apn = self.state.apn_handler.subscribe(
             apn,
             auth = auth,

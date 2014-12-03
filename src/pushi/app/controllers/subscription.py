@@ -39,7 +39,7 @@ __license__ = "Apache License, Version 2.0"
 
 import appier
 
-import pushi.app
+import pushi.app.models
 
 class SubscriptionController(appier.Controller):
 
@@ -51,7 +51,7 @@ class SubscriptionController(appier.Controller):
         filter = dict()
         if user_id: filter["user_id"] = user_id
         if event: filter["event"] = event
-        subscriptions = pushi.app.Subscription.find(map = True, **filter)
+        subscriptions = pushi.app.models.Subscription.find(map = True, **filter)
         return dict(
             subscriptions = subscriptions
         )
@@ -59,8 +59,8 @@ class SubscriptionController(appier.Controller):
     @appier.private
     @appier.route("/subscriptions", "POST")
     def create(self):
-        subscription = pushi.app.Subscription.new()
-        exists = pushi.app.Subscription.exists(
+        subscription = pushi.app.models.Subscription.new()
+        exists = pushi.app.models.Subscription.exists(
             user_id = subscription.user_id,
             event = subscription.event
         )
@@ -72,7 +72,7 @@ class SubscriptionController(appier.Controller):
     @appier.route("/subscriptions/<user_id>/<regex('[\.\w-]+'):event>", "DELETE")
     def delete(self, user_id, event):
         force = self.field("force", False, cast = bool)
-        subscription = pushi.app.Subscription.get(
+        subscription = pushi.app.models.Subscription.get(
             user_id = user_id,
             event = event,
             raise_e = force

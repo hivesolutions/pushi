@@ -65,7 +65,8 @@ setuptools.setup(
         "" : os.path.normpath("src")
     },
     install_requires = [
-        "appier"
+        "appier",
+        "netius"
     ],
     classifiers = [
         "Development Status :: 5 - Production/Stable",

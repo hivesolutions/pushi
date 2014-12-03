@@ -56,6 +56,7 @@ setuptools.setup(
         "pushi.app",
         "pushi.app.controllers",
         "pushi.app.models",
+        "pushi.base",
         "pushi.net",
         "pushi.test"
     ],

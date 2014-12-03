@@ -67,10 +67,11 @@ class Web(base.PushiBase):
 
     def pre_update(self):
         base.PushiBase.pre_update(self)
+        previous = self.__class__.find(id = self.id)
         self.state and self.state.web_handler.remove(
-            self.app_id,
-            self.url,
-            self.event
+            previous.app_id,
+            previous.url,
+            previous.event
         )
 
     def post_create(self):

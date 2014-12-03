@@ -67,10 +67,11 @@ class Apn(base.PushiBase):
 
     def pre_update(self):
         base.PushiBase.pre_update(self)
+        previous = self.__class__.find(id = self.id)
         self.state and self.state.apn_handler.remove(
-            self.app_id,
-            self.token,
-            self.event
+            previous.app_id,
+            previous.token,
+            previous.event
         )
 
     def post_create(self):

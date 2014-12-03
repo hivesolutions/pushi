@@ -67,10 +67,11 @@ class Subscription(base.PushiBase):
 
     def pre_update(self):
         base.PushiBase.pre_update(self)
+        previous = self.__class__.find(id = self.id)
         self.state and self.state.remove_alias(
-            self.app_key,
-            "personal-" + self.user_id,
-            self.event
+            previous.app_key,
+            "personal-" + previous.user_id,
+            previous.event
         )
 
     def post_create(self):

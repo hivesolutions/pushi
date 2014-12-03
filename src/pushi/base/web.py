@@ -64,7 +64,7 @@ class WebHandler(handler.Handler):
         # retrieves the app key for the retrieved app by unpacking the current
         # app structure into the appropriate values
         app_key = app.key
-        
+
         # saves the original event name for the received event, so that it may
         # be used latter for debugging/log purposes
         root_event = event

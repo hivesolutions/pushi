@@ -182,8 +182,6 @@ class WebHandler(handler.Handler):
         if exists: web = exists
         else: web.save()
 
-        self.add(web.app_id, web.url, web.event)
-
         return web
 
     def unsubscribe(self, url, event = None, force = True):
@@ -194,7 +192,6 @@ class WebHandler(handler.Handler):
         if not web: return None
 
         web.delete()
-        self.remove(web.app_id, web.url, web.event)
 
         return web
 
@@ -203,9 +200,6 @@ class WebHandler(handler.Handler):
         if event: kwargs["event"] = event
 
         webs = pushi.Web.find(**kwargs)
-
-        for web in webs:
-            web.delete()
-            self.remove(web.app_id, web.url, web.event)
+        for web in webs: web.delete()
 
         return webs

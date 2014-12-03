@@ -230,8 +230,6 @@ class ApnHandler(handler.Handler):
         if exists: apn = exists
         else: apn.save()
 
-        self.add(apn.app_id, apn.token, apn.event)
-
         return apn
 
     def unsubscribe(self, token, event = None, force = True):
@@ -242,7 +240,6 @@ class ApnHandler(handler.Handler):
         if not apn: return None
 
         apn.delete()
-        self.remove(apn.app_id, apn.token, apn.event)
 
         return apn
 
@@ -251,9 +248,6 @@ class ApnHandler(handler.Handler):
         if event: kwargs["event"] = event
 
         apns = pushi.Apn.find(**kwargs)
-
-        for apn in apns:
-            apn.delete()
-            self.remove(apn.app_id, apn.token, apn.event)
+        for apn in apns: apn.delete()
 
         return apns

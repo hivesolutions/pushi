@@ -64,3 +64,35 @@ class Apn(base.PushiBase):
     @classmethod
     def list_names(cls):
         return ["token", "event"]
+
+    def pre_update(self):
+        base.PushiBase.pre_update(self)
+        self.state and self.state.apn_handler.remove(
+            self.app_id,
+            self.token,
+            self.event
+        )
+
+    def post_create(self):
+        base.PushiBase.pre_create(self)
+        self.state and self.state.apn_handler.add(
+            self.app_id,
+            self.token,
+            self.event
+        )
+
+    def post_update(self):
+        base.PushiBase.post_update(self)
+        self.state and self.state.apn_handler.add(
+            self.app_id,
+            self.token,
+            self.event
+        )
+
+    def post_delete(self):
+        base.PushiBase.post_delete(self)
+        self.state and self.state.apn_handler.remove(
+            self.app_id,
+            self.token,
+            self.event
+        )

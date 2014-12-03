@@ -39,34 +39,34 @@ __license__ = "Apache License, Version 2.0"
 
 import appier
 
-import pushi
+import pushi.app
 
 class AppController(appier.Controller):
 
     @appier.private
     @appier.route("/apps", "GET")
     def list(self):
-        apps = pushi.App.find(map = True)
+        apps = pushi.app.App.find(map = True)
         return dict(
             apps = apps
         )
 
     @appier.route("/apps", "POST")
     def create(self):
-        app = pushi.App.new()
+        app = pushi.app.App.new()
         app.save()
         return app.map()
 
     @appier.private
     @appier.route("/apps/<ident>", "GET")
     def show(self, ident):
-        app = pushi.App.get(map = True, ident = ident)
+        app = pushi.app.App.get(map = True, ident = ident)
         return app
 
     @appier.private
     @appier.route("/apps/<ident>", "PUT")
     def update(self, ident):
-        app = pushi.App.get(ident = ident)
+        app = pushi.app.App.get(ident = ident)
         app.apply()
         app.save()
         return app
@@ -74,5 +74,5 @@ class AppController(appier.Controller):
     @appier.private
     @appier.route("/apps/ping", "GET")
     def ping(self):
-        app = pushi.App.get()
+        app = pushi.app.App.get()
         self.state.trigger(app.id, "ping", "ping")

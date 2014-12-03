@@ -232,6 +232,8 @@ class ApnHandler(handler.Handler):
         if exists: apn = exists
         else: apn.save()
 
+        self.logger.debug("Subscribed '%s' for '%s'" % (apn.token, apn.event))
+
         return apn
 
     def unsubscribe(self, token, event = None, force = True):
@@ -244,6 +246,8 @@ class ApnHandler(handler.Handler):
         if not apn: return None
 
         apn.delete()
+
+        self.logger.debug("Unsubscribed '%s' for '%s'" % (token, event or "*"))
 
         return apn
 

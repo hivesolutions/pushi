@@ -184,6 +184,8 @@ class WebHandler(handler.Handler):
         if exists: web = exists
         else: web.save()
 
+        self.logger.debug("Subscribed '%s' for '%s'" % (web.url, web.event))
+
         return web
 
     def unsubscribe(self, url, event = None, force = True):
@@ -196,6 +198,8 @@ class WebHandler(handler.Handler):
         if not web: return None
 
         web.delete()
+
+        self.logger.debug("Unsubscribed '%s' for '%s'" % (url, event or "*"))
 
         return web
 

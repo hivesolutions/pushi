@@ -91,4 +91,5 @@ class PushiBase(appier_extras.admin.Base):
 
     @property
     def app_key(self):
+        if not self.app_id: return None
         return self.state.app_id_to_app_key(self.app_id)

@@ -64,6 +64,10 @@ class WebHandler(handler.Handler):
         # retrieves the app key for the retrieved app by unpacking the current
         # app structure into the appropriate values
         app_key = app.key
+        
+        # saves the original event name for the received event, so that it may
+        # be used latter for debugging/log purposes
+        root_event = event
 
         # resolves the complete set of (extra) channels for the provided
         # event assuming that it may be associated with alias, then creates
@@ -88,7 +92,7 @@ class WebHandler(handler.Handler):
 
         # prints a logging message about the various (web) subscriptions
         # that were found for the event that was triggered
-        self.logger.debug("Found '%d' web subscription(s) for '%s" % (count, event))
+        self.logger.debug("Found %d web subscription(s) for '%s'" % (count, root_event))
 
         # serializes the json message so that it's possible to send it using
         # the http client to the endpoints and then creates the map of headers

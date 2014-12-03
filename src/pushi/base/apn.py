@@ -113,6 +113,10 @@ class ApnHandler(handler.Handler):
         # app structure into the appropriate values
         app_key = app.key
 
+        # saves the original event name for the received event, so that it may
+        # be used latter for debugging/log purposes
+        root_event = event
+
         # resolves the complete set of (extra) channels for the provided
         # event assuming that it may be associated with alias, then creates
         # the complete list of event containing also the "extra" events
@@ -136,7 +140,7 @@ class ApnHandler(handler.Handler):
 
         # prints a logging message about the various (web) subscriptions
         # that were found for the event that was triggered
-        self.logger.debug("Found '%d' apn subscription(s) for '%s" % (count, event))
+        self.logger.debug("Found %d apn subscription(s) for '%s'" % (count, root_event))
 
         # creates the counter that will be used by the cleanup function
         # to know exactly when to remove the ssl associated files

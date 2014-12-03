@@ -494,7 +494,7 @@ class State(appier.Mongo):
         is_empty = len(conns) == 0
         if is_empty: del state.channel_info[channel]
 
-        # creates the map that is giong to be used in the event to be sent to the set
+        # creates the map that is going to be used in the event to be sent to the set
         # sockets subscribed to the channel indicating that the member has been removed
         json_d = dict(
             event = "pusher:member_removed",
@@ -502,7 +502,7 @@ class State(appier.Mongo):
             channel = channel
         )
 
-        # iterates over the complete set of connection subscribed to the channel to notify
+        # iterates over the complete set of connections subscribed to the channel to notify
         # them about the member that has been removed from the channel
         for _connection in conns:
             # in case the current connection in iteration is the same as the

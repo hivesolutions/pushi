@@ -91,8 +91,4 @@ class PushiBase(appier_extras.admin.Base):
 
     @property
     def app_key(self):
-        request = appier.get_request()
-        if not "app_id" in request.session: return None
-        app_id = request.session["app_id"]
-        app_key = self.state.app_id_to_app_key(app_id)
-        return app_key
+        return self.state.app_id_to_app_key(self.app_id)

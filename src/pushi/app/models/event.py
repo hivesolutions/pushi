@@ -66,7 +66,8 @@ class Event(base.PushiBase):
 
     data = appier.field(
         type = dict,
-        immutable = True
+        immutable = True,
+        meta = "longtext"
     )
 
     @classmethod

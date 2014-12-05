@@ -243,6 +243,12 @@ class State(appier.Mongo):
         if not app_key: return
         if not socket_id: return
 
+        # tries to retrieve an app for the provided key in case that's
+        # not possible returns immediately, as it's not possible to
+        # disconnect a connection without an associated/valid app
+        app = self.get_app(app_key = app_key, raise_e = False)
+        if not app: return
+
         # retrieves the current state of the app using the app key and
         # then uses it to retrieve the complete set of channels that the
         # socket is subscribed and then unsubscribe it from them then
@@ -959,9 +965,9 @@ class State(appier.Mongo):
 
         return events
 
-    def get_app(self, app_id = None, app_key = None):
-        if app_id: app = pushi.App.get(ident = app_id)
-        if app_key: app = pushi.App.get(key = app_key)
+    def get_app(self, app_id = None, app_key = None, raise_e = True):
+        if app_id: app = pushi.App.get(ident = app_id, raise_e = raise_e)
+        if app_key: app = pushi.App.get(key = app_key, raise_e = raise_e)
         return app
 
     def invalidate(self, app_id = None, app_key = None):

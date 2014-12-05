@@ -52,7 +52,7 @@ class AppApi(object):
         )
         return result
 
-    def update(self, app_id = None, **kwargs):
+    def update_app(self, app_id = None, **kwargs):
         # retrieves the proper app id to be used defaulting to the current
         # defined app id in case none is provided
         app_id = app_id or self.app_id

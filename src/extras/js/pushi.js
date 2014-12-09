@@ -52,23 +52,27 @@ Channel.prototype.trigger = function(event, data) {
 };
 
 var Pushi = function(appKey, options) {
-    var TIMEOUT = 5000;
-    var BASE_URL = "wss://puxiapp.com/";
+    this.init(appKey, options);
+};
 
-    var timeout = options.timeout || TIMEOUT;
-    var baseURL = options.baseUrl || BASE_URL;
-
+Pushi.prototype.init = function(appKey, options) {
+    // tries to retrieve any previously existing instance
+    // of pushi for the provided key and in case it exists
+    // clones it and returns it as the properly initialized
+    // pushi instance (provides re-usage of resources)
     var previous = PUSHI_CONNECTIONS[appKey];
     if (previous) {
         return this.clone(previous);
     }
 
-    this.socket = null;
-    this.timeout = timeout;
-    this.url = baseURL + appKey;
+    // runs the configuration operation for the current instance
+    // so that the state based configuration variables are set
+    // according to the provided (configuration) values
+    this.config(appKey, options);
 
-    this.appKey = appKey;
-    this.options = options || {};
+    // starts the various state related variables for
+    // the newly initialized pushi instance
+    this.socket = null;
     this.socketId = null;
     this.state = "disconnected";
     this.channels = {};
@@ -77,16 +81,50 @@ var Pushi = function(appKey, options) {
     this._base = null;
     this._cloned = false;
 
+    // updates the proper auth endpoint for the current
+    // instance so that the proper call is made if required
     this.authEndpoint = this.options.authEndpoint;
 
-    PUSHI_CONNECTIONS[appKey] = this;
+    // triggers the starts of the connection loading by calling
+    // the open (connection) method in the instance
+    this.open();
+};
 
-    this.init();
+Pushi.prototype.config = function(appKey, options) {
+    // runs the definition of a series of contant values that
+    // will be used as defaults for some options
+    var TIMEOUT = 5000;
+    var BASE_URL = "wss://puxiapp.com/";
+
+    // retrieves the proper values for the options, defaulting
+    // to the pre-defined (constant) values if that's required
+    var timeout = options.timeout || TIMEOUT;
+    var baseUrl = options.baseUrl || BASE_URL;
+
+    // removes any previously registered configuration for the
+    // the current instance app key (for cases of re-configuration)
+    delete PUSHI_CONNECTIONS[this.appKey];
+
+    // updates the various configuration related variables
+    // that will condition the way the pushi instance behaves
+    this.timeout = timeout;
+    this.url = baseUrl + appKey;
+    this.baseUrl = baseUrl;
+    this.appKey = appKey;
+    this.options = options || {};
+
+    // sets the current connection for the app key value
+    // so that it gets re-used if that's requested
+    PUSHI_CONNECTIONS[appKey] = this;
 };
 
 Pushi.prototype.clone = function(base) {
+    // copies the complete set of attributes from the base
+    // object to the new one (cloned) so that they may be
+    // re-used for any future operation/action
     this.timeout = base.timeout;
-    this.url = base.url
+    this.url = base.url;
+    this.baseUrl = base.baseUrl;
     this.appKey = base.appKey;
     this.options = base.options;
     this.socket = base.socket;
@@ -99,6 +137,8 @@ Pushi.prototype.clone = function(base) {
     this._base = base;
     this._cloned = true;
 
+    // adds the current reference to the list of subscriptions
+    // for the socket that is going to be used (as expected)
     this.socket.subscriptions.push(this);
 
     // in case the current state of the connection is
@@ -112,24 +152,39 @@ Pushi.prototype.clone = function(base) {
     }
 };
 
-Pushi.prototype.init = function() {
+Pushi.prototype.open = function(callback) {
+    // in case the current state is not disconnected returns immediately
+    // as this is considered to be the only valid state for the operation
+    if (this.state != "disconnected") {
+        return;
+    }
+
+    // retrieves the current context as a local variable and then tries
+    // to gather the subscriptions from the current socket defaulting to
+    // a simple list with the current instance otherwise, this will make
+    // possible the re-usage of previously existing subscriptions for the
+    // instance for cloning situations (as defined in specifications)
     var self = this;
     var subscriptions = this.socket ? this.socket.subscriptions : [this];
 
     // creates the new websocket reference with the currently defined
-    // url and then updates the reference to the underlying subscriptions
+    // url, then updates the reference to the underlying subscriptions
+    // and sets the proper callback value for the socket operation
     var socket = new WebSocket(this.url);
     socket.subscriptions = subscriptions;
+    socket._callback = callback;
 
     // creates the function that will initialize the instance's socket to
     // the one that has now been created and then calls it to all the
-    // subscriptor of the current socket
+    // subscriptions of the current socket (sets socket for subscription)
     var _init = function() {
         this.socket = socket;
     };
     this.callobj(_init, subscriptions);
 
     this.socket.onopen = function() {
+        this._callback && this._callback();
+        this._callback = null;
     };
 
     this.socket.onmessage = function(event) {
@@ -146,11 +201,39 @@ Pushi.prototype.init = function() {
             var data = json;
             self.callobj(Pushi.prototype.onmessage, this.subscriptions, data);
         }
+
+        this._callback && this._callback();
+        this._callback = null;
     };
 
     this.socket.onclose = function() {
         self.callobj(Pushi.prototype.onodisconnect, this.subscriptions);
+        this._callback && this._callback();
+        this._callback = null;
     };
+};
+
+Pushi.prototype.close = function(callback) {
+    // in case the current state is not connected returns immediately
+    // as this is considered to be the only valid state for the operation
+    if (this.state != "connected") {
+        return;
+    }
+
+    // updates the next operation callback reference in the socket to the
+    // provided callback so that it gets notified on closing
+    this.socket._callback = callback;
+
+    // closes the currently assigned socket, triggering a series of events
+    // that will update the current pushi status as disconnected
+    this.socket.close();
+};
+
+Pushi.prototype.reopen = function() {
+    var self = this;
+    this.close(function() {
+                self.open();
+            });
 };
 
 Pushi.prototype.callobj = function(callable, objects) {
@@ -183,7 +266,7 @@ Pushi.prototype.retry = function() {
     // the server side nor to large that takes to long for
     // the reconnection to take effect (bad user experience)
     setTimeout(function() {
-                self.init();
+                self.open();
             }, this.timeout);
 };
 
@@ -423,6 +506,10 @@ Pushi.prototype.subscribePrivate = function(channel) {
                 });
     };
     request.send();
+};
+
+Pushi.prototype.isValid = function(appKey, baseUrl) {
+    return appKey == this.appKey && baseUrl == this.baseUrl;
 };
 
 if (typeof String.prototype.startsWith != "function") {

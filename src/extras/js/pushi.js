@@ -55,7 +55,7 @@ var Pushi = function(appKey, options) {
     this.init(appKey, options);
 };
 
-Pushi.prototype.init = function(appKey, options) {
+Pushi.prototype.init = function(appKey, options, callback) {
     // tries to retrieve any previously existing instance
     // of pushi for the provided key and in case it exists
     // clones it and returns it as the properly initialized
@@ -87,7 +87,7 @@ Pushi.prototype.init = function(appKey, options) {
 
     // triggers the starts of the connection loading by calling
     // the open (connection) method in the instance
-    this.open();
+    this.open(callback);
 };
 
 Pushi.prototype.config = function(appKey, options) {
@@ -119,8 +119,8 @@ Pushi.prototype.config = function(appKey, options) {
 };
 
 Pushi.prototype.reconfig = function(appKey, options, callback) {
-    pushi.config(appKey, options);
-    pushi.reopen(callback);
+    this.config(appKey, options);
+    this.reopen(callback);
 };
 
 Pushi.prototype.clone = function(base) {

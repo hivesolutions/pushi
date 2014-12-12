@@ -62,7 +62,7 @@ class PushiChannel(netius.observer.Observable):
 
         self.trigger("subscribe", self, data)
 
-    def send(self, event, data, persist = False):
+    def send(self, event, data, persist = True):
         self.owner.send_channel(event, data, self.name, persist = persist)
 
 class PushiConnection(netius.clients.WSConnection):
@@ -71,18 +71,14 @@ class PushiConnection(netius.clients.WSConnection):
         netius.clients.WSConnection.__init__(self, *args, **kwargs)
         self.state = "disconnected"
         self.socket_id = None
-        self.channels = {}
+        self.channels = dict()
 
-    def open(self, *args, **kwargs):
-        netius.Connection.open(self, *args, **kwargs)
-        self.owner.bind("message", self.on_message)
-
-    def on_message(self, client, cconnection, data):
+    def receive_ws(self, data):
         data = data.decode("utf-8")
         data_j = json.loads(data)
 
         is_connected = self.state == "disconnected" and\
-                data_j["event"] == "pusher:connection_established"
+            data_j["event"] == "pusher:connection_established"
 
         if is_connected:
             data = json.loads(data_j["data"])
@@ -94,6 +90,12 @@ class PushiConnection(netius.clients.WSConnection):
         self.socket_id = data["socket_id"]
         self.state = "connected"
         self.trigger("connect_pushi", self)
+
+    def on_disconnect_pushi(self, data):
+        self.socket_id = None
+        self.channels = dict()
+        self.state = "disconnected"
+        self.trigger("disconnect_pushi", self)
 
     def on_message_pushi(self, data_j):
         # unpacks the complete set of information from the json based
@@ -222,7 +224,7 @@ class PushiClient(netius.clients.WSClient):
 
 if __name__ == "__main__":
     def on_subscribe(channel, data):
-        channel.send("message", "Hello World")
+        channel.send("message", "Hello World", persist = False)
         connection = channel.owner
         client = connection.owner
         client.close()

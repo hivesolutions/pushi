@@ -64,7 +64,7 @@ class EventController(appier.Controller):
         _data = data.get("data", None)
         event = data.get("event", "message")
         channel = data.get("channel", "global")
-        persist = data.get("persist", True, cast = bool)
+        persist = data.get("persist", True)
         if not _data: raise RuntimeError("No data set for event")
         self.state.trigger(
             app_id,

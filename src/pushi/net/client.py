@@ -51,10 +51,34 @@ class PushiConnection(netius.clients.WSConnection):
 
     def __init__(self, *args, **kwargs):
         netius.clients.WSConnection.__init__(self, *args, **kwargs)
-        self.app_key = None
+        self.state = "disconnected"
         self.socket_id = None
         self.channels = {}
-        self.count = 0
+
+    def open(self, *args, **kwargs):
+        netius.Connection.open(self, *args, **kwargs)
+        self.owner.bind("message", self.on_message)
+
+    def on_message(self, client, cconnection, data):
+        data = data.decode("utf-8")
+        data_j = json.loads(data)
+
+        is_connected = self.state == "disconnected" and\
+                data_j["event"] == "pusher:connection_established"
+
+        if is_connected:
+            data = json.loads(data_j["data"])
+            self.on_connect_pushi(data)
+        elif self.state == "connected":
+            self.on_message_pushi(data_j)
+
+    def on_connect_pushi(self, data):
+        self.socket_id = data["socket_id"]
+        self.state = "connected"
+        self.trigger("connect_pushi", self)
+
+    def on_message_pushi(self, data):
+        pass
 
     def subscribe_pushi(self, channel, channel_data = None, force = False):
         exists = channel in self.channels
@@ -81,7 +105,6 @@ class PushiConnection(netius.clients.WSConnection):
     def send_pushi(self, json_d, callback = None):
         data = json.dumps(json_d)
         self.send_ws(data, callback = callback)
-        self.count += 1
 
     def _subscribe_public(self, channel):
         self.sendEvent("pusher:subscribe", dict(
@@ -110,9 +133,10 @@ class PushiClient(netius.clients.WSClient):
 
     def __init__(self, url = None, client_key = None, api = None, *args, **kwargs):
         netius.clients.WSClient.__init__(self, *args, **kwargs)
-        self.url = url or PushiClient.PUXIAPP_URL
+        self.base_url = url or PushiClient.PUXIAPP_URL
         self.client_key = client_key
         self.api = api
+        self.url = self.base_url + self.client_key
 
     def new_connection(self, socket, address, ssl = False):
         return PushiConnection(
@@ -125,7 +149,11 @@ class PushiClient(netius.clients.WSClient):
     def connect_pushi(self, callback = None):
         connection = self.connect_ws(self.url)
         if not callback: return
-        connection.bind("pushi_connect", callback)
+        connection.bind("connect_pushi", callback)
 
 if __name__ == "__main__":
-    client = PushiClient()
+    def tobias(connection):
+        print(connection)
+
+    client = PushiClient(client_key = "c4669efec89dfb6bddcbcbec5a259fe6adfd4f2cd1dff8b10a54ca1fca25a365")
+    client.connect_pushi(callback = tobias)

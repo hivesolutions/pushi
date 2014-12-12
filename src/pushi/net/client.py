@@ -232,5 +232,6 @@ if __name__ == "__main__":
     def on_connect(connection):
         connection.subscribe_pushi("global", callback = on_subscribe)
 
-    client = PushiClient(client_key = "c4669efec89dfb6bddcbcbec5a259fe6adfd4f2cd1dff8b10a54ca1fca25a365")
+    client_key = netius.conf("PUSHI_KEY")
+    client = PushiClient(client_key = client_key)
     client.connect_pushi(callback = on_connect)

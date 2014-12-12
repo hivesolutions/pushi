@@ -75,4 +75,4 @@ class AppController(appier.Controller):
     @appier.route("/apps/ping", "GET")
     def ping(self):
         app = pushi.App.get()
-        self.state.trigger(app.id, "ping", "ping")
+        self.state.trigger(app.id, "ping", "ping", persist = False)

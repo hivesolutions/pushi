@@ -44,8 +44,8 @@ import netius.servers
 
 class PushiConnection(netius.servers.WSConnection):
 
-    def __init__(self, owner, socket, address, ssl = False):
-        netius.servers.WSConnection.__init__(self, owner, socket, address, ssl = ssl)
+    def __init__(self, *args, **kwargs):
+        netius.servers.WSConnection.__init__(self, *args, **kwargs)
         self.app_key = None
         self.socket_id = str(uuid.uuid4())
         self.channels = []

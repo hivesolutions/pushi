@@ -41,11 +41,29 @@ import json
 
 import netius.clients
 
-class PushiChannel(object):
+class PushiChannel(netius.observer.Observable):
 
     def __init__(self, owner, name):
+        netius.observer.Observable.__init__(self)
         self.owner = owner
         self.name = name
+        self.data = None
+        self.subscribed = False
+
+    def confirm(self, data):
+        alias = data["alias"] if data else []
+        for name in alias:
+            channel = PushiChannel(self.owner, name)
+            self.owner.channels[name] = channel
+            self.owner.on_subscribe_pushi(name, {})
+
+        self.data = data
+        self.subscribed = True
+
+        self.trigger("subscribe", self, data)
+
+    def send(self, event, data, persist = False):
+        self.owner.send_channel(event, data, self.name, persist = persist)
 
 class PushiConnection(netius.clients.WSConnection):
 
@@ -77,10 +95,50 @@ class PushiConnection(netius.clients.WSConnection):
         self.state = "connected"
         self.trigger("connect_pushi", self)
 
-    def on_message_pushi(self, data):
+    def on_message_pushi(self, data_j):
+        # unpacks the complete set of information from the json based
+        # data structure so that it gets processed in the method
+        data = data_j["data"]
+        event = data_j["event"]
+        channel = data_j["channel"]
+
+        # tries to gather the channel object/information reference
+        # for the channel that received the message and verifies if
+        # the current channel is peer related or not
+        _channel = self.channels[channel]
+        is_peer = channel.startswith("peer-")
+
+        # in case no channel information is found for the channel
+        # (no subscription) and the channel is not peer related the
+        # message is ignored as there's no channel subscription
+        if channel and not _channel and not is_peer: return
+
+        if event == "pusher_internal:subscription_succeeded":
+            data = json.loads(data_j["data"])
+            self.on_subscribe_pushi(channel, data)
+
+        elif event == "pusher:member_added":
+            member = json.loads(data_j["member"])
+            self.on_member_added_pushi(channel, member)
+
+        elif event == "pusher:member_removed":
+            member = json.loads(data_j["member"])
+            self.on_member_removed_pushi(channel, member)
+
+        self.trigger(event, self, data, channel)
+
+    def on_subscribe_pushi(self, channel, data):
+        _channel = self.channels[channel]
+        _channel.confirm(data)
+        self.trigger("subscribe", self, channel, data)
+
+    def on_member_added_pushi(self, channel, member):
         pass
 
-    def subscribe_pushi(self, channel, channel_data = None, force = False):
+    def on_member_removed_pushi(self, channel, member):
+        pass
+
+    def subscribe_pushi(self, channel, channel_data = None, force = False, callback = None):
         exists = channel in self.channels
         if exists and not force: return
 
@@ -92,6 +150,8 @@ class PushiConnection(netius.clients.WSConnection):
         channel = PushiChannel(self, name)
         self.channels[name] = channel
 
+        if callback: channel.bind("subscribe", callback)
+
         return channel
 
     def send_event(self, event, data, persist = True, callback = None):
@@ -102,12 +162,21 @@ class PushiConnection(netius.clients.WSConnection):
         )
         self.send_pushi(json_d, callback = callback)
 
+    def send_channel(self, event, data, channel, persist = True, callback = None):
+        json_d = dict(
+            event = event,
+            data = data,
+            channel = channel,
+            persist = persist
+        )
+        self.send_pushi(json_d, callback = callback)
+
     def send_pushi(self, json_d, callback = None):
         data = json.dumps(json_d)
         self.send_ws(data, callback = callback)
 
     def _subscribe_public(self, channel):
-        self.sendEvent("pusher:subscribe", dict(
+        self.send_event("pusher:subscribe", dict(
             channel = channel
         ))
 
@@ -152,8 +221,14 @@ class PushiClient(netius.clients.WSClient):
         connection.bind("connect_pushi", callback)
 
 if __name__ == "__main__":
-    def tobias(connection):
-        print(connection)
+    def on_subscribe(channel, data):
+        channel.send("message", "Hello World")
+        connection = channel.owner
+        client = connection.owner
+        client.close()
+
+    def on_connect(connection):
+        connection.subscribe_pushi("global", callback = on_subscribe)
 
     client = PushiClient(client_key = "c4669efec89dfb6bddcbcbec5a259fe6adfd4f2cd1dff8b10a54ca1fca25a365")
-    client.connect_pushi(callback = tobias)
+    client.connect_pushi(callback = on_connect)

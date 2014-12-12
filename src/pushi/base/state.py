@@ -740,6 +740,7 @@ class State(appier.Mongo):
         event,
         data,
         channels = None,
+        persist = False,
         json_d = None,
         owner_id = None,
         verify = True
@@ -755,6 +756,7 @@ class State(appier.Mongo):
             app_id,
             channel,
             event,
+            persist,
             data,
             json_d = json_d,
             owner_id = owner_id,
@@ -767,21 +769,31 @@ class State(appier.Mongo):
         app_id,
         channel,
         event,
+        persist,
         data,
         json_d = None,
         owner_id = None,
         verify = True,
         invalid = {}
     ):
+        # retrieves the data type of the provided data of the event and
+        # depending on the kind of structure it may dump the result as
+        # a plain based string serialized using json
         data_t = type(data)
         data = data if data_t in appier.legacy.STRINGS else json.dumps(data)
 
+        # creates the "new" json dictionary object that represents the
+        # event payload and copies some of the event metadata into it
+        # so that it may be consulted latter by the client
         json_d = json_d or dict()
         if channel: json_d["channel"] = channel
         if event: json_d["event"] = event
         if data: json_d["data"] = data
 
-        self.log_channel(
+        # in case the persist flag is set the log channel operation is
+        # performed so that the event is stored in the data source and
+        # may be retrieved latter for reference/observation
+        if persist: self.log_channel(
             app_id,
             channel,
             json_d,
@@ -789,6 +801,10 @@ class State(appier.Mongo):
             verify = verify,
             invalid = invalid
         )
+
+        # runs the process of sending the event through the channel,
+        # note that the process will also be run for the complete set
+        # of handlers registered for the current infra-structure
         self.send_channel(
             app_id,
             channel,
@@ -805,7 +821,16 @@ class State(appier.Mongo):
         )
         return subscriptions
 
-    def log_channel(self, app_id, channel, json_d, owner_id = None, verify = True, invalid = {}, has_date = True):
+    def log_channel(
+        self,
+        app_id,
+        channel,
+        json_d,
+        owner_id = None,
+        verify = True,
+        invalid = {},
+        has_date = True
+    ):
         # verifies that the owner (socket) identifier is present in the channel
         # (but only in case the verify flag is present)
         if owner_id and verify: self.verify_presence(app_id, owner_id, channel)

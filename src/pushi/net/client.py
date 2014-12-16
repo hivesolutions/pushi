@@ -221,6 +221,7 @@ class PushiClient(netius.clients.WSClient):
         connection = self.connect_ws(self.url)
         if not callback: return
         connection.bind("connect_pushi", callback)
+        return connection
 
 if __name__ == "__main__":
     def on_subscribe(channel, data):

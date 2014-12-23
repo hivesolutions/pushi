@@ -125,7 +125,7 @@ proxy = pushi.Pushi(
     app_key = "YOU_APP_KEY",
     app_secret = "YOU_APP_SECRET"
 )
-proxy.trigger(
+proxy.trigger_event(
     channel = "global",
     data = "hello world",
     event = "message"

@@ -58,10 +58,12 @@ class PushiConnection(netius.servers.WSConnection):
         self.owner.count += 1
 
     def load_app(self):
-        self.app_key = self.path.rsplit("/", 1)[-1]
-        if not type(self.app_key) == unicode: self.app_key = self.app_key.decode("utf-8")
-        if not self.app_key: raise RuntimeError("Invalid app key loaded")
-        if not len(self.app_key) == 64: raise RuntimeError("Invalid app key length")
+        app_key = self.path.rsplit("/", 1)[-1]
+        is_unicode = netius.legacy.is_unicode(app_key)
+        if not is_unicode: app_key = app_key.decode("utf-8")
+        if not app_key: raise RuntimeError("Invalid app key loaded")
+        if not len(app_key) == 64: raise RuntimeError("Invalid app key length")
+        self.app_key = app_key
 
 class PushiServer(netius.servers.WSServer):
 

@@ -50,7 +50,7 @@ class PushiChannel(netius.observer.Observable):
         self.data = None
         self.subscribed = False
 
-    def confirm(self, data):
+    def set_subscribe(self, data):
         alias = data["alias"] if data else []
         for name in alias:
             channel = PushiChannel(self.owner, name)
@@ -59,23 +59,27 @@ class PushiChannel(netius.observer.Observable):
 
         self.data = data
         self.subscribed = True
-
         self.trigger("subscribe", self, data)
 
-    def unconfirm(self, data):
+    def set_unsubscribe(self, data):
         alias = data["alias"] if data else []
         for name in alias:
             self.owner.on_subscribe_pushi(name, {})
 
         self.subscribed = False
-
         self.trigger("unsubscribe", self, data)
+
+    def set_latest(self, data):
+        self.trigger("latest", self, data)
+
+    def send(self, event, data, persist = True):
+        self.owner.send_channel(event, data, self.name, persist = persist)
 
     def unsubscribe(self, callback = None):
         self.owner.unsubscribe_pushi(self.name, callback = callback)
 
-    def send(self, event, data, persist = True):
-        self.owner.send_channel(event, data, self.name, persist = persist)
+    def latest(self, skip = 0, count = 10, callback = None):
+        self.owner.latest_pushi(self.name, skip = skip, count = count, callback = callback)
 
 class PushiConnection(netius.clients.WSConnection):
 
@@ -135,6 +139,10 @@ class PushiConnection(netius.clients.WSConnection):
             data = json.loads(data_j["data"])
             self.on_unsubscribe_pushi(channel, data)
 
+        if event == "pusher_internal:latest":
+            data = json.loads(data_j["data"])
+            self.on_latest_pushi(channel, data)
+
         elif event == "pusher:member_added":
             member = json.loads(data_j["member"])
             self.on_member_added_pushi(channel, member)
@@ -147,14 +155,19 @@ class PushiConnection(netius.clients.WSConnection):
 
     def on_subscribe_pushi(self, channel, data):
         _channel = self.channels[channel]
-        _channel.confirm(data)
+        _channel.set_subscribe(data)
         self.trigger("subscribe", self, channel, data)
 
     def on_unsubscribe_pushi(self, channel, data):
         _channel = self.channels[channel]
         del self.channels[channel]
-        _channel.unconfirm(data)
+        _channel.set_unsubscribe(data)
         self.trigger("unsubscribe", self, channel, data)
+
+    def on_latest_pushi(self, channel, data):
+        _channel = self.channels[channel]
+        _channel.set_latest(data)
+        self.trigger("latest", self, channel, data)
 
     def on_member_added_pushi(self, channel, member):
         pass
@@ -188,6 +201,19 @@ class PushiConnection(netius.clients.WSConnection):
         channel = self.channels[name]
 
         if callback: channel.bind("unsubscribe", callback)
+
+        return channel
+
+    def latest_pushi(self, channel, skip = 0, count = 10, callback = None):
+        exists = channel in self.channels
+        if not exists: return
+
+        self._latest(channel, skip = skip, count = count)
+
+        name = channel
+        channel = self.channels[name]
+
+        if callback: channel.bind("latest", callback)
 
         return channel
 
@@ -231,6 +257,13 @@ class PushiConnection(netius.clients.WSConnection):
             channel = channel
         ))
 
+    def _latest(self, channel, skip = 0, count = 10):
+        self.send_event("pusher:latest", dict(
+            channel = channel,
+            skip = skip,
+            count = count
+        ))
+
     def _is_private(self, channel):
         return channel.startswith("private-") or\
             channel.startswith("presence-") or\
@@ -269,9 +302,15 @@ if __name__ == "__main__":
         client = connection.owner
         client.close()
 
-    def on_subscribe(channel, data):
-        channel.send("message", "Hello World", persist = False)
+    def on_latest(channel, data):
+        name = data["name"]
+        events = data["events"]
+        print("Received %d event(s) for channel %s" % (len(events), name))
         channel.unsubscribe(callback = on_unsubscribe)
+
+    def on_subscribe(channel, data):
+        channel.send("message", "Hello World", persist = True)
+        channel.latest(count = 20, callback = on_latest)
 
     def on_connect(connection):
         connection.subscribe_pushi("global", callback = on_subscribe)

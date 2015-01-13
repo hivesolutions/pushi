@@ -55,7 +55,7 @@ with the publish subscribe model. A channel of this type should be named `person
 Targeted at chat environment allows for the creation of automatic channels for the
 various elements (users) that are subscribed to a peer channel. The activation of the
 automatic peer channel configuration is archieved using the `peer` flag in the `channel_data`
-structure uppon the subscription of such channel. This channel type **should not be created directly**. 
+structure uppon the subscription of such channel. This channel type **should not be created directly**.
 
 The management of these kind of channels implies that the `peer` advertisement flag is set
 for a channel shared ummong the peers, from that moment the peer is visible to all the

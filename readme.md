@@ -57,9 +57,10 @@ various elements (users) that are subscribed to a peer channel. The activation o
 automatic peer channel configuration is archieved using the `peer` flag in the `channel_data`
 structure uppon the subscription of such channel. This channel type **should not be created directly**. 
 
-The management of these kind of channels implies that the peer advertisement flag is set
+The management of these kind of channels implies that the `peer` advertisement flag is set
 for a channel shared ummong the peers, from that moment the peer is visible to all the
-other peers. These kind of channels should be used together with the presence channels.
+other peers uppon subscription of that shared channel. These kind of channels should
+be used together with the presence channels.
 
 ## Persistence
 

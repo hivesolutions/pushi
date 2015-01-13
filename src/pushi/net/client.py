@@ -156,6 +156,20 @@ class PushiConnection(netius.clients.WSConnection):
 
         return channel
 
+    def unsubscribe_pushi(self, channel, callback = None):
+        exists = channel in self.channels
+        if not exists: return
+
+        self._unsubscribe(channel)
+
+        name = channel
+        channel = self.channels[name]
+        del self.channels[name]
+
+        if callback: channel.bind("unsubscribe", callback)
+
+        return channel
+
     def send_event(self, event, data, persist = True, callback = None):
         json_d = dict(
             event = event,
@@ -189,6 +203,11 @@ class PushiConnection(netius.clients.WSConnection):
             channel = channel,
             auth = auth,
             channel_data = channel_data
+        ))
+
+    def _unsubscribe(self, channel):
+        self.send_event("pusher:unsubscribe", dict(
+            channel = channel
         ))
 
     def _is_private(self, channel):

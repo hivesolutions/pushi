@@ -62,6 +62,18 @@ class PushiChannel(netius.observer.Observable):
 
         self.trigger("subscribe", self, data)
 
+    def unconfirm(self, data):
+        alias = data["alias"] if data else []
+        for name in alias:
+            self.owner.on_subscribe_pushi(name, {})
+
+        self.subscribed = False
+
+        self.trigger("unsubscribe", self, data)
+
+    def unsubscribe(self, callback = None):
+        self.owner.unsubscribe_pushi(self.name, callback = callback)
+
     def send(self, event, data, persist = True):
         self.owner.send_channel(event, data, self.name, persist = persist)
 
@@ -119,6 +131,10 @@ class PushiConnection(netius.clients.WSConnection):
             data = json.loads(data_j["data"])
             self.on_subscribe_pushi(channel, data)
 
+        if event == "pusher_internal:unsubscription_succeeded":
+            data = json.loads(data_j["data"])
+            self.on_unsubscribe_pushi(channel, data)
+
         elif event == "pusher:member_added":
             member = json.loads(data_j["member"])
             self.on_member_added_pushi(channel, member)
@@ -133,6 +149,12 @@ class PushiConnection(netius.clients.WSConnection):
         _channel = self.channels[channel]
         _channel.confirm(data)
         self.trigger("subscribe", self, channel, data)
+
+    def on_unsubscribe_pushi(self, channel, data):
+        _channel = self.channels[channel]
+        del self.channels[channel]
+        _channel.unconfirm(data)
+        self.trigger("unsubscribe", self, channel, data)
 
     def on_member_added_pushi(self, channel, member):
         pass
@@ -164,7 +186,6 @@ class PushiConnection(netius.clients.WSConnection):
 
         name = channel
         channel = self.channels[name]
-        del self.channels[name]
 
         if callback: channel.bind("unsubscribe", callback)
 
@@ -243,15 +264,19 @@ class PushiClient(netius.clients.WSClient):
         return connection
 
 if __name__ == "__main__":
-    def on_subscribe(channel, data):
-        channel.send("message", "Hello World", persist = False)
+    def on_unsubscribe(channel, data):
         connection = channel.owner
         client = connection.owner
         client.close()
 
+    def on_subscribe(channel, data):
+        channel.send("message", "Hello World", persist = False)
+        channel.unsubscribe(callback = on_unsubscribe)
+
     def on_connect(connection):
         connection.subscribe_pushi("global", callback = on_subscribe)
 
+    url = netius.conf("PUSHI_URL")
     client_key = netius.conf("PUSHI_KEY")
-    client = PushiClient(client_key = client_key)
+    client = PushiClient(url = url, client_key = client_key)
     client.connect_pushi(callback = on_connect)

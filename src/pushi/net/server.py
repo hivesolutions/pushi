@@ -179,6 +179,35 @@ class PushiServer(netius.servers.WSServer):
         )
         connection.send_pushi(json_d)
 
+    def handle_pusher_latest(self, connection, json_d):
+        data = json_d.get("data", {})
+        channel = data.get("channel", None)
+        skip = data.get("skip", 0)
+        count = data.get("count", 10)
+
+        self.trigger(
+            "validate",
+            connection = connection,
+            app_key = connection.app_key,
+            socket_id = connection.socket_id,
+            channel = channel
+        )
+
+        if not self.state: return
+
+        data = self.state.get_channel(
+            connection.app_key,
+            channel,
+            skip = skip,
+            count = count
+        )
+        json_d = dict(
+            event = "pusher_internal:latest",
+            data = json.dumps(data),
+            channel = channel
+        )
+        connection.send_pushi(json_d)
+
     def handle_event(self, connection, json_d):
         data = json_d["data"]
         event = json_d["event"]

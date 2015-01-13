@@ -309,7 +309,7 @@ if __name__ == "__main__":
         channel.unsubscribe(callback = on_unsubscribe)
 
     def on_subscribe(channel, data):
-        channel.send("message", "Hello World", persist = True)
+        channel.send("message", "Hello World", persist = False)
         channel.latest(count = 20, callback = on_latest)
 
     def on_connect(connection):

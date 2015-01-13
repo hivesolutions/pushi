@@ -957,10 +957,16 @@ class State(appier.Mongo):
         # (this state object has just been created)
         return state
 
-    def get_channel(self, app_key, channel, skip = 0, count = 10):
+    def get_channel(self, app_key, channel, skip = 0, count = 10, limit = True):
         members = self.get_members(app_key, channel)
         alias = self.get_alias(app_key, channel)
-        events = self.get_events(app_key, channel, skip = skip, count = count)
+        events = self.get_events(
+            app_key,
+            channel,
+            skip = skip,
+            count = count,
+            limit = limit
+        )
         return dict(
             name = channel,
             members = members,
@@ -982,10 +988,38 @@ class State(appier.Mongo):
         state = self.get_state(app_key = app_key)
         return state.alias_i.get(alias, [])
 
-    def get_events(self, app_key, channel, skip = 0, count = 10, map = True):
+    def get_events(self, app_key, channel, skip = 0, count = 10, limit = True, map = True):
         is_personal = channel.startswith("personal-")
-        if not is_personal: return []
+        if not is_personal and limit: return []
 
+        if is_personal: return self.get_events_personal(
+            app_key,
+            channel,
+            skip = skip,
+            count = count,
+            map = map
+        )
+        else: return self.get_events_global(
+            app_key,
+            channel,
+            skip = skip,
+            count = count,
+            map = map
+        )
+
+    def get_events_global(self, app_key, channel, skip = 0, count = 10, map = True):
+        app_id = self.app_key_to_app_id(app_key)
+        events = pushi.Event.find(
+            instance = app_id,
+            skip = skip,
+            limit = count,
+            sort = [("_id", -1)],
+            map = map
+        )
+        for event in events: del event["_id"]
+        return events
+
+    def get_events_personal(self, app_key, channel, skip = 0, count = 10, map = True):
         user_id = channel[9:]
         app_id = self.app_key_to_app_id(app_key)
 

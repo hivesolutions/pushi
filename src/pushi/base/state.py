@@ -118,6 +118,7 @@ class State(appier.Mongo):
         self.server.bind("disconnect", self.disconnect)
         self.server.bind("subscribe", self.subscribe)
         self.server.bind("unsubscribe", self.unsubscribe)
+        self.server.bind("validate", self.validate)
 
         # retrieves the various environment variable values that are going
         # to be used in the starting of both the app server and the proper
@@ -303,7 +304,7 @@ class State(appier.Mongo):
 
         # verifies if the current connection (by socket id) is already
         # registered to the channel and in case it's unsubscribes the
-        # connection from it (avoid duplicated registration)
+        # connection from it (avoids duplicated registration)
         is_subscribed = self.is_subscribed(app_key, socket_id, channel)
         if is_subscribed: self.unsubscribe(connection, app_key, socket_id, channel)
 
@@ -439,6 +440,11 @@ class State(appier.Mongo):
                 )
             return
 
+        # runs the validation process for the subscription to the
+        # current channel, meaning that in case the current socket
+        # is not subscribed to the chhanell an exception will be raised
+        self.validate(connection, app_key, socket_id, channel)
+
         # uses the provided app key to retrieve the state of the
         # app and then creates the channel socket tuple that is
         # going to be used for unique identification
@@ -558,6 +564,13 @@ class State(appier.Mongo):
                 app_key, _connection, channel, user_id, _user_id
             )
 
+    def validate(self, connection, app_key, socket_id, channel):
+        # verifies that the current socket is subscribed for the provided
+        # channel and raises an exception in case it's not, this provides
+        # a simple mechanism for security validation
+        is_subscribed = self.is_subscribed(app_key, socket_id, channel)
+        if not is_subscribed: raise RuntimeError("Not subscribed to channel")
+
     def subscribe_peer_all(self, app_key, connection, channel):
         # creates the channel socket tuple with the channel name and the
         # socket identifier for the current connection
@@ -675,6 +688,8 @@ class State(appier.Mongo):
             visited.append(_user_id)
 
     def subscribe_peer(self, app_key, connection, channel, first_id, second_id):
+        # in case the id of both parts is the same, must return immediately
+        # as this is considered to be an invalid channel, for peer basis
         if first_id == second_id: return
 
         base = [first_id, second_id]; base.sort()
@@ -690,6 +705,8 @@ class State(appier.Mongo):
         )
 
     def unsubscribe_peer(self, app_key, connection, channel, first_id, second_id):
+        # in case the id of both parts is the same, must return immediately
+        # as this is considered to be an invalid channel, for peer basis
         if first_id == second_id: return
 
         base = [first_id, second_id]; base.sort()
@@ -940,10 +957,10 @@ class State(appier.Mongo):
         # (this state object has just been created)
         return state
 
-    def get_channel(self, app_key, channel):
+    def get_channel(self, app_key, channel, skip = 0, count = 10):
         members = self.get_members(app_key, channel)
         alias = self.get_alias(app_key, channel)
-        events = self.get_events(app_key, channel)
+        events = self.get_events(app_key, channel, skip = skip, count = count)
         return dict(
             name = channel,
             members = members,
@@ -965,7 +982,7 @@ class State(appier.Mongo):
         state = self.get_state(app_key = app_key)
         return state.alias_i.get(alias, [])
 
-    def get_events(self, app_key, channel, count = 10, map = True):
+    def get_events(self, app_key, channel, skip = 0, count = 10, map = True):
         is_personal = channel.startswith("personal-")
         if not is_personal: return []
 
@@ -975,6 +992,7 @@ class State(appier.Mongo):
         assocs = pushi.Association.find(
             instance = app_id,
             user_id = user_id,
+            skip = skip,
             limit = count,
             sort = [("_id", -1)]
         )

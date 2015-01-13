@@ -199,7 +199,8 @@ class PushiServer(netius.servers.WSServer):
             connection.app_key,
             channel,
             skip = skip,
-            count = count
+            count = count,
+            limit = False
         )
         json_d = dict(
             event = "pusher_internal:latest",

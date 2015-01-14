@@ -135,11 +135,11 @@ class PushiConnection(netius.clients.WSConnection):
             data = json.loads(data_j["data"])
             self.on_subscribe_pushi(channel, data)
 
-        if event == "pusher_internal:unsubscription_succeeded":
+        elif event == "pusher_internal:unsubscription_succeeded":
             data = json.loads(data_j["data"])
             self.on_unsubscribe_pushi(channel, data)
 
-        if event == "pusher_internal:latest":
+        elif event == "pusher_internal:latest":
             data = json.loads(data_j["data"])
             self.on_latest_pushi(channel, data)
 

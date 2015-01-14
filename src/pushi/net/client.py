@@ -187,7 +187,7 @@ class PushiConnection(netius.clients.WSConnection):
         channel = PushiChannel(self, name)
         self.channels[name] = channel
 
-        if callback: channel.bind("subscribe", callback)
+        if callback: channel.bind("subscribe", callback, oneshot = True) 
 
         return channel
 
@@ -200,20 +200,20 @@ class PushiConnection(netius.clients.WSConnection):
         name = channel
         channel = self.channels[name]
 
-        if callback: channel.bind("unsubscribe", callback)
+        if callback: channel.bind("unsubscribe", callback, oneshot = True)
 
         return channel
 
     def latest_pushi(self, channel, skip = 0, count = 10, callback = None):
-        exists = channel in self.channels
+        exists = channel in self.channels or channel.startswith("peer-")
         if not exists: return
 
         self._latest(channel, skip = skip, count = count)
 
         name = channel
-        channel = self.channels[name]
+        channel = self._ensure_channel(name)
 
-        if callback: channel.bind("latest", callback)
+        if callback: channel.bind("latest", callback, oneshot = True)
 
         return channel
 
@@ -237,6 +237,12 @@ class PushiConnection(netius.clients.WSConnection):
     def send_pushi(self, json_d, callback = None):
         data = json.dumps(json_d)
         self.send_ws(data, callback = callback)
+
+    def _ensure_channel(self, name):
+        if name in self.channels: return self.channels[name]
+        channel = PushiChannel(self, name)
+        self.channels[name] = channel
+        return channel
 
     def _subscribe_public(self, channel):
         self.send_event("pusher:subscribe", dict(

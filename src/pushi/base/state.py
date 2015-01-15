@@ -809,15 +809,20 @@ class State(appier.Mongo):
 
         # in case the persist flag is set the log channel operation is
         # performed so that the event is stored in the data source and
-        # may be retrieved latter for reference/observation
-        if persist: self.log_channel(
-            app_id,
-            channel,
-            json_d,
-            owner_id = owner_id,
-            verify = verify,
-            invalid = invalid
-        )
+        # may be retrieved latter for reference/observation, note that
+        # for these situations the mid and timestamp values are added
+        # to the json information, so that they may be used for reference
+        if persist:
+            event_s = self.log_channel(
+                app_id,
+                channel,
+                json_d,
+                owner_id = owner_id,
+                verify = verify,
+                invalid = invalid
+            )
+            json_d["mid"] = event_s.mid
+            json_d["timestamp"] = event_s.timestamp
 
         # runs the process of sending the event through the channel,
         # note that the process will also be run for the complete set
@@ -882,6 +887,10 @@ class State(appier.Mongo):
             )
             assoc.save()
             invalid[user_id] = True
+
+        # returns the final generated event structure that may be used
+        # to retrieve some persistent related information (eg: mid)
+        return event
 
     def send_channel(self, app_id, channel, json_d, owner_id = None, verify = True, invalid = {}):
         # retrieves the state of the current app to be used in the sending and

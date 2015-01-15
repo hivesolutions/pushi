@@ -119,6 +119,8 @@ class PushiConnection(netius.clients.WSConnection):
         data = data_j["data"]
         event = data_j["event"]
         channel = data_j["channel"]
+        mid = data_j.get("mid", None)
+        timestamp = data_j.get("timestamp", None)
 
         # tries to gather the channel object/information reference
         # for the channel that received the message and verifies if
@@ -151,7 +153,7 @@ class PushiConnection(netius.clients.WSConnection):
             member = json.loads(data_j["member"])
             self.on_member_removed_pushi(channel, member)
 
-        self.trigger(event, self, data, channel)
+        self.trigger(event, self, data, channel, mid = mid, timestamp = timestamp)
 
     def on_subscribe_pushi(self, channel, data):
         _channel = self.channels[channel]

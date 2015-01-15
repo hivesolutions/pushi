@@ -1020,6 +1020,7 @@ class State(appier.Mongo):
         app_id = self.app_key_to_app_id(app_key)
         events = pushi.Event.find(
             instance = app_id,
+            channel = channel,
             skip = skip,
             limit = count,
             sort = [("_id", -1)],

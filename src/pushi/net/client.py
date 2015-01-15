@@ -187,7 +187,7 @@ class PushiConnection(netius.clients.WSConnection):
         channel = PushiChannel(self, name)
         self.channels[name] = channel
 
-        if callback: channel.bind("subscribe", callback, oneshot = True) 
+        if callback: channel.bind("subscribe", callback, oneshot = True)
 
         return channel
 

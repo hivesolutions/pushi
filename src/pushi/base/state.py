@@ -442,7 +442,7 @@ class State(appier.Mongo):
 
         # runs the validation process for the subscription to the
         # current channel, meaning that in case the current socket
-        # is not subscribed to the chhanell an exception will be raised
+        # is not subscribed to the channel an exception will be raised
         self.validate(connection, app_key, socket_id, channel)
 
         # uses the provided app key to retrieve the state of the

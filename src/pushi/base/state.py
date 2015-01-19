@@ -765,6 +765,10 @@ class State(appier.Mongo):
         base_channel = base.split("-", 1)[1]
         peers = tail.split("_", 1)
 
+        # retrieves the required app state from the provided app key, it's
+        # going to be used for channel data related operations
+        state = self.get_state(app_key = app_key)
+
         # constructs the channel socket tuple and uses it to retrieve the
         # the channel data value for the base channel so that the user
         # identification is retrieval for verification

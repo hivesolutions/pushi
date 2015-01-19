@@ -565,11 +565,13 @@ class State(appier.Mongo):
             )
 
     def validate(self, connection, app_key, socket_id, channel):
-        # verifies that the current socket is subscribed for the provided
-        # channel and raises an exception in case it's not, this provides
-        # a simple mechanism for security validation
+        # verifies that the current socket is subscribed of eligible for
+        # the provided channel and raises an exception in case it's not,
+        # this provides a simple mechanism for security validation
         is_subscribed = self.is_subscribed(app_key, socket_id, channel)
-        if not is_subscribed: raise RuntimeError("Not subscribed to channel")
+        is_eligible = self.is_eligible(app_key, socket_id, channel)
+        if not is_subscribed and not is_eligible:
+            raise RuntimeError("Not subscribed/eligible to channel")
 
     def subscribe_peer_all(self, app_key, connection, channel):
         # creates the channel socket tuple with the channel name and the
@@ -750,6 +752,29 @@ class State(appier.Mongo):
         channels = state.socket_channels.get(socket_id, None)
         is_subscribed = channel in channels if channels else False
         return is_subscribed
+
+    def is_eligible(self, app_key, socket_id, channel):
+        # verifies if the provided channel starts with the peer prefix
+        # and if that's not the case returns an invalid value immediately
+        # as no eligibility test is possible for other channels
+        if not channel.startswith("peer-"): return False
+
+        # splits the channel into the base and tail parts and then extracts
+        # both the base channel name and the peers list for processing
+        base, tail = channel.split(":", 1)
+        base_channel = base.split("-", 1)[1]
+        peers = tail.split("_", 1)
+
+        # constructs the channel socket tuple and uses it to retrieve the
+        # the channel data value for the base channel so that the user
+        # identification is retrieval for verification
+        channel_socket = (base_channel, socket_id)
+        channel_data = state.channel_socket_data.get(channel_socket)
+        user_id = channel_data["user_id"]
+
+        # returns the final boolean value for the presence testing of the
+        # user id value in the peers list (as expected)
+        return user_id in peers
 
     def trigger(
         self,

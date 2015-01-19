@@ -695,7 +695,7 @@ class State(appier.Mongo):
         if first_id == second_id: return
 
         base = [first_id, second_id]; base.sort()
-        base_s = "_".join(base)
+        base_s = "&".join(base)
         base_channel = channel[9:]
         _channel = "peer-" + base_channel + ":" + base_s
         self.subscribe(
@@ -712,7 +712,7 @@ class State(appier.Mongo):
         if first_id == second_id: return
 
         base = [first_id, second_id]; base.sort()
-        base_s = "_".join(base)
+        base_s = "&".join(base)
         base_channel = channel[9:]
         _channel = "peer-" + base_channel + ":" + base_s
         self.unsubscribe(
@@ -763,7 +763,7 @@ class State(appier.Mongo):
         # both the base channel name and the peers list for processing
         base, tail = channel.split(":", 1)
         base_channel = "presence-" + base.split("-", 1)[1]
-        peers = tail.split("_", 1)
+        peers = tail.split("&", 1)
 
         # retrieves the required app state from the provided app key, it's
         # going to be used for channel data related operations

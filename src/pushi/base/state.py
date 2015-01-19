@@ -771,7 +771,8 @@ class State(appier.Mongo):
 
         # constructs the channel socket tuple and uses it to retrieve the
         # the channel data value for the base channel so that the user
-        # identification is retrieval for verification
+        # identification is retrieved for verification, note that in no
+        # channel data exists the socket is considered not eligible
         channel_socket = (base_channel, socket_id)
         channel_data = state.channel_socket_data.get(channel_socket)
         if not channel_data: return False

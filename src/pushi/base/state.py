@@ -773,6 +773,7 @@ class State(appier.Mongo):
         # the channel data value for the base channel so that the user
         # identification is retrieval for verification
         channel_socket = (base_channel, socket_id)
+        print(channel_socket)
         channel_data = state.channel_socket_data.get(channel_socket)
         if not channel_data: return False
         user_id = channel_data["user_id"]

@@ -63,7 +63,8 @@ for a channel shared ummong the peers, from that moment the peer is visible to a
 other peers uppon subscription of that shared channel. These kind of channels should
 be used together with the presence channels.
 
-The naming of these kind of channels will always follow the structure **peer-base_channel:user_1&user_2&user_3**.
+The naming of these kind of channels will always follow the structure
+`peer-base_channel:user_1&user_2&user_3`.
 
 ## Persistence
 

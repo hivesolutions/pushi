@@ -762,7 +762,7 @@ class State(appier.Mongo):
         # splits the channel into the base and tail parts and then extracts
         # both the base channel name and the peers list for processing
         base, tail = channel.split(":", 1)
-        base_channel = base.split("-", 1)[1]
+        base_channel = "presence-" + base.split("-", 1)[1]
         peers = tail.split("_", 1)
 
         # retrieves the required app state from the provided app key, it's
@@ -773,7 +773,6 @@ class State(appier.Mongo):
         # the channel data value for the base channel so that the user
         # identification is retrieval for verification
         channel_socket = (base_channel, socket_id)
-        print(channel_socket)
         channel_data = state.channel_socket_data.get(channel_socket)
         if not channel_data: return False
         user_id = channel_data["user_id"]

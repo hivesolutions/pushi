@@ -95,7 +95,7 @@ class Api(
         if self.token: return self.token
         return self.login()
 
-    def auth_callback(self, params):
+    def auth_callback(self, params, headers):
         token = self.login()
         params["sid"] = token
 

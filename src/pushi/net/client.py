@@ -219,19 +219,36 @@ class PushiConnection(netius.clients.WSConnection):
 
         return channel
 
-    def send_event(self, event, data, persist = True, callback = None):
+    def send_event(
+        self,
+        event,
+        data,
+        echo = False,
+        persist = True,
+        callback = None
+    ):
         json_d = dict(
             event = event,
             data = data,
+            echo = echo,
             persist = persist
         )
         self.send_pushi(json_d, callback = callback)
 
-    def send_channel(self, event, data, channel, persist = True, callback = None):
+    def send_channel(
+        self,
+        event,
+        data,
+        channel,
+        echo = False,
+        persist = True,
+        callback = None
+    ):
         json_d = dict(
             event = event,
             data = data,
             channel = channel,
+            echo = echo,
             persist = persist
         )
         self.send_pushi(json_d, callback = callback)

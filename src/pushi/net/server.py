@@ -213,6 +213,7 @@ class PushiServer(netius.servers.WSServer):
         data = json_d["data"]
         event = json_d["event"]
         channel = json_d["channel"]
+        echo = json_d.get("echo", False)
         persist = json_d.get("persist", True)
 
         if not self.state: return
@@ -223,6 +224,7 @@ class PushiServer(netius.servers.WSServer):
             event,
             data,
             channels = (channel,),
+            echo = echo,
             persist = persist,
             owner_id = connection.socket_id
         )

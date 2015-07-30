@@ -788,6 +788,7 @@ class State(appier.Mongo):
         event,
         data,
         channels = None,
+        echo = False,
         persist = False,
         json_d = None,
         owner_id = None,
@@ -804,6 +805,7 @@ class State(appier.Mongo):
             app_id,
             channel,
             event,
+            echo,
             persist,
             data,
             json_d = json_d,
@@ -817,6 +819,7 @@ class State(appier.Mongo):
         app_id,
         channel,
         event,
+        echo,
         persist,
         data,
         json_d = None,
@@ -862,6 +865,7 @@ class State(appier.Mongo):
             app_id,
             channel,
             json_d,
+            echo = echo,
             owner_id = owner_id,
             verify = verify,
             invalid = invalid
@@ -923,7 +927,16 @@ class State(appier.Mongo):
         # to retrieve some persistent related information (eg: mid)
         return event
 
-    def send_channel(self, app_id, channel, json_d, owner_id = None, verify = True, invalid = {}):
+    def send_channel(
+        self,
+        app_id,
+        channel,
+        json_d,
+        echo = False,
+        owner_id = None,
+        verify = True,
+        invalid = {}
+    ):
         # retrieves the state of the current app to be used in the sending and
         # verifies that the owner (socket) identifier is present in the channel
         # (but only in case the verify flag is present)
@@ -932,11 +945,12 @@ class State(appier.Mongo):
 
         # retrieves the complete set of sockets associated with the channel
         # and sends the json data through the socket, avoiding sending the
-        # data through the same socket that originated the event
+        # data through the same socket that originated the event, unless the
+        # echo flag is set (meaning re-sending to channel)
         sockets = state.channel_sockets.get(channel, [])
         for socket_id in sockets:
             if socket_id in invalid: continue
-            if socket_id == owner_id: continue
+            if socket_id == owner_id and not echo: continue
             self.send_socket(socket_id, json_d)
             invalid[socket_id] = True
 

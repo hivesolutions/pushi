@@ -6,6 +6,7 @@ python:
   - "3.2"
   - "3.3"
   - "3.4"
+  - "3.5-dev"
   - "pypy"
   - "pypy3"
 install:
@@ -15,3 +16,12 @@ script: coverage run --source=pushi setup.py test
 after_success: coveralls
 git:
   submodules: false
+deploy:
+  provider: pypi
+  user: joamag
+  password:
+    secure: Ri/IEfrA1beo+w2mxRZXZMltz9wEvVesx/kEA1gsfq5KLHUSrdBkNHbpqqUQbYe4CvHsBJnXZpf8X/C0ssRMwTrmxPq1PSovXp5jRC7vsTpk5oGQNIaaGa4PW5btZUgyMEHg5Q760VI276ZjHuTbcTXFEOk2PJ1NwyeFtRl928I=
+  distributions: sdist bdist_wheel
+  on:
+    tags: true
+    python: "2.7"

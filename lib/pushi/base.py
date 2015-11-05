@@ -86,7 +86,18 @@ class Api(
         self.base_url = kwargs.get("base_url", self.base_url)
         self.token = None
 
-    def build(self, method, url, headers, kwargs):
+    def build(
+        self,
+        method,
+        url,
+        data = None,
+        data_j = None,
+        data_m = None,
+        headers = None,
+        params = None,
+        mime = None,
+        kwargs = None
+    ):
         auth = kwargs.pop("auth", True)
         if auth: kwargs["sid"] = self.get_token()
 

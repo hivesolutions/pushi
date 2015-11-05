@@ -44,7 +44,7 @@ setuptools.setup(
     version = "0.2.12",
     author = "Hive Solutions Lda.",
     author_email = "development@hive.pt",
-    description = "Pushi System",
+    description = "Pushi System API",
     license = "Apache License, Version 2.0",
     keywords = "pushi websocket",
     url = "http://pushi.hive.pt",

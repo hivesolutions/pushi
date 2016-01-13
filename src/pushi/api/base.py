@@ -116,6 +116,7 @@ class Api(
         # session token, to be used in further calls
         result = self.get(
             self.base_url + "login",
+            callback = False,
             auth = False,
             app_id = self.app_id,
             app_key = self.app_key,

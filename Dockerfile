@@ -29,4 +29,4 @@ ADD src /src
 RUN apt-get update && apt-get install -y -q python python-setuptools python-dev python-pip
 RUN pip install -r /requirements.txt && pip install -r /extra.txt && pip install --upgrade netius
 
-CMD python /src/pushi/base/state.py
+CMD ["/usr/bin/python", "/src/pushi/base/state.py"]

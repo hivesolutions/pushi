@@ -42,15 +42,16 @@ import appier_extras
 
 import pushi
 
-class PushiApp(appier.App):
+class PushiApp(appier.APIApp):
 
-    def __init__(self, state = None):
-        appier.App.__init__(
+    def __init__(self, state = None, *args, **kwargs):
+        appier.APIApp.__init__(
             self,
             name = "pushi",
             parts = (
                 appier_extras.AdminPart,
-            )
+            ),
+            *args, **kwargs
         )
         self.state = state
 
@@ -63,20 +64,20 @@ class PushiApp(appier.App):
         if not app: raise RuntimeError("Invalid credentials provided")
 
     def info(self, data = {}):
-        info = appier.App.info(self, data)
+        info = appier.APIApp.info(self, data)
         if not self.state: return info
         server = self.state.server
         info["service"] = server.info_dict()
         return info
 
     def on_login(self, sid, secret, app_id, app_key, app_secret, **kwargs):
-        appier.App.on_login(self, sid, secret, **kwargs)
+        appier.APIApp.on_login(self, sid, secret, **kwargs)
         self.session["app_id"] = app_id
         self.session["app_key"] = app_key
         self.session["app_secret"] = app_secret
 
     def on_logout(self):
-        appier.App.on_logout(self)
+        appier.APIApp.on_logout(self)
         if not self.session: return
         if "app_id" in self.session: del self.session["app_id"]
         if "app_key" in self.session: del self.session["app_key"]

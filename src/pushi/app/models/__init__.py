@@ -46,6 +46,6 @@ from .apn import Apn
 from .app import App
 from .association import Association
 from .base import PushiBase
-from .event import Event
+from .event import PushiEvent
 from .subscription import Subscription
 from .web import Web

@@ -47,7 +47,7 @@ class EventController(appier.Controller):
     @appier.route("/events", "GET")
     def list(self):
         count = self.field("count", 10, cast = int)
-        events = pushi.Event.find(
+        events = pushi.PushiEvent.find(
             limit = count,
             sort = [("_id", -1),],
             map = True

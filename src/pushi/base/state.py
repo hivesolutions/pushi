@@ -1063,7 +1063,7 @@ class State(appier.Mongo):
 
     def get_events_global(self, app_key, channel, skip = 0, count = 10, map = True):
         app_id = self.app_key_to_app_id(app_key)
-        events = pushi.Event.find(
+        events = pushi.PushiEvent.find(
             instance = app_id,
             channel = channel,
             skip = skip,
@@ -1087,7 +1087,7 @@ class State(appier.Mongo):
         )
         mids = [assoc.mid for assoc in assocs]
 
-        events = pushi.Event.find(
+        events = pushi.PushiEvent.find(
             instance = app_id,
             mid = {"$in" : mids},
             sort = [("_id", -1)],
@@ -1200,7 +1200,7 @@ class State(appier.Mongo):
         @type has_date: bool
         @param has_date: If the generates event structure should include
         the data in its structure, this account for more processing.
-        @rtype: Event
+        @rtype: PushiEvent
         @return: The generated event structure that was created according
         to the provided details for generation.
         """
@@ -1218,7 +1218,7 @@ class State(appier.Mongo):
 
         # creates the proper dictionary of the event that includes all of the
         # main values of it, together with the ones that have been generated
-        event = pushi.Event(
+        event = pushi.PushiEvent(
             mid = mid,
             instance = app_id,
             channel = channel,

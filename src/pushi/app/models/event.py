@@ -41,7 +41,7 @@ import appier
 
 from . import base
 
-class Event(base.PushiBase):
+class PushiEvent(base.PushiBase):
 
     mid = appier.field(
         index = True,
@@ -72,7 +72,7 @@ class Event(base.PushiBase):
 
     @classmethod
     def validate(cls):
-        return super(Event, cls).validate() + [
+        return super(PushiEvent, cls).validate() + [
             appier.not_null("mid"),
             appier.not_empty("mid"),
 

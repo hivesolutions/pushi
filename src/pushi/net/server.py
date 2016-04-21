@@ -117,6 +117,10 @@ class PushiServer(netius.servers.WSServer):
         netius.servers.WSServer.on_data_ws(self, connection, data)
 
         try:
+            print("--------------")
+            print(type(data))
+            print(repr(data))
+            print("--------------")
             data = data.decode("utf-8")
             json_d = json.loads(data)
         except:

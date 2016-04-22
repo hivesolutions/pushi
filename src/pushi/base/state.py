@@ -318,6 +318,8 @@ class State(appier.Mongo):
         # adds the current channel to it (subscription) then updates the
         # association between the socket id and the channels
         channels = state.socket_channels.get(socket_id, [])
+        subscribed = channel in channels
+        if subscribed: raise RuntimeError("Channel already subscribed")
         channels.append(channel)
         state.socket_channels[socket_id] = channels
 
@@ -325,6 +327,8 @@ class State(appier.Mongo):
         # association and adds the current socket id to the list then
         # re-updates the inverted map with the sockets list
         sockets = state.channel_sockets.get(channel, [])
+        subscribed = socket_id in sockets
+        if subscribed: raise RuntimeError("Socket already subscribed")
         sockets.append(socket_id)
         state.channel_sockets[channel] = sockets
 
@@ -455,12 +459,12 @@ class State(appier.Mongo):
         # id is currently subscribed and removes the current channel
         # from that list in case it exists there
         channels = state.socket_channels.get(socket_id, [])
-        if channel in channels: channels.remove(channel)
+        while channel in channels: channels.remove(channel)
 
         # retrieves the list of sockets that are subscribed to the defined
         # channel and removes the current socket from it
         sockets = state.channel_sockets.get(channel, [])
-        if socket_id in sockets: sockets.remove(socket_id)
+        while socket_id in sockets: sockets.remove(socket_id)
 
         # tries to retrieve the channel data for the channel socket
         # tuple in case there's none available there's nothing else
@@ -494,7 +498,7 @@ class State(appier.Mongo):
         # of the connection to be unregistered then removes the current connection
         # from the list of connections and re-sets the connections list
         user_conns = users.get(user_id, [])
-        user_conns.remove(connection)
+        while connection in user_conns: user_conns.remove(connection)
         users[user_id] = user_conns
 
         # verifies if the current connection is old, a connection is considered

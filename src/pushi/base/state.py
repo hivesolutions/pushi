@@ -244,11 +244,10 @@ class State(appier.Mongo):
         if not app_key: return
         if not socket_id: return
 
-        # tries to retrieve an app for the provided key in case that's
-        # not possible returns immediately, as it's not possible to
-        # disconnect a connection without an associated/valid app
-        app = self.get_app(app_key = app_key, raise_e = False)
-        if not app: return
+        # in case the app key is not currently present in the map
+        # associating the app key with the state there's no need
+        # to continue ant the control flow is returned immediately
+        if not self.has_state(app_key = app_key): return
 
         # retrieves the current state of the app using the app key and
         # then uses it to retrieve the complete set of channels that the
@@ -459,12 +458,12 @@ class State(appier.Mongo):
         # id is currently subscribed and removes the current channel
         # from that list in case it exists there
         channels = state.socket_channels.get(socket_id, [])
-        while channel in channels: channels.remove(channel)
+        if channel in channels: channels.remove(channel)
 
         # retrieves the list of sockets that are subscribed to the defined
         # channel and removes the current socket from it
         sockets = state.channel_sockets.get(channel, [])
-        while socket_id in sockets: sockets.remove(socket_id)
+        if socket_id in sockets: sockets.remove(socket_id)
 
         # tries to retrieve the channel data for the channel socket
         # tuple in case there's none available there's nothing else
@@ -498,7 +497,7 @@ class State(appier.Mongo):
         # of the connection to be unregistered then removes the current connection
         # from the list of connections and re-sets the connections list
         user_conns = users.get(user_id, [])
-        while connection in user_conns: user_conns.remove(connection)
+        user_conns.remove(connection)
         users[user_id] = user_conns
 
         # verifies if the current connection is old, a connection is considered
@@ -972,6 +971,14 @@ class State(appier.Mongo):
 
     def send_socket(self, socket_id, json_d):
         self.server.send_socket(socket_id, json_d)
+
+    def has_state(self, app_id = None, app_key = None):
+        # verifies if either the app id or the app key are
+        # present in the respective state maps and if that's
+        # the case returns a valid vaue (presence validated)
+        if app_id in self.app_id_state: return True
+        if app_key in self.app_key_state: return True
+        return False
 
     def get_state(self, app_id = None, app_key = None):
         # sets the initial value of the state value as invalid so

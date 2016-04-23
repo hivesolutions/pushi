@@ -244,10 +244,10 @@ class State(appier.Mongo):
         if not app_key: return
         if not socket_id: return
 
-        # in case the app key is not currently present in the map
-        # associating the app key with the state there's no need
-        # to continue ant the control flow is returned immediately
-        if not self.has_state(app_key = app_key): return
+        # verifies if there's an app value available for the app key
+        # in case there's not, returns immediately, as it's not possible
+        # to disconnect a connection without an associated/valid app
+        if not self.has_app(app_key = app_key): return
 
         # retrieves the current state of the app using the app key and
         # then uses it to retrieve the complete set of channels that the
@@ -972,14 +972,6 @@ class State(appier.Mongo):
     def send_socket(self, socket_id, json_d):
         self.server.send_socket(socket_id, json_d)
 
-    def has_state(self, app_id = None, app_key = None):
-        # verifies if either the app id or the app key are
-        # present in the respective state maps and if that's
-        # the case returns a valid vaue (presence validated)
-        if app_id in self.app_id_state: return True
-        if app_key in self.app_key_state: return True
-        return False
-
     def get_state(self, app_id = None, app_key = None):
         # sets the initial value of the state value as invalid so
         # that by default the returned value is invalid
@@ -1112,6 +1104,30 @@ class State(appier.Mongo):
         if app_id: app = pushi.App.get(ident = app_id, raise_e = raise_e)
         if app_key: app = pushi.App.get(key = app_key, raise_e = raise_e)
         return app
+
+    def has_app(self, app_id = None, app_key = None):
+        # verifies if state is currently defined for the
+        # provided app values and if that's the case returns
+        # immediately with a valid value
+        if self.has_state(app_id = app_id, app_key = app_key): return True
+
+        # tries to retrieve an app for the provided values
+        # and in case there's one an app is considered to
+        # exist (returns a valid value)
+        app = self.get_app(app_id = app_id, app_key = app_key, raise_e = False)
+        if app: return True
+
+        # by default an invalid value is returned as none of the
+        # verifications is considered successful
+        return False
+
+    def has_state(self, app_id = None, app_key = None):
+        # verifies if either the app id or the app key are
+        # present in the respective state maps and if that's
+        # the case returns a valid value (presence validated)
+        if app_id in self.app_id_state: return True
+        if app_key in self.app_key_state: return True
+        return False
 
     def invalidate(self, app_id = None, app_key = None):
         """

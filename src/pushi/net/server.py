@@ -67,6 +67,8 @@ class PushiConnection(netius.servers.WSConnection):
 
 class PushiServer(netius.servers.WSServer):
 
+    WS_CLOSE_FRAME = b"\x03\xe9"
+
     def __init__(self, state = None, *args, **kwargs):
         netius.servers.WSServer.__init__(self, *args, **kwargs)
         self.state = state
@@ -115,6 +117,10 @@ class PushiServer(netius.servers.WSServer):
 
     def on_data_ws(self, connection, data):
         netius.servers.WSServer.on_data_ws(self, connection, data)
+
+        cls = self.__class__
+
+        if data == cls.WS_CLOSE_FRAME: return
 
         try:
             data = data.decode("utf-8")

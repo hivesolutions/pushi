@@ -342,21 +342,21 @@ if __name__ == "__main__":
         print("Received %d event(s) for channel %s" % (len(events), name))
 
     def on_subscribe(channel, data):
-        client = channel.owner.owner
-
-        def timer():
-            print("Waiting for events(s) on channel %s ..." % channel.name)
-            client.delay(timer, timeout = 3)
-
         channel.send("message", "Hello World", persist = False)
         channel.bind("message", on_message)
         channel.latest(count = 20, callback = on_latest)
-        client.delay(timer, timeout = 3)
 
     def on_connect(connection):
         connection.subscribe_pushi("global", callback = on_subscribe)
+
+    def register_timer(client):
+        def timer():
+            print("Waiting for events(s) on channel global ...")
+            client.delay(timer, timeout = 5)
+        client.delay(timer, timeout = 5)
 
     url = netius.conf("PUSHI_URL")
     client_key = netius.conf("PUSHI_KEY")
     client = PushiClient(url = url, client_key = client_key)
     client.connect_pushi(callback = on_connect)
+    register_timer(client)

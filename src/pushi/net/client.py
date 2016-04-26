@@ -274,7 +274,7 @@ class PushiConnection(netius.clients.WSConnection):
 
     def _subscribe_private(self, channel, channel_data = None):
         if not self.owner.api: raise RuntimeError("No private app available")
-        auth = self.owner.api.authenticate(channel,self.socket_id)
+        auth = self.owner.api.authenticate(channel, self.socket_id)
         self.send_event("pusher:subscribe", dict(
             channel = channel,
             auth = auth,

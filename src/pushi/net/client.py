@@ -73,7 +73,7 @@ class PushiChannel(netius.observer.Observable):
         self.trigger("latest", self, data)
 
     def set_message(self, event, data, mid = None, timestamp = None):
-        self.trigger(event, data, mid = mid, timestamp = timestamp)
+        self.trigger(event, self, data, mid = mid, timestamp = timestamp)
 
     def send(self, event, data, persist = True):
         self.owner.send_channel(event, data, self.name, persist = persist)
@@ -327,6 +327,10 @@ class PushiClient(netius.clients.WSClient):
 
 if __name__ == "__main__":
 
+    def on_message(channel, data, mid = None, timestamp = None):
+        print("Received %s" % data)
+        channel.unsubscribe(callback = on_unsubscribe)
+
     def on_unsubscribe(channel, data):
         connection = channel.owner
         client = connection.owner
@@ -338,10 +342,6 @@ if __name__ == "__main__":
         print("Received %d event(s) for channel %s" % (len(events), name))
 
     def on_subscribe(channel, data):
-        def on_message(data, mid = None, timestamp = None):
-            print("Received %s" % data)
-            channel.unsubscribe(callback = on_unsubscribe)
-
         channel.send("message", "Hello World", persist = False)
         channel.bind("message", on_message)
         channel.latest(count = 20, callback = on_latest)

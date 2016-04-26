@@ -72,6 +72,9 @@ class PushiChannel(netius.observer.Observable):
     def set_latest(self, data):
         self.trigger("latest", self, data)
 
+    def set_message(self, event, data, mid = None, timestamp = None):
+        self.trigger(event, data, mid = mid, timestamp = timestamp)
+
     def send(self, event, data, persist = True):
         self.owner.send_channel(event, data, self.name, persist = persist)
 
@@ -125,7 +128,7 @@ class PushiConnection(netius.clients.WSConnection):
         # tries to gather the channel object/information reference
         # for the channel that received the message and verifies if
         # the current channel is peer related or not
-        _channel = self.channels[channel]
+        _channel = self.channels.get(channel, None)
         is_peer = channel.startswith("peer-")
 
         # in case no channel information is found for the channel
@@ -154,6 +157,7 @@ class PushiConnection(netius.clients.WSConnection):
             self.on_member_removed_pushi(channel, member)
 
         self.trigger(event, self, data, channel, mid = mid, timestamp = timestamp)
+        if _channel: _channel.set_message(event, data, mid = mid, timestamp = timestamp)
 
     def on_subscribe_pushi(self, channel, data):
         _channel = self.channels[channel]
@@ -302,7 +306,7 @@ class PushiClient(netius.clients.WSClient):
 
     def __init__(self, url = None, client_key = None, api = None, *args, **kwargs):
         netius.clients.WSClient.__init__(self, *args, **kwargs)
-        self.base_url = url or PushiClient.PUXIAPP_URL
+        self.base_url = url or self.__class__.PUXIAPP_URL
         self.client_key = client_key
         self.api = api
         self.url = self.base_url + self.client_key
@@ -322,6 +326,7 @@ class PushiClient(netius.clients.WSClient):
         return connection
 
 if __name__ == "__main__":
+
     def on_unsubscribe(channel, data):
         connection = channel.owner
         client = connection.owner
@@ -331,10 +336,14 @@ if __name__ == "__main__":
         name = data["name"]
         events = data["events"]
         print("Received %d event(s) for channel %s" % (len(events), name))
-        channel.unsubscribe(callback = on_unsubscribe)
 
     def on_subscribe(channel, data):
+        def on_message(data, mid = None, timestamp = None):
+            print("Received %s" % data)
+            channel.unsubscribe(callback = on_unsubscribe)
+
         channel.send("message", "Hello World", persist = False)
+        channel.bind("message", on_message)
         channel.latest(count = 20, callback = on_latest)
 
     def on_connect(connection):

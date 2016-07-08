@@ -912,7 +912,7 @@ class State(appier.Mongo):
         # to be extracted in every iteration
         mid = event.mid
 
-        # retrieves the complete set of subscription for the
+        # retrieves the complete set of subscriptions for the
         # provided channel and under the current app id to be
         # able to create the proper associations
         subscriptions = self.get_subscriptions(app_id, channel)

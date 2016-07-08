@@ -165,12 +165,16 @@ class ApnHandler(handler.Handler):
             # map of invalid items must skip iteration as the message
             # has probably already been sent "to the token"
             if token in invalid: continue
-            
-            continue
 
             # prints a debug message about the apn message that
             # is going to be sent (includes token)
             self.logger.debug("Sending apn message to '%s'" % token)
+            
+            netius.clients.HTTPClient.method_s(
+                "GET",
+                "https://httpbin.org/headers" % self.httpbin,
+            )
+            continue
 
             # creates the new apn client to be used and uses it to
             # send the new message (should be correctly serialized)

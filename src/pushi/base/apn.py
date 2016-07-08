@@ -138,6 +138,21 @@ class ApnHandler(handler.Handler):
         tokens = set(tokens)
         count = len(tokens)
 
+
+        print("GETTING 1")
+        netius.clients.HTTPClient.method_s(
+            "GET",
+            "https://httpbin.org/headers",
+            async = True
+        )
+        print("GETTING")
+        import sys
+        sys.stderr.write("GETTING\n")
+        sys.stderr.flush()
+        continue
+
+
+
         # prints a logging message about the various (web) subscriptions
         # that were found for the event that was triggered
         self.logger.debug("Found %d apn subscription(s) for '%s'" % (count, root_event))
@@ -169,18 +184,6 @@ class ApnHandler(handler.Handler):
             # prints a debug message about the apn message that
             # is going to be sent (includes token)
             self.logger.debug("Sending apn message to '%s'" % token)
-            
-            print("GETTING 1")
-            netius.clients.HTTPClient.method_s(
-                "GET",
-                "https://httpbin.org/headers",
-                async = True
-            )
-            print("GETTING")
-            import sys
-            sys.stderr.write("GETTING\n")
-            sys.stderr.flush()
-            continue
 
             # creates the new apn client to be used and uses it to
             # send the new message (should be correctly serialized)

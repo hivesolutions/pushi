@@ -165,6 +165,8 @@ class ApnHandler(handler.Handler):
             # map of invalid items must skip iteration as the message
             # has probably already been sent "to the token"
             if token in invalid: continue
+            
+            continue
 
             # prints a debug message about the apn message that
             # is going to be sent (includes token)
@@ -181,7 +183,6 @@ class ApnHandler(handler.Handler):
                 key_file = key_path,
                 cer_file = cer_path
             )
-            apn_client.join()
 
             # adds the current token to the list of invalid item for
             # the current message sending stream

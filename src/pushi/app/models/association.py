@@ -63,4 +63,4 @@ class Association(base.PushiBase):
 
     @classmethod
     def list_names(cls):
-        return ["user_id", "mid"]
+        return ["user_id", "mid", "created"]

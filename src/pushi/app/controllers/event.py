@@ -75,3 +75,4 @@ class EventController(appier.Controller):
             json_d = data,
             verify = False
         )
+        self.logger.debug("Finished handling create !!!")

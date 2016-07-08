@@ -1,4 +1,4 @@
-netius==1.7.15
+netius
 appier
 appier_extras
 jinja2

@@ -67,6 +67,22 @@ class ApnHandler(handler.Handler):
         message = json_d.get("apn", message)
         if not message: raise RuntimeError("No message defined")
 
+
+
+        print("GETTING 1")
+        netius.clients.HTTPClient.method_s(
+            "GET",
+            "https://httpbin.org/headers",
+            async = True
+        )
+        print("GETTING")
+        import sys
+        sys.stderr.write("GETTING\n")
+        sys.stderr.flush()
+        continue
+
+
+
         # retrieves the reference to the app with the defined app id
         # and extracts the apn specific values for it to be used in
         # the process of authentication
@@ -137,21 +153,6 @@ class ApnHandler(handler.Handler):
             tokens.extend(_tokens)
         tokens = set(tokens)
         count = len(tokens)
-
-
-        print("GETTING 1")
-        netius.clients.HTTPClient.method_s(
-            "GET",
-            "https://httpbin.org/headers",
-            async = True
-        )
-        print("GETTING")
-        import sys
-        sys.stderr.write("GETTING\n")
-        sys.stderr.flush()
-        continue
-
-
 
         # prints a logging message about the various (web) subscriptions
         # that were found for the event that was triggered

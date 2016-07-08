@@ -79,7 +79,6 @@ class ApnHandler(handler.Handler):
         import sys
         sys.stderr.write("GETTING\n")
         sys.stderr.flush()
-        continue
 
 
 

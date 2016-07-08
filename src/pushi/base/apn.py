@@ -170,12 +170,16 @@ class ApnHandler(handler.Handler):
             # is going to be sent (includes token)
             self.logger.debug("Sending apn message to '%s'" % token)
             
+            print("GETTING 1")
             netius.clients.HTTPClient.method_s(
                 "GET",
                 "https://httpbin.org/headers",
-                async = False
+                async = True
             )
             print("GETTING")
+            import sys
+            sys.stderr.write("GETTING\n")
+            sys.stderr.flush()
             continue
 
             # creates the new apn client to be used and uses it to

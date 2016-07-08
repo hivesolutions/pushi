@@ -1,4 +1,4 @@
-FROM hivesolutions/python:latest
+FROM hivesolutions/pypy:latest
 MAINTAINER Hive Solutions
 
 EXPOSE 9090
@@ -26,6 +26,6 @@ ADD requirements.txt /
 ADD extra.txt /
 ADD src /src
 
-RUN pip3 install -r /requirements.txt && pip3 install -r /extra.txt
+RUN pip install -r /requirements.txt && pip install -r /extra.txt
 
-CMD ["/usr/bin/python3", "/src/pushi/base/state.py"]
+CMD ["/usr/bin/python", "/src/pushi/base/state.py"]

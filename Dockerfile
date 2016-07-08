@@ -26,6 +26,6 @@ ADD requirements.txt /
 ADD extra.txt /
 ADD src /src
 
-RUN pip3 install -r /requirements.txt && pip3 install -r /extra.txt && pip3 install --upgrade netius
+RUN pip3 install -r /requirements.txt && pip3 install -r /extra.txt
 
 CMD ["/usr/bin/python3", "/src/pushi/base/state.py"]

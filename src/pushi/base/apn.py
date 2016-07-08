@@ -173,6 +173,7 @@ class ApnHandler(handler.Handler):
             # creates the new apn client to be used and uses it to
             # send the new message (should be correctly serialized)
             apn_client = netius.clients.APNClient()
+            apn_client.bind("stop", cleanup)
             apn_client.message(
                 token,
                 message = message,
@@ -180,7 +181,6 @@ class ApnHandler(handler.Handler):
                 key_file = key_path,
                 cer_file = cer_path
             )
-            apn_client.bind("stop", cleanup)
 
             # adds the current token to the list of invalid item for
             # the current message sending stream

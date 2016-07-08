@@ -941,6 +941,10 @@ class State(appier.Mongo):
         verify = True,
         invalid = {}
     ):
+        # tries to retrieve the value of the flag that controls if the
+        # "custom" handlers should be used for the channel handling
+        use_handlers = appier.conf("USE_HANDLERS", True, cast = bool)
+
         # retrieves the state of the current app to be used in the sending and
         # verifies that the owner (socket) identifier is present in the channel
         # (but only in case the verify flag is present)
@@ -957,6 +961,10 @@ class State(appier.Mongo):
             if socket_id == owner_id and not echo: continue
             self.send_socket(socket_id, json_d)
             invalid[socket_id] = True
+
+        # in case the handlers should not be used for custom handling the
+        # control flow should be returned immediately as expected
+        if not use_handlers: return
 
         # iterates over the complete set of handler currently defined
         # to send the message also through these channels, in case there's

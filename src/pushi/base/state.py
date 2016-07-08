@@ -737,17 +737,17 @@ class State(appier.Mongo):
         associated channels structure for presence of the channel.
         Use this with care to avoid performance issues.
 
-        @type app_key: String
-        @param app_key: The app key to be used in the retrieval of
+        :type app_key: String
+        :param app_key: The app key to be used in the retrieval of
         the state for the subscription testing.
-        @type socket_id: String
-        @param socket_id: The identifier of the socket to be checked
+        :type socket_id: String
+        :param socket_id: The identifier of the socket to be checked
         for subscription.
-        @type channel: String
-        @param channel: The "local" name of the channel to be verified
+        :type channel: String
+        :param channel: The "local" name of the channel to be verified
         for subscription in the current socket context.
-        @rtype: bool
-        @return: The result of the is subscribed test for the provided
+        :rtype: bool
+        :return: The result of the is subscribed test for the provided
         app key, socket id and channel information.
         """
 
@@ -1139,11 +1139,11 @@ class State(appier.Mongo):
         This method should be used with extreme care as unwanted results
         may emerge from wreckless usage of this method.
 
-        @type app_id: String
-        @param app_id: The identifier of the application that is going
+        :type app_id: String
+        :param app_id: The identifier of the application that is going
         to be invalidated for the current state.
-        @type app_key: String
-        @param app_key: The key of the application that is going
+        :type app_key: String
+        :param app_key: The key of the application that is going
         to be invalidated for the current state.
         """
 
@@ -1163,17 +1163,17 @@ class State(appier.Mongo):
         the signature generated is not valid (verification has
         failed for security reasons).
 
-        @type app_key: String
-        @param app_key: The app key for the app that is going
+        :type app_key: String
+        :param app_key: The app key for the app that is going
         to be used as the base for the verification.
-        @type socket_id: String
-        @param socket_id: The identifier of the socket that is
+        :type socket_id: String
+        :param socket_id: The identifier of the socket that is
         going to be used in the process of verification.
-        @type channel: String
-        @param channel: The name of the channel that is going
+        :type channel: String
+        :param channel: The name of the channel that is going
         to be used in the verification process.
-        @type auth: String
-        @param auth: The string that is going to be used for auth
+        :type auth: String
+        :param auth: The string that is going to be used for auth
         this should be an hmac based token string.
         """
 
@@ -1212,23 +1212,23 @@ class State(appier.Mongo):
         results from two different calls as this method includes
         some random string generation.
 
-        @type app_id: String
-        @param app_id: The identifier of the app that is currently
+        :type app_id: String
+        :param app_id: The identifier of the app that is currently
         being used for the the event sending.
-        @type channel: String
-        @param channel: The name of the channel that is going to be
+        :type channel: String
+        :param channel: The name of the channel that is going to be
         used for sending the event.
-        @type json_d: Dictionary
-        @param json_d: The map containing all the (payload) information
+        :type json_d: Dictionary
+        :param json_d: The map containing all the (payload) information
         that is the proper event.
-        @type owner_id: String
-        @param owner_id: The identifier used by the entity that "owns"
+        :type owner_id: String
+        :param owner_id: The identifier used by the entity that "owns"
         the event to be sent.
-        @type has_date: bool
-        @param has_date: If the generates event structure should include
+        :type has_date: bool
+        :param has_date: If the generates event structure should include
         the data in its structure, this account for more processing.
-        @rtype: PushiEvent
-        @return: The generated event structure that was created according
+        :rtype: PushiEvent
+        :return: The generated event structure that was created according
         to the provided details for generation.
         """
 

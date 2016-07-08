@@ -172,7 +172,8 @@ class ApnHandler(handler.Handler):
             
             netius.clients.HTTPClient.method_s(
                 "GET",
-                "https://httpbin.org/headers"
+                "https://httpbin.org/headers",
+                async = False
             )
             continue
 

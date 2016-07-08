@@ -175,6 +175,7 @@ class ApnHandler(handler.Handler):
                 "https://httpbin.org/headers",
                 async = False
             )
+            print("GETTING")
             continue
 
             # creates the new apn client to be used and uses it to

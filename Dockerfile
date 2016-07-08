@@ -21,7 +21,7 @@ ENV SERVER_SSL_KEY /data/pushi.key
 ENV SERVER_SSL_CER /data/pushi.cer
 ENV MONGOHQ_URL mongodb://localhost:27017
 ENV FILE_LOG 1
-ENV USE_HANDLERS 1
+ENV PUSHI_HANDLERS 1
 
 ADD requirements.txt /
 ADD extra.txt /

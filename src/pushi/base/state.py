@@ -943,7 +943,7 @@ class State(appier.Mongo):
     ):
         # tries to retrieve the value of the flag that controls if the
         # "custom" handlers should be used for the channel handling
-        use_handlers = appier.conf("USE_HANDLERS", True, cast = bool)
+        use_handlers = appier.conf("PUSHI_HANDLERS", True, cast = bool)
 
         # retrieves the state of the current app to be used in the sending and
         # verifies that the owner (socket) identifier is present in the channel

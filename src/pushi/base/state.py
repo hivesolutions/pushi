@@ -1235,8 +1235,8 @@ class State(appier.Mongo):
 
         # runs a series of initial pre condition verification to ensure that
         # the data is ready to be persisted if required
-        self.verify(not "mid" in json_d)
-        self.verify(not "timestamp" in json_d)
+        appier.verify(not "mid" in json_d)
+        appier.verify(not "timestamp" in json_d)
 
         # generates a globally unique identifier that is going to be the
         # sole unique value for the event, this may be used latter for

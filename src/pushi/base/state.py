@@ -838,8 +838,9 @@ class State(appier.Mongo):
 
         # creates the "new" json dictionary object that represents the
         # event payload and copies some of the event metadata into it
-        # so that it may be consulted latter by the client
-        json_d = json_d or dict()
+        # so that it may be consulted latter by the client, note that
+        # a copy must be created to avoid any issue related with re-usage
+        json_d = dict(json_d) or dict()
         if channel: json_d["channel"] = channel
         if event: json_d["event"] = event
         if data: json_d["data"] = data
@@ -1231,6 +1232,11 @@ class State(appier.Mongo):
         :return: The generated event structure that was created according
         to the provided details for generation.
         """
+
+        # runs a series of initial pre condition verification to ensure that
+        # the data is ready to be persisted if required
+        self.verify(not "mid" in json_d)
+        self.verify(not "timestamp" in json_d)
 
         # generates a globally unique identifier that is going to be the
         # sole unique value for the event, this may be used latter for

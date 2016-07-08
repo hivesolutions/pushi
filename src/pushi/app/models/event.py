@@ -85,3 +85,7 @@ class PushiEvent(base.PushiBase):
     @classmethod
     def list_names(cls):
         return ["mid", "channel", "owner_id", "timestamp"]
+
+    def pre_save(self):
+        base.PushiBase.pre_save(self)
+        appier.verify(not "mid" in self.data)

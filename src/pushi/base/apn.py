@@ -181,6 +181,7 @@ class ApnHandler(handler.Handler):
                 key_file = key_path,
                 cer_file = cer_path
             )
+            apn_client.join()
 
             # adds the current token to the list of invalid item for
             # the current message sending stream

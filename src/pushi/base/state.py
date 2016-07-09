@@ -840,8 +840,7 @@ class State(appier.Mongo):
         # event payload and copies some of the event metadata into it
         # so that it may be consulted latter by the client, note that
         # a copy must be created to avoid any issue related with re-usage
-        json_d = json_d or dict()
-        json_d = dict(json_d)
+        json_d = dict(json_d) if json_d else dict()
         if channel: json_d["channel"] = channel
         if event: json_d["event"] = event
         if data: json_d["data"] = data

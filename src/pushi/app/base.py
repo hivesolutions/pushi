@@ -55,6 +55,13 @@ class PushiApp(appier.APIApp):
         )
         self.state = state
 
+    def info_dict(self):
+        info = appier.APIApp.info_dict(self)
+        if not self.state: return info
+        server = self.state.server
+        info["service"] = server.info_dict()
+        return info
+
     def auth(self, app_id, app_key, app_secret, **kwargs):
         app = pushi.App.get(
             ident = app_id,
@@ -62,13 +69,6 @@ class PushiApp(appier.APIApp):
             secret = app_secret
         )
         if not app: raise RuntimeError("Invalid credentials provided")
-
-    def info(self, data = {}):
-        info = appier.APIApp.info(self, data)
-        if not self.state: return info
-        server = self.state.server
-        info["service"] = server.info_dict()
-        return info
 
     def on_login(self, sid, secret, app_id, app_key, app_secret, **kwargs):
         appier.APIApp.on_login(self, sid, secret, **kwargs)

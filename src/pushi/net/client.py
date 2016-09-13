@@ -339,7 +339,7 @@ if __name__ == "__main__":
     def on_latest(channel, data):
         name = data["name"]
         events = data["events"]
-        print("Received %d event(s) for channel %s" % (len(events), name))
+        print("Received the latest %d event(s) for channel %s" % (len(events), name))
 
     def on_subscribe(channel, data):
         channel.send("message", "Hello World", persist = False)

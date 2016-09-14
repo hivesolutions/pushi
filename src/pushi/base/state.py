@@ -897,8 +897,8 @@ class State(appier.Mongo):
         if owner_id and verify: self.verify_presence(app_id, owner_id, channel)
 
         # generates the proper event structure (includes identifiers
-        # and timestamps) to the current event and then adds it to
-        # the list of events registered in the data source
+        # and timestamps) to the current event this structure is going
+        # to be used for both handling and persistence
         event = self.gen_event(
             app_id,
             channel,
@@ -906,26 +906,36 @@ class State(appier.Mongo):
             owner_id = owner_id,
             has_date = has_date
         )
-        event.save()
 
-        # extracts the mid from the event so that it's does not need
-        # to be extracted in every iteration
-        mid = event.mid
+        def persist():
+            # stores the event structure in the data source for latter usage
+            # this is going to be a blocking operation and as such must be
+            # used with proper care to avoid blocking of application
+            event.save()
 
-        # retrieves the complete set of subscriptions for the
-        # provided channel and under the current app id to be
-        # able to create the proper associations
-        subscriptions = self.get_subscriptions(app_id, channel)
-        for subscription in subscriptions:
-            user_id = subscription.user_id
-            if user_id in invalid: continue
-            assoc = pushi.Association(
-                instance = app_id,
-                mid = mid,
-                user_id = user_id
-            )
-            assoc.save()
-            invalid[user_id] = True
+            # extracts the mid from the event so that it's does not need
+            # to be extracted in every iteration
+            mid = event.mid
+
+            # retrieves the complete set of subscriptions for the
+            # provided channel and under the current app id to be
+            # able to create the proper associations
+            subscriptions = self.get_subscriptions(app_id, channel)
+            for subscription in subscriptions:
+                user_id = subscription.user_id
+                if user_id in invalid: continue
+                assoc = pushi.Association(
+                    instance = app_id,
+                    mid = mid,
+                    user_id = user_id
+                )
+                assoc.save()
+                invalid[user_id] = True
+
+        # delays the persistence of the event data and subscription so
+        # that the current control flow is not blocked with the data
+        # store operations that are going to be performed
+        self.app.delay(persist)
 
         # returns the final generated event structure that may be used
         # to retrieve some persistent related information (eg: mid)
@@ -1265,7 +1275,7 @@ class State(appier.Mongo):
             channel = channel,
             owner_id = owner_id,
             timestamp = timestamp,
-            data = json_d
+            data = dict(json_d)
         )
 
         # in case the date inclusion flag is set a new date string must be

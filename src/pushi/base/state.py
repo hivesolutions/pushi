@@ -890,7 +890,8 @@ class State(appier.Mongo):
         owner_id = None,
         verify = True,
         invalid = {},
-        has_date = True
+        has_date = True,
+        delayed = True
     ):
         # verifies that the owner (socket) identifier is present in the channel
         # (but only in case the verify flag is present)
@@ -934,8 +935,9 @@ class State(appier.Mongo):
 
         # delays the persistence of the event data and subscription so
         # that the current control flow is not blocked with the data
-        # store operations that are going to be performed
-        self.app.delay(persist)
+        # store operations that are going to be performed, in case the
+        # delayed flag is not set the operation is executed immediately
+        self.app.delay(persist) if delayed else persist()
 
         # returns the final generated event structure that may be used
         # to retrieve some persistent related information (eg: mid)

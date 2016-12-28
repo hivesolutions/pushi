@@ -242,3 +242,5 @@ class PushiServer(netius.servers.WSServer):
 if __name__ == "__main__":
     server = PushiServer()
     server.serve()
+else:
+    __path__ = []

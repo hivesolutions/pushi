@@ -326,7 +326,6 @@ class PushiClient(netius.clients.WSClient):
         return connection
 
 if __name__ == "__main__":
-
     def on_message(channel, data, mid = None, timestamp = None):
         print("Received %s" % data)
         channel.unsubscribe(callback = on_unsubscribe)
@@ -360,3 +359,5 @@ if __name__ == "__main__":
     client = PushiClient(url = url, client_key = client_key)
     client.connect_pushi(callback = on_connect)
     register_timer(client)
+else:
+    __path__ = []

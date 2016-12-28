@@ -86,3 +86,5 @@ class PushiApp(appier.APIApp):
 if __name__ == "__main__":
     app = PushiApp()
     app.serve()
+else:
+    __path__ = []

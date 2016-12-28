@@ -1296,3 +1296,5 @@ if __name__ == "__main__":
     app = pushi.PushiApp(state)
     server = pushi.PushiServer(state)
     state.load(app, server)
+else:
+    __path__ = []

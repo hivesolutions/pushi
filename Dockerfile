@@ -19,7 +19,7 @@ ENV SERVER_PORT=443
 ENV SERVER_SSL 1
 ENV SERVER_SSL_KEY /data/pushi.key
 ENV SERVER_SSL_CER /data/pushi.cer
-ENV MONGOHQ_URL mongodb://localhost:27017
+ENV MONGOHQ_URL mongodb://localhost
 ENV FILE_LOG 1
 ENV PUSHI_HANDLERS 1
 

@@ -65,6 +65,10 @@ class Apn(base.PushiBase):
     def list_names(cls):
         return ["token", "event"]
 
+    @classmethod
+    def _singular(cls):
+        return "APN"
+
     def pre_update(self):
         base.PushiBase.pre_update(self)
         previous = self.__class__.get(id = self.id)

@@ -44,7 +44,8 @@ from . import base
 class Subscription(base.PushiBase):
 
     user_id = appier.field(
-        index = True
+        index = True,
+        description = "User ID"
     )
 
     event = appier.field(

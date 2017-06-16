@@ -44,11 +44,13 @@ from . import base
 class Association(base.PushiBase):
 
     user_id = appier.field(
-        index = True
+        index = True,
+        description = "User ID"
     )
 
     mid = appier.field(
-        index = True
+        index = True,
+        description = "MID"
     )
 
     @classmethod

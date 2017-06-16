@@ -44,7 +44,8 @@ from . import base
 class Web(base.PushiBase):
 
     url = appier.field(
-        index = True
+        index = True,
+        description = "URL"
     )
 
     event = appier.field(

@@ -46,7 +46,8 @@ class PushiEvent(base.PushiBase):
     mid = appier.field(
         index = True,
         immutable = True,
-        default = True
+        default = True,
+        description = "MID"
     )
 
     channel = appier.field(
@@ -55,7 +56,8 @@ class PushiEvent(base.PushiBase):
     )
 
     owner_id = appier.field(
-        immutable = True
+        immutable = True,
+        description = "Owner ID"
     )
 
     timestamp = appier.field(

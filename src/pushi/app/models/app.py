@@ -70,15 +70,18 @@ class App(base.PushiBase):
     )
 
     apn_sandbox = appier.field(
-        type = bool
+        type = bool,
+        description = "APN Sandbox"
     )
 
     apn_key = appier.field(
-        meta = "longtext"
+        meta = "longtext",
+        description = "APN Key"
     )
 
     apn_cer = appier.field(
-        meta = "longtext"
+        meta = "longtext",
+        description = "APN Cer"
     )
 
     @classmethod

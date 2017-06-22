@@ -66,8 +66,12 @@ class Apn(base.PushiBase):
         return ["token", "event"]
 
     @classmethod
-    def _singular(cls):
-        return "APN"
+    def _underscore(cls, plural = True):
+        return "apns" if plural else "apn"
+
+    @classmethod
+    def _readable(cls, plural = False):
+        return "APNs" if plural else "APN"
 
     def pre_update(self):
         base.PushiBase.pre_update(self)

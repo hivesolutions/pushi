@@ -22,6 +22,7 @@ ENV SERVER_SSL_CER /data/pushi.cer
 ENV MONGOHQ_URL mongodb://localhost
 ENV FILE_LOG 1
 ENV PUSHI_HANDLERS 1
+ENV PYTHONPATH /src
 
 ADD requirements.txt /
 ADD extra.txt /

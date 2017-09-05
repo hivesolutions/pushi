@@ -41,7 +41,7 @@ import setuptools
 
 setuptools.setup(
     name = "pushi",
-    version = "0.2.12",
+    version = "0.2.13",
     author = "Hive Solutions Lda.",
     author_email = "development@hive.pt",
     description = "Pushi System API",

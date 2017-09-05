@@ -37,7 +37,7 @@ __copyright__ = "Copyright (c) 2008-2017 Hive Solutions Lda."
 __license__ = "Apache License, Version 2.0"
 """ The license for the module """
 
-class ApnApi(object):
+class ApnAPI(object):
 
     def create_apn(self, token, event, auth = None, unsubscribe = True):
         # runs the apn subscription operation for the provided

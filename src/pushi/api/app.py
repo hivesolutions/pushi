@@ -37,7 +37,7 @@ __copyright__ = "Copyright (c) 2008-2017 Hive Solutions Lda."
 __license__ = "Apache License, Version 2.0"
 """ The license for the module """
 
-class AppApi(object):
+class AppAPI(object):
 
     def create_app(self, name):
         # runs the post call that will create the app with the provided

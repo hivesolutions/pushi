@@ -41,9 +41,9 @@ from . import event
 from . import subscription
 from . import web
 
-from .apn import ApnApi
-from .app import AppApi
-from .base import BASE_URL, BASE_WS_URL, Api
-from .event import EventApi
-from .subscription import SubscriptionApi
-from .web import WebApi
+from .apn import ApnAPI
+from .app import AppAPI
+from .base import BASE_URL, BASE_WS_URL, API
+from .event import EventAPI
+from .subscription import SubscriptionAPI
+from .web import WebAPI

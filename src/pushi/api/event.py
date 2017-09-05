@@ -37,7 +37,7 @@ __copyright__ = "Copyright (c) 2008-2017 Hive Solutions Lda."
 __license__ = "Apache License, Version 2.0"
 """ The license for the module """
 
-class EventApi(object):
+class EventAPI(object):
 
     def create_event(self, channel, data, event = "message", persist = True, **kwargs):
         # creates the initial json data structure to be used as the message

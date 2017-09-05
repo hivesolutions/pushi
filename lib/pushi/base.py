@@ -56,13 +56,13 @@ BASE_WS_URL = "wss://puxiapp.com/"
 """ The default base websockets url that is going
 to be used in case no other value is specified """
 
-class Api(
-    appier.Api,
-    apn.ApnApi,
-    app.AppApi,
-    web.WebApi,
-    event.EventApi,
-    subscription.SubscriptionApi
+class API(
+    appier.API,
+    apn.ApnAPI,
+    app.AppAPI,
+    web.WebAPI,
+    event.EventAPI,
+    subscription.SubscriptionAPI
 ):
     """
     Base class for the construction of the pushi
@@ -75,7 +75,7 @@ class Api(
     """
 
     def __init__(self, *args, **kwargs):
-        appier.Api.__init__(self, *args, **kwargs)
+        appier.API.__init__(self, *args, **kwargs)
         self.app_id = appier.conf("PUSHI_ID", None)
         self.app_key = appier.conf("PUSHI_KEY", None)
         self.app_secret = appier.conf("PUSHI_SECRET", None)

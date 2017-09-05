@@ -37,7 +37,7 @@ __copyright__ = "Copyright (c) 2008-2017 Hive Solutions Lda."
 __license__ = "Apache License, Version 2.0"
 """ The license for the module """
 
-class SubscriptionApi(object):
+class SubscriptionAPI(object):
 
     def create_subscription(self, user_id, event):
         # runs the subscription operation for the provided

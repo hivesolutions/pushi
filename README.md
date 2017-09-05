@@ -10,7 +10,7 @@ layer (select layer) on an event driven basis. The infra-structure itself should
 be nonblocking and asyncronous for performance and saclability.
 
 The API layer should be provided by a simple WSGI application implemented using
-the [appier framework](https://github.com/hivesolutions/appier) to keep things
+the [Appier Framework](https://github.com/hivesolutions/appier) to keep things
 simple and fast.
 
 For persistence the pushi infra-structure uses the MongoDB database infra-structure

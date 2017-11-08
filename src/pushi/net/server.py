@@ -120,8 +120,8 @@ class PushiServer(netius.servers.WSServer):
 
         cls = self.__class__
 
-        if data == cls.WS_CLOSE_FRAME: return
         if not data: return
+        if data == cls.WS_CLOSE_FRAME: return
 
         try:
             data = data.decode("utf-8")

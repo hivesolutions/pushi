@@ -44,8 +44,10 @@ class PushAPIHandler(handler.Handler):
     Pushi handler (adapter) for the Push API infra-structure
     (APN) infra-structure, so that it's possible to send
     push notification to modern Web browsers.
-    
+
     :see: https://w3c.github.io/push-api
     """
-    
-    pass
+
+    def __init__(self, owner):
+        handler.Handler.__init__(self, owner, name = "push_api")
+        self.subs = {}

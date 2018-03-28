@@ -40,7 +40,7 @@ from . import mail
 from . import state
 from . import web
 
-from .apn import ApnHandler
+from .apn import APNHandler
 from .handler import Handler
 from .mail import MailHandler
 from .state import AppState, State

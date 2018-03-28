@@ -42,7 +42,7 @@ from . import socket
 from . import subscription
 from . import web
 
-from .apn import ApnController
+from .apn import APNController
 from .app import AppController
 from .base import BaseController
 from .event import EventController

@@ -168,7 +168,7 @@ class State(appier.Mongo):
         self.load_alias()
 
     def load_handlers(self):
-        self.apn_handler = apn.ApnHandler(self)
+        self.apn_handler = apn.APNHandler(self)
         self.web_handler = web.WebHandler(self)
 
         self.apn_handler.load()

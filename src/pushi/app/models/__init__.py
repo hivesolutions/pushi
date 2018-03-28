@@ -42,7 +42,7 @@ from . import event
 from . import subscription
 from . import web
 
-from .apn import Apn
+from .apn import APN
 from .app import App
 from .association import Association
 from .base import PushiBase

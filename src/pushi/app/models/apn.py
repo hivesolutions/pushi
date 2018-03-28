@@ -41,7 +41,7 @@ import appier
 
 from . import base
 
-class Apn(base.PushiBase):
+class APN(base.PushiBase):
 
     token = appier.field(
         index = True
@@ -53,7 +53,7 @@ class Apn(base.PushiBase):
 
     @classmethod
     def validate(cls):
-        return super(Apn, cls).validate() + [
+        return super(APN, cls).validate() + [
             appier.not_null("token"),
             appier.not_empty("token"),
 

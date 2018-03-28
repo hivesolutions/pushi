@@ -47,7 +47,7 @@ import pushi
 
 from . import handler
 
-class ApnHandler(handler.Handler):
+class APNHandler(handler.Handler):
     """
     Pushi handler (adapter) for the apple push notification
     (APN) infra-structure, so that it's possible to send
@@ -187,7 +187,7 @@ class ApnHandler(handler.Handler):
             invalid[token] = True
 
     def load(self):
-        subs = pushi.Apn.find()
+        subs = pushi.APN.find()
         for sub in subs:
             app_id = sub.app_id
             token = sub.token
@@ -210,7 +210,7 @@ class ApnHandler(handler.Handler):
         filter = dict()
         if token: filter["token"] = token
         if event: filter["event"] = event
-        subscriptions = pushi.Apn.find(map = True, **filter)
+        subscriptions = pushi.APN.find(map = True, **filter)
         return dict(
             subscriptions = subscriptions
         )
@@ -225,7 +225,7 @@ class ApnHandler(handler.Handler):
         is_private and self.owner.verify(apn.app_key, apn.token, apn.event, auth)
         unsubscribe and self.unsubscribe(apn.token, force = False)
 
-        exists = pushi.Apn.exists(
+        exists = pushi.APN.exists(
             token = apn.token,
             event = apn.event
         )
@@ -242,7 +242,7 @@ class ApnHandler(handler.Handler):
         kwargs = dict(token = token, raise_e = force)
         if event: kwargs["event"] = event
 
-        apn = pushi.Apn.get(**kwargs)
+        apn = pushi.APN.get(**kwargs)
         if not apn: return None
 
         apn.delete()
@@ -255,7 +255,7 @@ class ApnHandler(handler.Handler):
         kwargs = dict(token = token)
         if event: kwargs["event"] = event
 
-        apns = pushi.Apn.find(**kwargs)
+        apns = pushi.APN.find(**kwargs)
         for apn in apns: apn.delete()
 
         return apns

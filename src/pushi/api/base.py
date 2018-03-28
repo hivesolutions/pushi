@@ -58,7 +58,7 @@ to be used in case no other value is specified """
 
 class API(
     appier.API,
-    apn.ApnAPI,
+    apn.APNAPI,
     app.AppAPI,
     web.WebAPI,
     event.EventAPI,

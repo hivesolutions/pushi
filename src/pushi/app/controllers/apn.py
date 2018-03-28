@@ -41,7 +41,7 @@ import appier
 
 import pushi
 
-class ApnController(appier.Controller):
+class APNController(appier.Controller):
 
     @appier.private
     @appier.route("/apns", "GET")
@@ -55,7 +55,7 @@ class ApnController(appier.Controller):
     def create(self):
         auth = self.field("auth", None)
         unsubscribe = self.field("unsubscribe", False, cast = bool)
-        apn = pushi.Apn.new()
+        apn = pushi.APN.new()
         apn = self.state.apn_handler.subscribe(
             apn,
             auth = auth,

@@ -19,6 +19,9 @@
 # You should have received a copy of the Apache License along with
 # Hive Pushi System. If not, see <http://www.apache.org/licenses/>.
 
+__author__ = "João Magalhães <joamag@hive.pt>"
+""" The author(s) of the module """
+
 __version__ = "1.0.0"
 """ The version of the module """
 
@@ -34,16 +37,15 @@ __copyright__ = "Copyright (c) 2008-2018 Hive Solutions Lda."
 __license__ = "Apache License, Version 2.0"
 """ The license for the module """
 
-from . import apn
 from . import handler
-from . import mail
-from . import push_api
-from . import state
-from . import web
 
-from .apn import APNHandler
-from .handler import Handler
-from .mail import MailHandler
-from .push_api import PushAPIHandler
-from .state import AppState, State
-from .web import WebHandler
+class PushAPIHandler(handler.Handler):
+    """
+    Pushi handler (adapter) for the Push API infra-structure
+    (APN) infra-structure, so that it's possible to send
+    push notification to modern Web browsers.
+    
+    :see: https://w3c.github.io/push-api
+    """
+    
+    pass

@@ -49,7 +49,7 @@ from . import handler
 
 class APNHandler(handler.Handler):
     """
-    Pushi handler (adapter) for the apple push notification
+    Pushi handler (adapter) for the Apple Push Notifications
     (APN) infra-structure, so that it's possible to send
     push notification to iOS/OSX devices.
     """

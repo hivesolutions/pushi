@@ -50,8 +50,8 @@ from . import handler
 class ApnHandler(handler.Handler):
     """
     Pushi handler (adapter) for the apple push notification
-    (apn) infra-structure, so that it's possible to send
-    push notification to ios/osx devices.
+    (APN) infra-structure, so that it's possible to send
+    push notification to iOS/OSX devices.
     """
 
     def __init__(self, owner):
@@ -68,7 +68,7 @@ class ApnHandler(handler.Handler):
         if not message: raise RuntimeError("No message defined")
 
         # retrieves the reference to the app with the defined app id
-        # and extracts the apn specific values for it to be used in
+        # and extracts the APN specific values for it to be used in
         # the process of authentication
         app = self.owner.get_app(app_id = app_id)
         key_data = app.apn_key
@@ -77,8 +77,8 @@ class ApnHandler(handler.Handler):
 
         # in case no key data or certificate data is present a runtime
         # error is raised to indicate the problem
-        if not key_data: raise RuntimeError("No apn key defined")
-        if not cer_data: raise RuntimeError("No apn certificate defined")
+        if not key_data: raise RuntimeError("No APN key defined")
+        if not cer_data: raise RuntimeError("No APN certificate defined")
 
         # ensures that the complete set of data is encoded as bytes, as
         # this is required for the proper writing of the file, otherwise
@@ -123,7 +123,7 @@ class ApnHandler(handler.Handler):
         extra = self.owner.get_channels(app_key, event)
         events = [event] + extra
 
-        # retrieves the complete set of subscriptions for the current apn
+        # retrieves the complete set of subscriptions for the current APN
         # infra-structure to be able to resolve the appropriate tokens
         subs = self.subs.get(app_id, {})
 
@@ -140,7 +140,7 @@ class ApnHandler(handler.Handler):
 
         # prints a logging message about the various (web) subscriptions
         # that were found for the event that was triggered
-        self.logger.debug("Found %d apn subscription(s) for '%s'" % (count, root_event))
+        self.logger.debug("Found %d APN subscription(s) for '%s'" % (count, root_event))
 
         # creates the counter that will be used by the cleanup function
         # to know exactly when to remove the ssl associated files
@@ -148,7 +148,7 @@ class ApnHandler(handler.Handler):
         clojure = dict(pending = pending)
 
         # creates the cleanup function that will be called for
-        # the close operation of the apn client, this function
+        # the close operation of the APN client, this function
         # will remove the temporary path when called as a response
         # to the "stop" of the last client
         def cleanup(client):
@@ -159,18 +159,18 @@ class ApnHandler(handler.Handler):
             shutil.rmtree(path, ignore_errors = True)
 
         # iterates over the complete set of tokens to be notified and notifies
-        # them using the current apn client infra-structure
+        # them using the current APN client infra-structure
         for token in tokens:
             # in case the current token is present in the current
             # map of invalid items must skip iteration as the message
             # has probably already been sent "to the token"
             if token in invalid: continue
 
-            # prints a debug message about the apn message that
+            # prints a debug message about the APN message that
             # is going to be sent (includes token)
-            self.logger.debug("Sending apn message to '%s'" % token)
+            self.logger.debug("Sending APN message to '%s'" % token)
 
-            # creates the new apn client to be used and uses it to
+            # creates the new APN client to be used and uses it to
             # send the new message (should be correctly serialized)
             apn_client = netius.clients.APNClient()
             apn_client.bind("stop", cleanup)

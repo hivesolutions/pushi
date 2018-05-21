@@ -84,10 +84,10 @@ class PushiChannel(netius.observer.Observable):
     def latest(self, skip = 0, count = 10, callback = None):
         self.owner.latest_pushi(self.name, skip = skip, count = count, callback = callback)
 
-class PushiConnection(netius.clients.WSConnection):
+class PushiProtocol(netius.clients.WSProtocol):
 
     def __init__(self, *args, **kwargs):
-        netius.clients.WSConnection.__init__(self, *args, **kwargs)
+        netius.clients.WSProtocol.__init__(self, *args, **kwargs)
         self.state = "disconnected"
         self.socket_id = None
         self.channels = dict()
@@ -301,8 +301,10 @@ class PushiConnection(netius.clients.WSConnection):
 class PushiClient(netius.clients.WSClient):
 
     PUXIAPP_URL = "wss://puxiapp.com/"
-    """ The default puxiapp url that is going to be used
+    """ The default puxiapp URL that is going to be used
     to establish new client's connections """
+
+    protocol = PushiProtocol
 
     def __init__(self, url = None, client_key = None, api = None, *args, **kwargs):
         netius.clients.WSClient.__init__(self, *args, **kwargs)
@@ -310,14 +312,6 @@ class PushiClient(netius.clients.WSClient):
         self.client_key = client_key
         self.api = api
         self.url = self.base_url + self.client_key
-
-    def new_connection(self, socket, address, ssl = False):
-        return PushiConnection(
-            owner = self,
-            socket = socket,
-            address = address,
-            ssl = ssl
-        )
 
     def connect_pushi(self, callback = None):
         connection = self.connect_ws(self.url)

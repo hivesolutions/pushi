@@ -86,11 +86,38 @@ class PushiChannel(netius.observer.Observable):
 
 class PushiProtocol(netius.clients.WSProtocol):
 
+    PUXIAPP_URL = "wss://puxiapp.com/"
+    """ The default PuxiApp URL that is going to be used
+    to establish new client's connections """
+
     def __init__(self, *args, **kwargs):
         netius.clients.WSProtocol.__init__(self, *args, **kwargs)
+        self.base_url = None
+        self.client_key = None
+        self.api = None
+        self.url = None
         self.state = "disconnected"
         self.socket_id = None
         self.channels = dict()
+
+    def connect_pushi(
+        self,
+        url = None,
+        client_key = None,
+        api = None,
+        callback = None,
+        loop = None
+    ):
+        cls = self.__class__
+
+        self.base_url = url or cls.PUXIAPP_URL
+        self.client_key = client_key
+        self.api = api
+        self.url = self.base_url + self.client_key
+
+        if callback: self.bind("connect_pushi", callback)
+
+        return self.connect_ws(self.url, loop = loop)
 
     def receive_ws(self, data):
         data = data.decode("utf-8")
@@ -273,8 +300,8 @@ class PushiProtocol(netius.clients.WSProtocol):
         ))
 
     def _subscribe_private(self, channel, channel_data = None):
-        if not self.owner.api: raise RuntimeError("No private app available")
-        auth = self.owner.api.authenticate(channel, self.socket_id)
+        if not self.api: raise RuntimeError("No private app available")
+        auth = self.api.authenticate(channel, self.socket_id)
         self.send_event("pusher:subscribe", dict(
             channel = channel,
             auth = auth,
@@ -300,24 +327,25 @@ class PushiProtocol(netius.clients.WSProtocol):
 
 class PushiClient(netius.clients.WSClient):
 
-    PUXIAPP_URL = "wss://puxiapp.com/"
-    """ The default puxiapp URL that is going to be used
-    to establish new client's connections """
-
     protocol = PushiProtocol
 
-    def __init__(self, url = None, client_key = None, api = None, *args, **kwargs):
-        netius.clients.WSClient.__init__(self, *args, **kwargs)
-        self.base_url = url or self.__class__.PUXIAPP_URL
-        self.client_key = client_key
-        self.api = api
-        self.url = self.base_url + self.client_key
-
-    def connect_pushi(self, callback = None):
-        connection = self.connect_ws(self.url)
-        if not callback: return
-        connection.bind("connect_pushi", callback)
-        return connection
+    @classmethod
+    def connect_pushi_s(
+        cls,
+        url = None,
+        client_key = None,
+        api = None,
+        callback = None,
+        loop = None
+    ):
+        protocol = cls.protocol()
+        return protocol.connect_pushi(
+            url = url,
+            client_key = client_key,
+            api = api,
+            callback = callback,
+            loop = loop
+        )
 
 if __name__ == "__main__":
     def on_message(channel, data, mid = None, timestamp = None):
@@ -339,19 +367,27 @@ if __name__ == "__main__":
         channel.bind("message", on_message)
         channel.latest(count = 20, callback = on_latest)
 
-    def on_connect(connection):
-        connection.subscribe_pushi("global", callback = on_subscribe)
+    def on_connect(protocol):
+        protocol.subscribe_pushi("global", callback = on_subscribe)
 
-    def register_timer(client):
+    def register_timer(protocol):
         def timer():
             print("Waiting for events(s) on channel global ...")
-            client.delay(timer, timeout = 5)
-        client.delay(timer, timeout = 5)
+            protocol.delay(timer, timeout = 5)
+        protocol.delay(timer, timeout = 5)
 
     url = netius.conf("PUSHI_URL")
     client_key = netius.conf("PUSHI_KEY")
-    client = PushiClient(url = url, client_key = client_key)
-    client.connect_pushi(callback = on_connect)
-    register_timer(client)
+
+    loop, protocol = PushiClient.connect_pushi_s(
+        url = url,
+        client_key = client_key,
+        callback = on_connect
+    )
+
+    register_timer(protocol)
+
+    loop.run_forever()
+    loop.close()
 else:
     __path__ = []

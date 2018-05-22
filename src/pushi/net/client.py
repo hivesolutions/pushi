@@ -115,7 +115,7 @@ class PushiProtocol(netius.clients.WSProtocol):
         self.api = api
         self.url = self.base_url + self.client_key
 
-        if callback: self.bind("connect_pushi", callback)
+        if callback: self.bind("connect_pushi", callback, oneshot = True)
 
         return self.connect_ws(self.url, loop = loop)
 

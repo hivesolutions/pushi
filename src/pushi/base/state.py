@@ -828,6 +828,7 @@ class State(appier.Mongo):
         json_d = None,
         owner_id = None,
         verify = True,
+        delayed = True,
         invalid = {}
     ):
         # retrieves the data type of the provided data of the event and
@@ -857,6 +858,7 @@ class State(appier.Mongo):
                 json_d,
                 owner_id = owner_id,
                 verify = verify,
+                delayed = delayed,
                 invalid = invalid
             )
             json_d["mid"] = event_s.mid
@@ -872,6 +874,7 @@ class State(appier.Mongo):
             echo = echo,
             owner_id = owner_id,
             verify = verify,
+            delayed = delayed,
             invalid = invalid
         )
 
@@ -889,9 +892,9 @@ class State(appier.Mongo):
         json_d,
         owner_id = None,
         verify = True,
+        delayed = True,
         invalid = {},
-        has_date = True,
-        delayed = True
+        has_date = True
     ):
         # verifies that the owner (socket) identifier is present in the channel
         # (but only in case the verify flag is present)
@@ -951,6 +954,7 @@ class State(appier.Mongo):
         echo = False,
         owner_id = None,
         verify = True,
+        delayed = True,
         invalid = {}
     ):
         # tries to retrieve the value of the flag that controls if the
@@ -983,7 +987,8 @@ class State(appier.Mongo):
         # a failure the event is logged to avoid unwanted exceptions
         for handler in self.handlers:
             try:
-                handler.send(app_id, channel, json_d, invalid = invalid)
+                handler_send = lambda: handler.send(app_id, channel, json_d, invalid = invalid)
+                self.app.delay(handler_send) if delayed else handler_send()
             except BaseException as exception:
                 self.app.logger.info(
                     "Problem using handler '%s' for sending - %s" %

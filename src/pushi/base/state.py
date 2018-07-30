@@ -86,7 +86,7 @@ class State(appier.Mongo):
 
     The structure of the system is based on the encapsulation
     of both the (async) server and the web based app that handles
-    the http based requests (rest api).
+    the HTTP based requests (REST API).
     """
 
     def __init__(self):
@@ -307,7 +307,7 @@ class State(appier.Mongo):
         is_subscribed = self.is_subscribed(app_key, socket_id, channel)
         if is_subscribed: self.unsubscribe(connection, app_key, socket_id, channel)
 
-        # retrieves the global state structure for the provided api key
+        # retrieves the global state structure for the provided API key
         # and also creates the tuple that encapsulates both the channel
         # and the socket id (unique identification)
         state = self.get_state(app_key = app_key)

@@ -48,7 +48,7 @@ from . import handler
 class WebHandler(handler.Handler):
     """
     Event handler to be used for web based "hooks".
-    This handler provides the abstraction for the http
+    This handler provides the abstraction for the HTTP
     client based callbacks.
     """
 
@@ -79,10 +79,10 @@ class WebHandler(handler.Handler):
         # infra-structure to be able to resolve the appropriate urls
         subs = self.subs.get(app_id, {})
 
-        # creates the initial list of urls to be notified and then populates
-        # the list with the various url associated with the complete set of
+        # creates the initial list of URLs to be notified and then populates
+        # the list with the various URL associated with the complete set of
         # resolved events, note that a set is created at the end so that one
-        # url gets notified only once (no double notifications)
+        # URL gets notified only once (no double notifications)
         urls = []
         for event in events:
             _urls = subs.get(event, [])
@@ -95,7 +95,7 @@ class WebHandler(handler.Handler):
         self.logger.debug("Found %d web subscription(s) for '%s'" % (count, root_event))
 
         # serializes the json message so that it's possible to send it using
-        # the http client to the endpoints and then creates the map of headers
+        # the HTTP client to the endpoints and then creates the map of headers
         # that is going to be used in the post messages to be sent
         data = json.dumps(json_d)
         headers = {
@@ -113,20 +113,20 @@ class WebHandler(handler.Handler):
         def on_close(client, connection):
             client.close()
 
-        # iterates over the complete set of urls that are going to
+        # iterates over the complete set of URLs that are going to
         # be notified about the message, each of them is going to
-        # received an http post request with the data
+        # received an HTTP post request with the data
         for url in urls:
             # in case the current token is present in the current
             # map of invalid items must skip iteration as the message
-            # has probably already been sent "to the target url"
+            # has probably already been sent "to the target URL"
             if url in invalid: continue
 
             # prints a debug message about the web message that
-            # is going to be sent (includes url)
+            # is going to be sent (includes URL)
             self.logger.debug("Sending post request to '%s'" % url)
 
-            # creates the http client to be used in the post request and
+            # creates the HTTP client to be used in the post request and
             # sets the headers and the data then registers for the message
             # event so that the client may be closed
             http_client = netius.clients.HTTPClient()
@@ -134,7 +134,7 @@ class WebHandler(handler.Handler):
             http_client.bind("message", on_message)
             http_client.bind("close", on_close)
 
-            # adds the current url to the list of invalid item for
+            # adds the current URL to the list of invalid item for
             # the current message sending stream
             invalid[url] = True
 

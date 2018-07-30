@@ -92,3 +92,19 @@ class PushiEvent(base.PushiBase):
         base.PushiBase.pre_save(self)
         appier.verify(not "mid" in self.data)
         appier.verify(not "timestamp" in self.data)
+
+    @classmethod
+    @appier.operation(
+        name = "Trigger",
+        description = """Triggers a new event on the pushi system running
+        the complete set of handlers associated""",
+        parameters = (
+            ("App ID", "app_id", str),
+            ("Event", "event", str),
+            ("Data", "data", "longtext"),
+            ("Persist", "persist", bool, True)
+        )
+    )
+    def trigger_s(cls, app_id, event, data, persist = True):
+        state = appier.get_app().state
+        state.trigger(app_id, event, data, persist = persist)

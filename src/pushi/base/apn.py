@@ -148,10 +148,11 @@ class APNHandler(handler.Handler):
         clojure = dict(pending = pending)
 
         # creates the cleanup function that will be called for
-        # the close operation of the APN client, this function
+        # the close operation of the APN protocol, this function
         # will remove the temporary path when called as a response
-        # to the "stop" of the last client
+        # to the "stop" of the last protocol
         def cleanup(protocol):
+            netius.compat_loop(loop).stop()
             pending = clojure["pending"]
             pending -= 1
             clojure["pending"] = pending
@@ -170,19 +171,17 @@ class APNHandler(handler.Handler):
             # is going to be sent (includes token)
             self.logger.debug("Sending APN message to '%s'" % token)
 
-            # creates the new APN client to be used and uses it to
+            # creates the new APN protocol to be used and uses it to
             # send the new message (should be correctly serialized)
-            apn_protocol = netius.clients.APNProtocol()
-            apn_protocol.bind("finish", cleanup)
-            _protocol, loop = apn_protocol.message(
+            loop, protocol = netius.clients.APNClient.notify_s(
                 token,
                 message = message,
                 sandbox = sandbox,
                 key_file = key_path,
                 cer_file = cer_path
             )
-            
-            loop.run_until_complete
+            protocol.bind("finish", cleanup)
+            loop.run_forever()
 
             # adds the current token to the list of invalid item for
             # the current message sending stream

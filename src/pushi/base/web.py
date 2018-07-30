@@ -103,15 +103,15 @@ class WebHandler(handler.Handler):
         }
 
         # creates the on message function that is going to be used at the end of
-        # the request to be able to close the client, this is a clojure and so
+        # the request to be able to close the protocol, this is a clojure and so
         # current local variables will be exposed to the method
-        def on_message(client, parser, message):
-            client.close()
+        def on_message(protocol, parser, message):
+            protocol.close()
 
-        # creates the on close function that will be responsible for the closing
-        # of the client as defined by the web implementation
-        def on_close(client, connection):
-            client.close()
+        # creates the on close function that will be responsible for the stopping
+        # of the loop as defined by the web implementation
+        def on_finish(protocol):
+            netius.compat_loop(loop).stop()
 
         # iterates over the complete set of URLs that are going to
         # be notified about the message, each of them is going to
@@ -126,15 +126,19 @@ class WebHandler(handler.Handler):
             # is going to be sent (includes URL)
             self.logger.debug("Sending post request to '%s'" % url)
 
-            # creates the HTTP client to be used in the post request and
+            # creates the HTTP protocol to be used in the POST request and
             # sets the headers and the data then registers for the message
-            # event so that the client may be closed
-            http_client = netius.clients.HTTPClient()
-            http_client.post(url, headers = headers, data = data)
-            http_client.bind("message", on_message)
-            http_client.bind("close", on_close)
+            # event so that the loop and protocol may be closed
+            loop, protocol = netius.clients.HTTPClient.post_s(
+                url,
+                headers = headers,
+                data = data
+            )
+            protocol.bind("message", on_message)
+            protocol.bind("finish", on_finish)
+            loop.run_forever()
 
-            # adds the current URL to the list of invalid item for
+            # adds the current URL to the list of invalid items for
             # the current message sending stream
             invalid[url] = True
 

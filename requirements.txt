@@ -1,4 +1,4 @@
-netius
+netius<1.17.0
 appier
 appier_extras
 jinja2

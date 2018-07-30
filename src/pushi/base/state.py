@@ -987,8 +987,19 @@ class State(appier.Mongo):
         # a failure the event is logged to avoid unwanted exceptions
         for handler in self.handlers:
             try:
-                handler_send = lambda: handler.send(app_id, channel, json_d, invalid = invalid)
-                self.app.delay(handler_send) if delayed else handler_send()
+                if delayed:
+                    self.app.delay(
+                        handler.send,
+                        args = (app_id, channel, json_d),
+                        kwargs = dict(invalid = invalid)
+                    )
+                else:
+                    handler.send(
+                        app_id,
+                        channel,
+                        json_d,
+                        invalid = invalid
+                    )
             except BaseException as exception:
                 self.app.logger.info(
                     "Problem using handler '%s' for sending - %s" %

@@ -152,11 +152,20 @@ class APNHandler(handler.Handler):
         # will remove the temporary path when called as a response
         # to the "stop" of the last protocol
         def cleanup(protocol):
+            # schedules the stop of the current event loop as the
+            # APN operation has been completed with success
             netius.compat_loop(loop).stop()
+
+            # retrieve the number of pending APN messages from the
+            # clojure and verifies if the end has been reached
             pending = clojure["pending"]
             pending -= 1
             clojure["pending"] = pending
             if not pending == 0: return
+
+            # removes the temporary keys and certificated files as
+            # they are no longer required for APN usage
+            self.logger.debug("Removing temporary APN keys")
             shutil.rmtree(path, ignore_errors = True)
 
         # iterates over the complete set of tokens to be notified and notifies

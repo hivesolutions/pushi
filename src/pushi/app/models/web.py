@@ -45,7 +45,8 @@ class Web(base.PushiBase):
 
     url = appier.field(
         index = True,
-        description = "URL"
+        description = "URL",
+        meta = "url"
     )
 
     event = appier.field(

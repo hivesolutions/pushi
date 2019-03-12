@@ -126,7 +126,7 @@ class PushiServer(netius.servers.WSServer):
         try:
             data = data.decode("utf-8")
             json_d = json.loads(data)
-        except:
+        except Exception:
             raise netius.DataError("Invalid message received '%s'" % data)
 
         event = json_d.get("event", None)

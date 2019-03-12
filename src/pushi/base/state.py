@@ -1000,7 +1000,7 @@ class State(appier.Mongo):
                         json_d,
                         invalid = invalid
                     )
-            except BaseException as exception:
+            except Exception as exception:
                 self.app.logger.info(
                     "Problem using handler '%s' for sending - %s" %
                     (handler.name, appier.legacy.UNICODE(exception))

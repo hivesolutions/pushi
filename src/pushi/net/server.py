@@ -100,7 +100,7 @@ class PushiServer(netius.servers.WSServer):
             socket_id = connection.socket_id
         )
 
-    def new_connection(self, socket, address, ssl = False):
+    def build_connection(self, socket, address, ssl = False):
         return PushiConnection(self, socket, address, ssl = ssl)
 
     def on_handshake(self, connection):

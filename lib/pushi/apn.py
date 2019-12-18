@@ -40,7 +40,7 @@ __license__ = "Apache License, Version 2.0"
 class APNAPI(object):
 
     def create_apn(self, token, event, auth = None, unsubscribe = True):
-        # runs the apn subscription operation for the provided
+        # runs the APN subscription operation for the provided
         # token and event, this operation uses the currently
         # defined app id for the operation, then returns the
         # resulting dictionary to the caller method

@@ -390,7 +390,7 @@ class State(appier.Mongo):
         # return immediately, because there's nothing remaining to be done
         if not is_new: return
 
-        # creates the json dictionary containing the event to be sent to all
+        # creates the JSON dictionary containing the event to be sent to all
         # of the socket in the channel indicating the presence change for the
         # "new" user that has just logged in (member added)
         json_d = dict(
@@ -833,11 +833,11 @@ class State(appier.Mongo):
     ):
         # retrieves the data type of the provided data of the event and
         # depending on the kind of structure it may dump the result as
-        # a plain based string serialized using json
+        # a plain based string serialized using JSON
         data_t = type(data)
         data = data if data_t in appier.legacy.STRINGS else json.dumps(data)
 
-        # creates the "new" json dictionary object that represents the
+        # creates the "new" JSON dictionary object that represents the
         # event payload and copies some of the event metadata into it
         # so that it may be consulted latter by the client, note that
         # a copy must be created to avoid any issue related with re-usage
@@ -850,7 +850,7 @@ class State(appier.Mongo):
         # performed so that the event is stored in the data source and
         # may be retrieved latter for reference/observation, note that
         # for these situations the mid and timestamp values are added
-        # to the json information, so that they may be used for reference
+        # to the JSON information, so that they may be used for reference
         if persist:
             event_s = self.log_channel(
                 app_id,
@@ -968,7 +968,7 @@ class State(appier.Mongo):
         if owner_id and verify: self.verify_presence(app_id, owner_id, channel)
 
         # retrieves the complete set of sockets associated with the channel
-        # and sends the json data through the socket, avoiding sending the
+        # and sends the JSON data through the socket, avoiding sending the
         # data through the same socket that originated the event, unless the
         # echo flag is set (meaning re-sending to channel)
         sockets = state.channel_sockets.get(channel, [])

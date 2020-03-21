@@ -40,7 +40,7 @@ __license__ = "Apache License, Version 2.0"
 class EventAPI(object):
 
     def create_event(self, channel, data, event = "message", persist = True, **kwargs):
-        # creates the initial json data structure to be used as the message
+        # creates the initial JSON data structure to be used as the message
         # and then "extends" it with the extra key word arguments passed
         # to this methods as a method of extension
         data_j = dict(

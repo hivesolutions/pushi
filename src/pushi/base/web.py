@@ -94,7 +94,7 @@ class WebHandler(handler.Handler):
         # that were found for the event that was triggered
         self.logger.debug("Found %d web subscription(s) for '%s'" % (count, root_event))
 
-        # serializes the json message so that it's possible to send it using
+        # serializes the JSON message so that it's possible to send it using
         # the HTTP client to the endpoints and then creates the map of headers
         # that is going to be used in the post messages to be sent
         data = json.dumps(json_d)

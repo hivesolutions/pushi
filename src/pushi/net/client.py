@@ -144,7 +144,7 @@ class PushiProtocol(netius.clients.WSProtocol):
         self.trigger("disconnect_pushi", self)
 
     def on_message_pushi(self, data_j):
-        # unpacks the complete set of information from the json based
+        # unpacks the complete set of information from the JSON based
         # data structure so that it gets processed in the method
         data = data_j["data"]
         event = data_j["event"]

@@ -41,7 +41,7 @@ class WebAPI(object):
 
     def create_web(self, url, event, auth = None, unsubscribe = True):
         # runs the web subscription operation for the provided
-        # url and event, this operation uses the currently
+        # URL and event, this operation uses the currently
         # defined app id for the operation, then returns the
         # resulting dictionary to the caller method
         result = self.post(

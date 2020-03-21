@@ -49,11 +49,11 @@ from . import event
 from . import subscription
 
 BASE_URL = "https://puxiapp.com:9090/"
-""" The base URL to be used by the api to access
+""" The base URL to be used by the API to access
 the remote endpoints, should not be changed """
 
 BASE_WS_URL = "wss://puxiapp.com/"
-""" The default base websockets url that is going
+""" The default base websockets URL that is going
 to be used in case no other value is specified """
 
 class API(

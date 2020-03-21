@@ -49,7 +49,7 @@ from . import event
 from . import subscription
 
 BASE_URL = "https://puxiapp.com:9090/"
-""" The base URL to be used by the api to access
+""" The base URL to be used by the API to access
 the remote endpoints, should not be changed """
 
 BASE_WS_URL = "wss://puxiapp.com/"

@@ -87,7 +87,7 @@ class APNHandler(handler.Handler):
         cer_data = netius.legacy.bytes(cer_data)
 
         # creates a new temporary directory that will be used to store
-        # the temporary key and certificate files for ssl
+        # the temporary key and certificate files for SSL
         path = tempfile.mkdtemp()
 
         # creates the full paths to both the key and certificate
@@ -95,7 +95,7 @@ class APNHandler(handler.Handler):
         key_path = os.path.join(path, "apn.key")
         cer_path = os.path.join(path, "apn.cer")
 
-        # opens the ssl key file for writing (in binary mode) and
+        # opens the SSL key file for writing (in binary mode) and
         # then writes the current data into it so that it may be
         # used by the encryption infra-structure
         key_file = open(key_path, "wb")
@@ -104,7 +104,7 @@ class APNHandler(handler.Handler):
 
         # opens the temporary certificate file and writes
         # the retrieved certificate data into it, to be used
-        # temporarily by the ssl infra-structure
+        # temporarily by the SSL infra-structure
         cer_file = open(cer_path, "wb")
         try: cer_file.write(cer_data)
         finally: cer_file.close()
@@ -143,7 +143,7 @@ class APNHandler(handler.Handler):
         self.logger.debug("Found %d APN subscription(s) for '%s'" % (count, root_event))
 
         # creates the counter that will be used by the cleanup function
-        # to know exactly when to remove the ssl associated files
+        # to know exactly when to remove the SSL associated files
         pending = len(tokens)
         clojure = dict(pending = pending)
 

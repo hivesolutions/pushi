@@ -150,7 +150,7 @@ class API(
         string = "%s:%s" % (socket_id, channel)
         string = appier.legacy.bytes(string)
 
-        # runs the hmac encryption in the provided secret and
+        # runs the HMAC encryption in the provided secret and
         # the constructed string and returns a string containing
         # both the key and the hexadecimal digest
         app_secret = appier.legacy.bytes(str(self.app_secret))

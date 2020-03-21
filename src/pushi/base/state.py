@@ -1211,7 +1211,7 @@ class State(appier.Mongo):
         to be used in the verification process.
         :type auth: String
         :param auth: The string that is going to be used for auth
-        this should be an hmac based token string.
+        this should be an HMAC based token string.
         """
 
         app = self.get_app(app_key = app_key)

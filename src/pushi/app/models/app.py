@@ -76,12 +76,16 @@ class App(base.PushiBase):
 
     apn_key = appier.field(
         meta = "longtext",
-        description = "APN Key"
+        description = "APN Key",
+        observations = """The private key in PEM format to be used
+        in messages to be sent using APN (Apple Push Notifications)"""
     )
 
     apn_cer = appier.field(
         meta = "longtext",
-        description = "APN Cer"
+        description = "APN Cer",
+        observations = """The certificate in PEM format to be used
+        in messages to be sent using APN (Apple Push Notifications)"""
     )
 
     @classmethod

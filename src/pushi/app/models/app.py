@@ -71,7 +71,9 @@ class App(base.PushiBase):
 
     apn_sandbox = appier.field(
         type = bool,
-        description = "APN Sandbox"
+        description = "APN Sandbox",
+        observations = """Indicates if the APN context is sandbox or
+        production related, should be in sync with Apple Development configuration"""
     )
 
     apn_key = appier.field(

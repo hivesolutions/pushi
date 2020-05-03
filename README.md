@@ -7,7 +7,7 @@ Simple yet powerful infra-structure for handling of websocket connections.
 The server itself should be based on a common infra-structure like the one
 present in frameworks like node.js that should abstract the socket connection
 layer (select layer) on an event driven basis. The infra-structure itself should
-be nonblocking and asyncronous for performance and saclability.
+be nonblocking and asynchronous for performance and scalability.
 
 The API layer should be provided by a simple WSGI application implemented using
 the [Appier Framework](https://github.com/hivesolutions/appier) to keep things
@@ -46,7 +46,7 @@ are considered private and so are subject to validation from the server side.
 ### Personal Channels
 
 This channels provide the capability to aggregate a series of (personal) subscriptions
-into a single channel (for simplicity). This way it's easy to agregate a stream of
+into a single channel (for simplicity). This way it's easy to aggregate a stream of
 notifications that arise from a group of channels. This channel must be used together
 with the publish subscribe model. A channel of this type should be named `personal-<user_id>`.
 
@@ -54,13 +54,13 @@ with the publish subscribe model. A channel of this type should be named `person
 
 Targeted at chat environment allows for the creation of automatic channels for the
 various elements (users) that are subscribed to a peer channel. The activation of the
-automatic peer channel configuration is archieved using the `peer` flag in the `channel_data`
-structure uppon the subscription of such channel. This channel type **should not be created directly
+automatic peer channel configuration is archived using the `peer` flag in the `channel_data`
+structure upon the subscription of such channel. This channel type **should not be created directly
 but instead should be created through presence channels**.
 
 The management of these kind of channels implies that the `peer` advertisement flag is set
-for a channel shared ummong the peers, from that moment the peer is visible to all the
-other peers uppon subscription of that shared channel. These kind of channels should
+for a channel shared among the peers, from that moment the peer is visible to all the
+other peers upon subscription of that shared channel. These kind of channels should
 be used together with the presence channels.
 
 The naming of these kind of channels will always follow the structure
@@ -69,7 +69,7 @@ The naming of these kind of channels will always follow the structure
 ## Persistence
 
 It's possible to use pushi to store messages in the server side in a publish/subscriber
-way so that a `user_id` may susbscribe for a certain channel even when it's offline.
+way so that a `user_id` may subscribe for a certain channel even when it's offline.
 
 ### Subscribe
 

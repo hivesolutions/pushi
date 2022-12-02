@@ -1,5 +1,5 @@
 netius
 appier
-appier_extras
+appier-extras
 jinja2
 pymongo

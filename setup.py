@@ -67,7 +67,7 @@ setuptools.setup(
     install_requires = [
         "netius",
         "appier",
-        "appier_extras"
+        "appier-extras"
     ],
     classifiers = [
         "Development Status :: 5 - Production/Stable",

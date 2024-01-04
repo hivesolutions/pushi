@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 # Hive Pushi System
-# Copyright (c) 2008-2020 Hive Solutions Lda.
+# Copyright (c) 2008-2024 Hive Solutions Lda.
 #
 # This file is part of Hive Pushi System.
 #
@@ -22,16 +22,7 @@
 __author__ = "João Magalhães <joamag@hive.pt>"
 """ The author(s) of the module """
 
-__version__ = "1.0.0"
-""" The version of the module """
-
-__revision__ = "$LastChangedRevision$"
-""" The revision number of the module """
-
-__date__ = "$LastChangedDate$"
-""" The last change date of the module """
-
-__copyright__ = "Copyright (c) 2008-2020 Hive Solutions Lda."
+__copyright__ = "Copyright (c) 2008-2024 Hive Solutions Lda."
 """ The copyright for the module """
 
 __license__ = "Apache License, Version 2.0"
@@ -47,6 +38,7 @@ import pushi
 
 from . import handler
 
+
 class APNHandler(handler.Handler):
     """
     Pushi handler (adapter) for the Apple Push Notifications
@@ -55,30 +47,33 @@ class APNHandler(handler.Handler):
     """
 
     def __init__(self, owner):
-        handler.Handler.__init__(self, owner, name = "apn")
+        handler.Handler.__init__(self, owner, name="apn")
         self.subs = {}
 
-    def send(self, app_id, event, json_d, invalid = {}):
+    def send(self, app_id, event, json_d, invalid={}):
         # tries to retrieve the appropriate message starting from
         # the most general values to the most specific values,
         # be aware that the value may be a bit fuzzy
         message = json_d.get("data", None)
         message = json_d.get("push", message)
         message = json_d.get("apn", message)
-        if not message: raise RuntimeError("No message defined")
+        if not message:
+            raise RuntimeError("No message defined")
 
         # retrieves the reference to the app with the defined app id
         # and extracts the APN specific values for it to be used in
         # the process of authentication
-        app = self.owner.get_app(app_id = app_id)
+        app = self.owner.get_app(app_id=app_id)
         key_data = app.apn_key
         cer_data = app.apn_cer
         sandbox = app.apn_sandbox
 
         # in case no key data or certificate data is present a runtime
         # error is raised to indicate the problem
-        if not key_data: raise RuntimeError("No APN key defined")
-        if not cer_data: raise RuntimeError("No APN certificate defined")
+        if not key_data:
+            raise RuntimeError("No APN key defined")
+        if not cer_data:
+            raise RuntimeError("No APN certificate defined")
 
         # ensures that the complete set of data is encoded as bytes, as
         # this is required for the proper writing of the file, otherwise
@@ -99,15 +94,19 @@ class APNHandler(handler.Handler):
         # then writes the current data into it so that it may be
         # used by the encryption infra-structure
         key_file = open(key_path, "wb")
-        try: key_file.write(key_data)
-        finally: key_file.close()
+        try:
+            key_file.write(key_data)
+        finally:
+            key_file.close()
 
         # opens the temporary certificate file and writes
         # the retrieved certificate data into it, to be used
         # temporarily by the SSL infra-structure
         cer_file = open(cer_path, "wb")
-        try: cer_file.write(cer_data)
-        finally: cer_file.close()
+        try:
+            cer_file.write(cer_data)
+        finally:
+            cer_file.close()
 
         # retrieves the app key for the retrieved app by unpacking the current
         # app structure into the appropriate values
@@ -145,7 +144,7 @@ class APNHandler(handler.Handler):
         # creates the counter that will be used by the cleanup function
         # to know exactly when to remove the SSL associated files
         pending = len(tokens)
-        clojure = dict(pending = pending)
+        clojure = dict(pending=pending)
 
         # creates the cleanup function that will be called for
         # the close operation of the APN protocol, this function
@@ -161,12 +160,13 @@ class APNHandler(handler.Handler):
             pending = clojure["pending"]
             pending -= 1
             clojure["pending"] = pending
-            if not pending == 0: return
+            if not pending == 0:
+                return
 
             # removes the temporary keys and certificated files as
             # they are no longer required for APN usage
             self.logger.debug("Removing temporary APN keys")
-            shutil.rmtree(path, ignore_errors = True)
+            shutil.rmtree(path, ignore_errors=True)
 
         # iterates over the complete set of tokens to be notified and notifies
         # them using the current APN client infra-structure
@@ -174,7 +174,8 @@ class APNHandler(handler.Handler):
             # in case the current token is present in the current
             # map of invalid items must skip iteration as the message
             # has probably already been sent "to the token"
-            if token in invalid: continue
+            if token in invalid:
+                continue
 
             # prints a debug message about the APN message that
             # is going to be sent (includes token)
@@ -184,10 +185,10 @@ class APNHandler(handler.Handler):
             # send the new message (should be correctly serialized)
             loop, protocol = netius.clients.APNClient.notify_s(
                 token,
-                message = message,
-                sandbox = sandbox,
-                key_file = key_path,
-                cer_file = cer_path
+                message=message,
+                sandbox=sandbox,
+                key_file=key_path,
+                cer_file=cer_path,
             )
             protocol.bind("finish", cleanup)
             loop.run_forever()
@@ -214,46 +215,51 @@ class APNHandler(handler.Handler):
     def remove(self, app_id, token, event):
         events = self.subs.get(app_id, {})
         tokens = events.get(event, [])
-        if token in tokens: tokens.remove(token)
+        if token in tokens:
+            tokens.remove(token)
 
-    def subscriptions(self, token = None, event = None):
+    def subscriptions(self, token=None, event=None):
         filter = dict()
-        if token: filter["token"] = token
-        if event: filter["event"] = event
-        subscriptions = pushi.APN.find(map = True, **filter)
-        return dict(
-            subscriptions = subscriptions
-        )
+        if token:
+            filter["token"] = token
+        if event:
+            filter["event"] = event
+        subscriptions = pushi.APN.find(map=True, **filter)
+        return dict(subscriptions=subscriptions)
 
-    def subscribe(self, apn, auth = None, unsubscribe = True):
+    def subscribe(self, apn, auth=None, unsubscribe=True):
         self.logger.debug("Subscribing '%s' for '%s'" % (apn.token, apn.event))
 
-        is_private = apn.event.startswith("private-") or\
-            apn.event.startswith("presence-") or apn.event.startswith("peer-") or\
-            apn.event.startswith("personal-")
+        is_private = (
+            apn.event.startswith("private-")
+            or apn.event.startswith("presence-")
+            or apn.event.startswith("peer-")
+            or apn.event.startswith("personal-")
+        )
 
         is_private and self.owner.verify(apn.app_key, apn.token, apn.event, auth)
-        unsubscribe and self.unsubscribe(apn.token, force = False)
+        unsubscribe and self.unsubscribe(apn.token, force=False)
 
-        exists = pushi.APN.exists(
-            token = apn.token,
-            event = apn.event
-        )
-        if exists: apn = exists
-        else: apn.save()
+        exists = pushi.APN.exists(token=apn.token, event=apn.event)
+        if exists:
+            apn = exists
+        else:
+            apn.save()
 
         self.logger.debug("Subscribed '%s' for '%s'" % (apn.token, apn.event))
 
         return apn
 
-    def unsubscribe(self, token, event = None, force = True):
+    def unsubscribe(self, token, event=None, force=True):
         self.logger.debug("Unsubscribing '%s' from '%s'" % (token, event or "*"))
 
-        kwargs = dict(token = token, raise_e = force)
-        if event: kwargs["event"] = event
+        kwargs = dict(token=token, raise_e=force)
+        if event:
+            kwargs["event"] = event
 
         apn = pushi.APN.get(**kwargs)
-        if not apn: return None
+        if not apn:
+            return None
 
         apn.delete()
 
@@ -261,11 +267,13 @@ class APNHandler(handler.Handler):
 
         return apn
 
-    def unsubscribes(self, token, event = None):
-        kwargs = dict(token = token)
-        if event: kwargs["event"] = event
+    def unsubscribes(self, token, event=None):
+        kwargs = dict(token=token)
+        if event:
+            kwargs["event"] = event
 
         apns = pushi.APN.find(**kwargs)
-        for apn in apns: apn.delete()
+        for apn in apns:
+            apn.delete()
 
         return apns

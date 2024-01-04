@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 # Hive Pushi System
-# Copyright (c) 2008-2020 Hive Solutions Lda.
+# Copyright (c) 2008-2024 Hive Solutions Lda.
 #
 # This file is part of Hive Pushi System.
 #
@@ -22,16 +22,7 @@
 __author__ = "João Magalhães <joamag@hive.pt>"
 """ The author(s) of the module """
 
-__version__ = "1.0.0"
-""" The version of the module """
-
-__revision__ = "$LastChangedRevision$"
-""" The revision number of the module """
-
-__date__ = "$LastChangedDate$"
-""" The last change date of the module """
-
-__copyright__ = "Copyright (c) 2008-2020 Hive Solutions Lda."
+__copyright__ = "Copyright (c) 2008-2024 Hive Solutions Lda."
 """ The copyright for the module """
 
 __license__ = "Apache License, Version 2.0"
@@ -44,50 +35,35 @@ import appier
 
 from . import base
 
+
 class App(base.PushiBase):
+    name = appier.field(index=True, default=True)
 
-    name = appier.field(
-        index = True,
-        default = True
-    )
+    ident = appier.field(index=True, safe=True, immutable=True)
 
-    ident = appier.field(
-        index = True,
-        safe = True,
-        immutable = True
-    )
+    key = appier.field(index=True, safe=True, immutable=True)
 
-    key = appier.field(
-        index = True,
-        safe = True,
-        immutable = True
-    )
-
-    secret = appier.field(
-        index = True,
-        safe = True,
-        immutable = True
-    )
+    secret = appier.field(index=True, safe=True, immutable=True)
 
     apn_sandbox = appier.field(
-        type = bool,
-        description = "APN Sandbox",
-        observations = """Indicates if the APN context is sandbox or
-        production related, should be in sync with Apple Development configuration"""
+        type=bool,
+        description="APN Sandbox",
+        observations="""Indicates if the APN context is sandbox or
+        production related, should be in sync with Apple Development configuration""",
     )
 
     apn_key = appier.field(
-        meta = "longtext",
-        description = "APN Key",
-        observations = """The private key in PEM format to be used
-        in messages to be sent using APN (Apple Push Notifications)"""
+        meta="longtext",
+        description="APN Key",
+        observations="""The private key in PEM format to be used
+        in messages to be sent using APN (Apple Push Notifications)""",
     )
 
     apn_cer = appier.field(
-        meta = "longtext",
-        description = "APN Cer",
-        observations = """The certificate in PEM format to be used
-        in messages to be sent using APN (Apple Push Notifications)"""
+        meta="longtext",
+        description="APN Cer",
+        observations="""The certificate in PEM format to be used
+        in messages to be sent using APN (Apple Push Notifications)""",
     )
 
     @classmethod
@@ -95,7 +71,7 @@ class App(base.PushiBase):
         return super(App, cls).validate() + [
             appier.not_null("name"),
             appier.not_empty("name"),
-            appier.not_duplicate("name", cls._name())
+            appier.not_duplicate("name", cls._name()),
         ]
 
     @classmethod

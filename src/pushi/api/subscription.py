@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 # Hive Pushi System
-# Copyright (c) 2008-2020 Hive Solutions Lda.
+# Copyright (c) 2008-2024 Hive Solutions Lda.
 #
 # This file is part of Hive Pushi System.
 #
@@ -22,34 +22,21 @@
 __author__ = "João Magalhães <joamag@hive.pt>"
 """ The author(s) of the module """
 
-__version__ = "1.0.0"
-""" The version of the module """
-
-__revision__ = "$LastChangedRevision$"
-""" The revision number of the module """
-
-__date__ = "$LastChangedDate$"
-""" The last change date of the module """
-
-__copyright__ = "Copyright (c) 2008-2020 Hive Solutions Lda."
+__copyright__ = "Copyright (c) 2008-2024 Hive Solutions Lda."
 """ The copyright for the module """
 
 __license__ = "Apache License, Version 2.0"
 """ The license for the module """
 
-class SubscriptionAPI(object):
 
+class SubscriptionAPI(object):
     def create_subscription(self, user_id, event):
         # runs the subscription operation for the provided
         # user id and event, this operation uses the currently
         # defined app id for the operation, then returns the
         # resulting dictionary to the caller method
         result = self.post(
-            self.base_url + "subscriptions",
-            data_j = dict(
-                user_id = user_id,
-                event = event
-            )
+            self.base_url + "subscriptions", data_j=dict(user_id=user_id, event=event)
         )
         return result
 
@@ -58,9 +45,7 @@ class SubscriptionAPI(object):
         # user id and event, this operation uses the currently
         # defined app id for the operation, then returns the
         # resulting dictionary to the caller method
-        result = self.delete(
-            self.base_url + "subscriptions/%s/%s" % (user_id, event)
-        )
+        result = self.delete(self.base_url + "subscriptions/%s/%s" % (user_id, event))
         return result
 
     def subscribe(self, *args, **kwargs):

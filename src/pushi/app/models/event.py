@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 # Hive Pushi System
-# Copyright (c) 2008-2020 Hive Solutions Lda.
+# Copyright (c) 2008-2024 Hive Solutions Lda.
 #
 # This file is part of Hive Pushi System.
 #
@@ -22,16 +22,7 @@
 __author__ = "João Magalhães <joamag@hive.pt>"
 """ The author(s) of the module """
 
-__version__ = "1.0.0"
-""" The version of the module """
-
-__revision__ = "$LastChangedRevision$"
-""" The revision number of the module """
-
-__date__ = "$LastChangedDate$"
-""" The last change date of the module """
-
-__copyright__ = "Copyright (c) 2008-2020 Hive Solutions Lda."
+__copyright__ = "Copyright (c) 2008-2024 Hive Solutions Lda."
 """ The copyright for the module """
 
 __license__ = "Apache License, Version 2.0"
@@ -41,47 +32,26 @@ import appier
 
 from . import base
 
+
 class PushiEvent(base.PushiBase):
+    mid = appier.field(index=True, immutable=True, default=True, description="MID")
 
-    mid = appier.field(
-        index = True,
-        immutable = True,
-        default = True,
-        description = "MID"
-    )
+    channel = appier.field(index=True, immutable=True)
 
-    channel = appier.field(
-        index = True,
-        immutable = True
-    )
+    owner_id = appier.field(immutable=True, description="Owner ID")
 
-    owner_id = appier.field(
-        immutable = True,
-        description = "Owner ID"
-    )
+    timestamp = appier.field(type=float, immutable=True, meta="datetime")
 
-    timestamp = appier.field(
-        type = float,
-        immutable = True,
-        meta = "datetime"
-    )
-
-    data = appier.field(
-        type = dict,
-        immutable = True,
-        meta = "longtext"
-    )
+    data = appier.field(type=dict, immutable=True, meta="longtext")
 
     @classmethod
     def validate(cls):
         return super(PushiEvent, cls).validate() + [
             appier.not_null("mid"),
             appier.not_empty("mid"),
-
             appier.not_null("channel"),
             appier.not_empty("channel"),
-
-            appier.not_null("timestamp")
+            appier.not_null("timestamp"),
         ]
 
     @classmethod
@@ -95,16 +65,16 @@ class PushiEvent(base.PushiBase):
 
     @classmethod
     @appier.operation(
-        name = "Trigger",
-        description = """Triggers a new event on the pushi system running
+        name="Trigger",
+        description="""Triggers a new event on the pushi system running
         the complete set of handlers associated""",
-        parameters = (
+        parameters=(
             ("App ID", "app_id", str),
             ("Event", "event", str),
             ("Data", "data", "longtext"),
-            ("Persist", "persist", bool, True)
-        )
+            ("Persist", "persist", bool, True),
+        ),
     )
-    def trigger_s(cls, app_id, event, data, persist = True):
+    def trigger_s(cls, app_id, event, data, persist=True):
         state = appier.get_app().state
-        state.trigger(app_id, event, data, persist = persist)
+        state.trigger(app_id, event, data, persist=persist)

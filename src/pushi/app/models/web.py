@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 # Hive Pushi System
-# Copyright (c) 2008-2020 Hive Solutions Lda.
+# Copyright (c) 2008-2024 Hive Solutions Lda.
 #
 # This file is part of Hive Pushi System.
 #
@@ -22,16 +22,7 @@
 __author__ = "João Magalhães <joamag@hive.pt>"
 """ The author(s) of the module """
 
-__version__ = "1.0.0"
-""" The version of the module """
-
-__revision__ = "$LastChangedRevision$"
-""" The revision number of the module """
-
-__date__ = "$LastChangedDate$"
-""" The last change date of the module """
-
-__copyright__ = "Copyright (c) 2008-2020 Hive Solutions Lda."
+__copyright__ = "Copyright (c) 2008-2024 Hive Solutions Lda."
 """ The copyright for the module """
 
 __license__ = "Apache License, Version 2.0"
@@ -41,26 +32,19 @@ import appier
 
 from . import base
 
+
 class Web(base.PushiBase):
+    url = appier.field(index=True, description="URL", meta="url")
 
-    url = appier.field(
-        index = True,
-        description = "URL",
-        meta = "url"
-    )
-
-    event = appier.field(
-        index = True
-    )
+    event = appier.field(index=True)
 
     @classmethod
     def validate(cls):
         return super(Web, cls).validate() + [
             appier.not_null("url"),
             appier.not_empty("url"),
-
             appier.not_null("event"),
-            appier.not_empty("event")
+            appier.not_empty("event"),
         ]
 
     @classmethod
@@ -69,33 +53,19 @@ class Web(base.PushiBase):
 
     def pre_update(self):
         base.PushiBase.pre_update(self)
-        previous = self.__class__.get(id = self.id)
+        previous = self.__class__.get(id=self.id)
         self.state and self.state.web_handler.remove(
-            previous.app_id,
-            previous.url,
-            previous.event
+            previous.app_id, previous.url, previous.event
         )
 
     def post_create(self):
         base.PushiBase.pre_create(self)
-        self.state and self.state.web_handler.add(
-            self.app_id,
-            self.url,
-            self.event
-        )
+        self.state and self.state.web_handler.add(self.app_id, self.url, self.event)
 
     def post_update(self):
         base.PushiBase.post_update(self)
-        self.state and self.state.web_handler.add(
-            self.app_id,
-            self.url,
-            self.event
-        )
+        self.state and self.state.web_handler.add(self.app_id, self.url, self.event)
 
     def post_delete(self):
         base.PushiBase.post_delete(self)
-        self.state and self.state.web_handler.remove(
-            self.app_id,
-            self.url,
-            self.event
-        )
+        self.state and self.state.web_handler.remove(self.app_id, self.url, self.event)

@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 # Hive Pushi System
-# Copyright (c) 2008-2020 Hive Solutions Lda.
+# Copyright (c) 2008-2024 Hive Solutions Lda.
 #
 # This file is part of Hive Pushi System.
 #
@@ -22,38 +22,23 @@
 __author__ = "João Magalhães <joamag@hive.pt>"
 """ The author(s) of the module """
 
-__version__ = "1.0.0"
-""" The version of the module """
-
-__revision__ = "$LastChangedRevision$"
-""" The revision number of the module """
-
-__date__ = "$LastChangedDate$"
-""" The last change date of the module """
-
-__copyright__ = "Copyright (c) 2008-2020 Hive Solutions Lda."
+__copyright__ = "Copyright (c) 2008-2024 Hive Solutions Lda."
 """ The copyright for the module """
 
 __license__ = "Apache License, Version 2.0"
 """ The license for the module """
 
-class WebAPI(object):
 
-    def create_web(self, url, event, auth = None, unsubscribe = True):
+class WebAPI(object):
+    def create_web(self, url, event, auth=None, unsubscribe=True):
         # runs the web subscription operation for the provided
         # url and event, this operation uses the currently
         # defined app id for the operation, then returns the
         # resulting dictionary to the caller method
         result = self.post(
             self.base_url + "webs",
-            params = dict(
-                auth = auth,
-                unsubscribe = unsubscribe
-            ),
-            data_j = dict(
-                url = url,
-                event = event
-            )
+            params=dict(auth=auth, unsubscribe=unsubscribe),
+            data_j=dict(url=url, event=event),
         )
         return result
 
@@ -62,9 +47,7 @@ class WebAPI(object):
         # user id and event, this operation uses the currently
         # defined app id for the operation, then returns the
         # resulting dictionary to the caller method
-        result = self.delete(
-            self.base_url + "webs/%s/%s" % (url, event)
-        )
+        result = self.delete(self.base_url + "webs/%s/%s" % (url, event))
         return result
 
     def subscribe_web(self, *args, **kwargs):

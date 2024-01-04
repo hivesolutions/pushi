@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 # Hive Pushi System
-# Copyright (c) 2008-2020 Hive Solutions Lda.
+# Copyright (c) 2008-2024 Hive Solutions Lda.
 #
 # This file is part of Hive Pushi System.
 #
@@ -22,16 +22,7 @@
 __author__ = "João Magalhães <joamag@hive.pt>"
 """ The author(s) of the module """
 
-__version__ = "1.0.0"
-""" The version of the module """
-
-__revision__ = "$LastChangedRevision$"
-""" The revision number of the module """
-
-__date__ = "$LastChangedDate$"
-""" The last change date of the module """
-
-__copyright__ = "Copyright (c) 2008-2020 Hive Solutions Lda."
+__copyright__ = "Copyright (c) 2008-2024 Hive Solutions Lda."
 """ The copyright for the module """
 
 __license__ = "Apache License, Version 2.0"
@@ -56,13 +47,14 @@ BASE_WS_URL = "wss://puxiapp.com/"
 """ The default base websockets url that is going
 to be used in case no other value is specified """
 
+
 class API(
     appier.API,
     apn.APNAPI,
     app.AppAPI,
     web.WebAPI,
     event.EventAPI,
-    subscription.SubscriptionAPI
+    subscription.SubscriptionAPI,
 ):
     """
     Base class for the construction of the pushi
@@ -90,19 +82,21 @@ class API(
         self,
         method,
         url,
-        data = None,
-        data_j = None,
-        data_m = None,
-        headers = None,
-        params = None,
-        mime = None,
-        kwargs = None
+        data=None,
+        data_j=None,
+        data_m=None,
+        headers=None,
+        params=None,
+        mime=None,
+        kwargs=None,
     ):
         auth = kwargs.pop("auth", True)
-        if auth: kwargs["sid"] = self.get_token()
+        if auth:
+            kwargs["sid"] = self.get_token()
 
     def get_token(self):
-        if self.token: return self.token
+        if self.token:
+            return self.token
         return self.login()
 
     def auth_callback(self, params, headers):
@@ -116,11 +110,11 @@ class API(
         # session token, to be used in further calls
         result = self.get(
             self.base_url + "login",
-            callback = False,
-            auth = False,
-            app_id = self.app_id,
-            app_key = self.app_key,
-            app_secret = self.app_secret
+            callback=False,
+            auth=False,
+            app_id=self.app_id,
+            app_key=self.app_key,
+            app_secret=self.app_secret,
         )
 
         # unpacks the token value from the result map and then
@@ -131,9 +125,7 @@ class API(
     def logout(self):
         # runs the "simplistic" call to the logout operation so
         # that the session is invalidated from the server side
-        self.get(
-            self.base_url + "logout"
-        )
+        self.get(self.base_url + "logout")
 
         # invalidates the currently set token so that it's no longer
         # going to be used for any kind of operation
@@ -143,7 +135,8 @@ class API(
         # in case the app key is not defined for the current
         # instance an exception must be raised as it's not possible
         # to run the authentication process without an app key
-        if not self.app_key: raise RuntimeError("No app key defined")
+        if not self.app_key:
+            raise RuntimeError("No app key defined")
 
         # creates the string to hashed using both the provided
         # socket id and channel (concatenation)

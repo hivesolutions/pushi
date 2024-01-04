@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 # Hive Pushi System
-# Copyright (c) 2008-2020 Hive Solutions Lda.
+# Copyright (c) 2008-2024 Hive Solutions Lda.
 #
 # This file is part of Hive Pushi System.
 #
@@ -22,16 +22,7 @@
 __author__ = "João Magalhães <joamag@hive.pt>"
 """ The author(s) of the module """
 
-__version__ = "1.0.0"
-""" The version of the module """
-
-__revision__ = "$LastChangedRevision$"
-""" The revision number of the module """
-
-__date__ = "$LastChangedDate$"
-""" The last change date of the module """
-
-__copyright__ = "Copyright (c) 2008-2020 Hive Solutions Lda."
+__copyright__ = "Copyright (c) 2008-2024 Hive Solutions Lda."
 """ The copyright for the module """
 
 __license__ = "Apache License, Version 2.0"
@@ -41,24 +32,19 @@ import appier
 
 from . import base
 
+
 class APN(base.PushiBase):
+    token = appier.field(index=True)
 
-    token = appier.field(
-        index = True
-    )
-
-    event = appier.field(
-        index = True
-    )
+    event = appier.field(index=True)
 
     @classmethod
     def validate(cls):
         return super(APN, cls).validate() + [
             appier.not_null("token"),
             appier.not_empty("token"),
-
             appier.not_null("event"),
-            appier.not_empty("event")
+            appier.not_empty("event"),
         ]
 
     @classmethod
@@ -66,42 +52,30 @@ class APN(base.PushiBase):
         return ["token", "event"]
 
     @classmethod
-    def _underscore(cls, plural = True):
+    def _underscore(cls, plural=True):
         return "apns" if plural else "apn"
 
     @classmethod
-    def _readable(cls, plural = False):
+    def _readable(cls, plural=False):
         return "APNs" if plural else "APN"
 
     def pre_update(self):
         base.PushiBase.pre_update(self)
-        previous = self.__class__.get(id = self.id)
+        previous = self.__class__.get(id=self.id)
         self.state and self.state.apn_handler.remove(
-            previous.app_id,
-            previous.token,
-            previous.event
+            previous.app_id, previous.token, previous.event
         )
 
     def post_create(self):
         base.PushiBase.pre_create(self)
-        self.state and self.state.apn_handler.add(
-            self.app_id,
-            self.token,
-            self.event
-        )
+        self.state and self.state.apn_handler.add(self.app_id, self.token, self.event)
 
     def post_update(self):
         base.PushiBase.post_update(self)
-        self.state and self.state.apn_handler.add(
-            self.app_id,
-            self.token,
-            self.event
-        )
+        self.state and self.state.apn_handler.add(self.app_id, self.token, self.event)
 
     def post_delete(self):
         base.PushiBase.post_delete(self)
         self.state and self.state.apn_handler.remove(
-            self.app_id,
-            self.token,
-            self.event
+            self.app_id, self.token, self.event
         )

@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 # Hive Pushi System
-# Copyright (c) 2008-2020 Hive Solutions Lda.
+# Copyright (c) 2008-2024 Hive Solutions Lda.
 #
 # This file is part of Hive Pushi System.
 #
@@ -22,16 +22,7 @@
 __author__ = "João Magalhães <joamag@hive.pt>"
 """ The author(s) of the module """
 
-__version__ = "1.0.0"
-""" The version of the module """
-
-__revision__ = "$LastChangedRevision$"
-""" The revision number of the module """
-
-__date__ = "$LastChangedDate$"
-""" The last change date of the module """
-
-__copyright__ = "Copyright (c) 2008-2020 Hive Solutions Lda."
+__copyright__ = "Copyright (c) 2008-2024 Hive Solutions Lda."
 """ The copyright for the module """
 
 __license__ = "Apache License, Version 2.0"
@@ -42,8 +33,8 @@ import json
 
 import netius.servers
 
-class PushiConnection(netius.servers.WSConnection):
 
+class PushiConnection(netius.servers.WSConnection):
     def __init__(self, *args, **kwargs):
         netius.servers.WSConnection.__init__(self, *args, **kwargs)
         self.app_key = None
@@ -60,16 +51,19 @@ class PushiConnection(netius.servers.WSConnection):
     def load_app(self):
         app_key = self.path.rsplit("/", 1)[-1]
         is_unicode = netius.legacy.is_unicode(app_key)
-        if not is_unicode: app_key = app_key.decode("utf-8")
-        if not app_key: raise RuntimeError("Invalid app key loaded")
-        if not len(app_key) == 64: raise RuntimeError("Invalid app key length")
+        if not is_unicode:
+            app_key = app_key.decode("utf-8")
+        if not app_key:
+            raise RuntimeError("Invalid app key loaded")
+        if not len(app_key) == 64:
+            raise RuntimeError("Invalid app key length")
         self.app_key = app_key
 
-class PushiServer(netius.servers.WSServer):
 
+class PushiServer(netius.servers.WSServer):
     WS_CLOSE_FRAME = b"\x03\xe9"
 
-    def __init__(self, state = None, *args, **kwargs):
+    def __init__(self, state=None, *args, **kwargs):
         netius.servers.WSServer.__init__(self, *args, **kwargs)
         self.state = state
         self.sockets = {}
@@ -85,9 +79,9 @@ class PushiServer(netius.servers.WSServer):
         self.sockets[connection.socket_id] = connection
         self.trigger(
             "connect",
-            connection = connection,
-            app_key = connection.app_key,
-            socket_id = connection.socket_id
+            connection=connection,
+            app_key=connection.app_key,
+            socket_id=connection.socket_id,
         )
 
     def on_connection_d(self, connection):
@@ -95,23 +89,21 @@ class PushiServer(netius.servers.WSServer):
         del self.sockets[connection.socket_id]
         self.trigger(
             "disconnect",
-            connection = connection,
-            app_key = connection.app_key,
-            socket_id = connection.socket_id
+            connection=connection,
+            app_key=connection.app_key,
+            socket_id=connection.socket_id,
         )
 
-    def build_connection(self, socket, address, ssl = False):
-        return PushiConnection(self, socket, address, ssl = ssl)
+    def build_connection(self, socket, address, ssl=False):
+        return PushiConnection(self, socket, address, ssl=ssl)
 
     def on_handshake(self, connection):
         netius.servers.WSServer.on_handshake(self, connection)
         connection.load_app()
 
         json_d = dict(
-            event = "pusher:connection_established",
-            data = json.dumps(dict(
-                socket_id = connection.socket_id
-            ))
+            event="pusher:connection_established",
+            data=json.dumps(dict(socket_id=connection.socket_id)),
         )
         connection.send_pushi(json_d)
 
@@ -120,8 +112,10 @@ class PushiServer(netius.servers.WSServer):
 
         cls = self.__class__
 
-        if not data: return
-        if data == cls.WS_CLOSE_FRAME: return
+        if not data:
+            return
+        if data == cls.WS_CLOSE_FRAME:
+            return
 
         try:
             data = data.decode("utf-8")
@@ -134,8 +128,10 @@ class PushiServer(netius.servers.WSServer):
 
         method_name = "handle_" + event
         has_method = hasattr(self, method_name)
-        if has_method: method = getattr(self, method_name)
-        else: method = self.handle_event
+        if has_method:
+            method = getattr(self, method_name)
+        else:
+            method = self.handle_event
         method(connection, json_d)
 
     def handle_pusher_subscribe(self, connection, json_d):
@@ -146,21 +142,22 @@ class PushiServer(netius.servers.WSServer):
 
         self.trigger(
             "subscribe",
-            connection = connection,
-            app_key = connection.app_key,
-            socket_id = connection.socket_id,
-            channel = channel,
-            auth = auth,
-            channel_data = channel_data
+            connection=connection,
+            app_key=connection.app_key,
+            socket_id=connection.socket_id,
+            channel=channel,
+            auth=auth,
+            channel_data=channel_data,
         )
 
-        if not self.state: return
+        if not self.state:
+            return
 
         data = self.state.get_channel(connection.app_key, channel)
         json_d = dict(
-            event = "pusher_internal:subscription_succeeded",
-            data = json.dumps(data),
-            channel = channel
+            event="pusher_internal:subscription_succeeded",
+            data=json.dumps(data),
+            channel=channel,
         )
         connection.send_pushi(json_d)
 
@@ -170,19 +167,20 @@ class PushiServer(netius.servers.WSServer):
 
         self.trigger(
             "unsubscribe",
-            connection = connection,
-            app_key = connection.app_key,
-            socket_id = connection.socket_id,
-            channel = channel
+            connection=connection,
+            app_key=connection.app_key,
+            socket_id=connection.socket_id,
+            channel=channel,
         )
 
-        if not self.state: return
+        if not self.state:
+            return
 
         data = self.state.get_channel(connection.app_key, channel)
         json_d = dict(
-            event = "pusher_internal:unsubscription_succeeded",
-            data = json.dumps(data),
-            channel = channel
+            event="pusher_internal:unsubscription_succeeded",
+            data=json.dumps(data),
+            channel=channel,
         )
         connection.send_pushi(json_d)
 
@@ -194,25 +192,20 @@ class PushiServer(netius.servers.WSServer):
 
         self.trigger(
             "validate",
-            connection = connection,
-            app_key = connection.app_key,
-            socket_id = connection.socket_id,
-            channel = channel
+            connection=connection,
+            app_key=connection.app_key,
+            socket_id=connection.socket_id,
+            channel=channel,
         )
 
-        if not self.state: return
+        if not self.state:
+            return
 
         data = self.state.get_channel(
-            connection.app_key,
-            channel,
-            skip = skip,
-            count = count,
-            limit = False
+            connection.app_key, channel, skip=skip, count=count, limit=False
         )
         json_d = dict(
-            event = "pusher_internal:latest",
-            data = json.dumps(data),
-            channel = channel
+            event="pusher_internal:latest", data=json.dumps(data), channel=channel
         )
         connection.send_pushi(json_d)
 
@@ -223,22 +216,24 @@ class PushiServer(netius.servers.WSServer):
         echo = json_d.get("echo", False)
         persist = json_d.get("persist", True)
 
-        if not self.state: return
+        if not self.state:
+            return
 
         app_id = self.state.app_key_to_app_id(connection.app_key)
         self.state.trigger(
             app_id,
             event,
             data,
-            channels = (channel,),
-            echo = echo,
-            persist = persist,
-            owner_id = connection.socket_id
+            channels=(channel,),
+            echo=echo,
+            persist=persist,
+            owner_id=connection.socket_id,
         )
 
     def send_socket(self, socket_id, json_d):
         connection = self.sockets[socket_id]
         connection.send_pushi(json_d)
+
 
 if __name__ == "__main__":
     server = PushiServer()

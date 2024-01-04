@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 # Hive Pushi System
-# Copyright (c) 2008-2020 Hive Solutions Lda.
+# Copyright (c) 2008-2024 Hive Solutions Lda.
 #
 # This file is part of Hive Pushi System.
 #
@@ -22,16 +22,7 @@
 __author__ = "João Magalhães <joamag@hive.pt>"
 """ The author(s) of the module """
 
-__version__ = "1.0.0"
-""" The version of the module """
-
-__revision__ = "$LastChangedRevision$"
-""" The revision number of the module """
-
-__date__ = "$LastChangedDate$"
-""" The last change date of the module """
-
-__copyright__ = "Copyright (c) 2008-2020 Hive Solutions Lda."
+__copyright__ = "Copyright (c) 2008-2024 Hive Solutions Lda."
 """ The copyright for the module """
 
 __license__ = "Apache License, Version 2.0"
@@ -39,31 +30,27 @@ __license__ = "Apache License, Version 2.0"
 
 import appier
 
-class SocketController(appier.Controller):
 
+class SocketController(appier.Controller):
     @appier.private
     @appier.route("/sockets", "GET")
     def list(self):
         app_id = self.session.get("app_id", None)
-        state = self.state.get_state(app_id = app_id)
+        state = self.state.get_state(app_id=app_id)
 
         sockets = []
 
         for socket_id, channel in state.socket_channels.iteritems():
-            socket = dict(socket_id = socket_id, channel = channel)
+            socket = dict(socket_id=socket_id, channel=channel)
             sockets.append(socket)
 
-        return dict(
-            sockets = sockets
-        )
+        return dict(sockets=sockets)
 
     @appier.private
     @appier.route("/sockets/<socket_id>", "POST")
     def show(self, socket_id):
         app_id = self.session.get("app_id", None)
-        state = self.state.get_state(app_id = app_id)
+        state = self.state.get_state(app_id=app_id)
         channels = state.socket_channels.get(socket_id, [])
 
-        return dict(
-            channels = channels
-        )
+        return dict(channels=channels)

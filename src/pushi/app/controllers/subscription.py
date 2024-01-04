@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 # Hive Pushi System
-# Copyright (c) 2008-2020 Hive Solutions Lda.
+# Copyright (c) 2008-2024 Hive Solutions Lda.
 #
 # This file is part of Hive Pushi System.
 #
@@ -22,16 +22,7 @@
 __author__ = "João Magalhães <joamag@hive.pt>"
 """ The author(s) of the module """
 
-__version__ = "1.0.0"
-""" The version of the module """
-
-__revision__ = "$LastChangedRevision$"
-""" The revision number of the module """
-
-__date__ = "$LastChangedDate$"
-""" The last change date of the module """
-
-__copyright__ = "Copyright (c) 2008-2020 Hive Solutions Lda."
+__copyright__ = "Copyright (c) 2008-2024 Hive Solutions Lda."
 """ The copyright for the module """
 
 __license__ = "Apache License, Version 2.0"
@@ -41,42 +32,42 @@ import appier
 
 import pushi
 
-class SubscriptionController(appier.Controller):
 
+class SubscriptionController(appier.Controller):
     @appier.private
     @appier.route("/subscriptions", "GET")
     def list(self):
         user_id = self.field("user_id", None)
         event = self.field("event", None)
         filter = dict()
-        if user_id: filter["user_id"] = user_id
-        if event: filter["event"] = event
-        subscriptions = pushi.Subscription.find(map = True, **filter)
-        return dict(
-            subscriptions = subscriptions
-        )
+        if user_id:
+            filter["user_id"] = user_id
+        if event:
+            filter["event"] = event
+        subscriptions = pushi.Subscription.find(map=True, **filter)
+        return dict(subscriptions=subscriptions)
 
     @appier.private
     @appier.route("/subscriptions", "POST")
     def create(self):
         subscription = pushi.Subscription.new()
         exists = pushi.Subscription.exists(
-            user_id = subscription.user_id,
-            event = subscription.event
+            user_id=subscription.user_id, event=subscription.event
         )
-        if exists: subscription = exists
-        else: subscription.save()
+        if exists:
+            subscription = exists
+        else:
+            subscription.save()
         return subscription.map()
 
     @appier.private
     @appier.route("/subscriptions/<user_id>/<regex('[\.\w-]+'):event>", "DELETE")
     def delete(self, user_id, event):
-        force = self.field("force", False, cast = bool)
+        force = self.field("force", False, cast=bool)
         subscription = pushi.Subscription.get(
-            user_id = user_id,
-            event = event,
-            raise_e = force
+            user_id=user_id, event=event, raise_e=force
         )
-        if not subscription: return None
+        if not subscription:
+            return None
         subscription.delete()
         return subscription.map()

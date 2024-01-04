@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 # Hive Pushi System
-# Copyright (c) 2008-2020 Hive Solutions Lda.
+# Copyright (c) 2008-2024 Hive Solutions Lda.
 #
 # This file is part of Hive Pushi System.
 #
@@ -22,16 +22,7 @@
 __author__ = "João Magalhães <joamag@hive.pt>"
 """ The author(s) of the module """
 
-__version__ = "1.0.0"
-""" The version of the module """
-
-__revision__ = "$LastChangedRevision$"
-""" The revision number of the module """
-
-__date__ = "$LastChangedDate$"
-""" The last change date of the module """
-
-__copyright__ = "Copyright (c) 2008-2020 Hive Solutions Lda."
+__copyright__ = "Copyright (c) 2008-2024 Hive Solutions Lda."
 """ The copyright for the module """
 
 __license__ = "Apache License, Version 2.0"
@@ -41,25 +32,19 @@ import appier
 
 from . import base
 
+
 class Subscription(base.PushiBase):
+    user_id = appier.field(index=True, description="User ID")
 
-    user_id = appier.field(
-        index = True,
-        description = "User ID"
-    )
-
-    event = appier.field(
-        index = True
-    )
+    event = appier.field(index=True)
 
     @classmethod
     def validate(cls):
         return super(Subscription, cls).validate() + [
             appier.not_null("user_id"),
             appier.not_empty("user_id"),
-
             appier.not_null("event"),
-            appier.not_empty("event")
+            appier.not_empty("event"),
         ]
 
     @classmethod
@@ -68,33 +53,25 @@ class Subscription(base.PushiBase):
 
     def pre_update(self):
         base.PushiBase.pre_update(self)
-        previous = self.__class__.get(id = self.id)
+        previous = self.__class__.get(id=self.id)
         self.state and self.state.remove_alias(
-            previous.app_key,
-            "personal-" + previous.user_id,
-            previous.event
+            previous.app_key, "personal-" + previous.user_id, previous.event
         )
 
     def post_create(self):
         base.PushiBase.pre_create(self)
         self.state and self.state.add_alias(
-            self.app_key,
-            "personal-" + self.user_id,
-            self.event
+            self.app_key, "personal-" + self.user_id, self.event
         )
 
     def post_update(self):
         base.PushiBase.post_update(self)
         self.state and self.state.add_alias(
-            self.app_key,
-            "personal-" + self.user_id,
-            self.event
+            self.app_key, "personal-" + self.user_id, self.event
         )
 
     def post_delete(self):
         base.PushiBase.post_delete(self)
         self.state and self.state.remove_alias(
-            self.app_key,
-            "personal-" + self.user_id,
-            self.event
+            self.app_key, "personal-" + self.user_id, self.event
         )

@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 # Hive Pushi System
-# Copyright (c) 2008-2020 Hive Solutions Lda.
+# Copyright (c) 2008-2024 Hive Solutions Lda.
 #
 # This file is part of Hive Pushi System.
 #
@@ -22,16 +22,7 @@
 __author__ = "João Magalhães <joamag@hive.pt>"
 """ The author(s) of the module """
 
-__version__ = "1.0.0"
-""" The version of the module """
-
-__revision__ = "$LastChangedRevision$"
-""" The revision number of the module """
-
-__date__ = "$LastChangedDate$"
-""" The last change date of the module """
-
-__copyright__ = "Copyright (c) 2008-2020 Hive Solutions Lda."
+__copyright__ = "Copyright (c) 2008-2024 Hive Solutions Lda."
 """ The copyright for the module """
 
 __license__ = "Apache License, Version 2.0"
@@ -41,20 +32,20 @@ import appier
 
 import pushi
 
-class EventController(appier.Controller):
 
+class EventController(appier.Controller):
     @appier.private
     @appier.route("/events", "GET")
     def list(self):
-        count = self.field("count", 10, cast = int)
+        count = self.field("count", 10, cast=int)
         events = pushi.PushiEvent.find(
-            limit = count,
-            sort = [("_id", -1),],
-            map = True
+            limit=count,
+            sort=[
+                ("_id", -1),
+            ],
+            map=True,
         )
-        return dict(
-            events = events
-        )
+        return dict(events=events)
 
     @appier.private
     @appier.route("/events", "POST")
@@ -65,13 +56,14 @@ class EventController(appier.Controller):
         event = data.get("event", "message")
         channel = data.get("channel", "global")
         persist = data.get("persist", True)
-        if not _data: raise RuntimeError("No data set for event")
+        if not _data:
+            raise RuntimeError("No data set for event")
         self.state.trigger(
             app_id,
             event,
             _data,
-            channels = channel,
-            persist = persist,
-            json_d = data,
-            verify = False
+            channels=channel,
+            persist=persist,
+            json_d=data,
+            verify=False,
         )

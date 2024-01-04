@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 # Hive Pushi System
-# Copyright (c) 2008-2020 Hive Solutions Lda.
+# Copyright (c) 2008-2024 Hive Solutions Lda.
 #
 # This file is part of Hive Pushi System.
 #
@@ -22,16 +22,7 @@
 __author__ = "João Magalhães <joamag@hive.pt>"
 """ The author(s) of the module """
 
-__version__ = "1.0.0"
-""" The version of the module """
-
-__revision__ = "$LastChangedRevision$"
-""" The revision number of the module """
-
-__date__ = "$LastChangedDate$"
-""" The last change date of the module """
-
-__copyright__ = "Copyright (c) 2008-2020 Hive Solutions Lda."
+__copyright__ = "Copyright (c) 2008-2024 Hive Solutions Lda."
 """ The copyright for the module """
 
 __license__ = "Apache License, Version 2.0"
@@ -40,33 +31,32 @@ __license__ = "Apache License, Version 2.0"
 import appier
 import appier_extras
 
-class PushiBase(appier_extras.admin.Base):
 
-    instance = appier.field(
-        index = True,
-        safe = True,
-        immutable = True
-    )
+class PushiBase(appier_extras.admin.Base):
+    instance = appier.field(index=True, safe=True, immutable=True)
 
     @classmethod
     def get(cls, *args, **kwargs):
         request = appier.get_request()
         app_id = request.session.get("app_id", None)
-        if app_id: kwargs["instance"] = app_id
+        if app_id:
+            kwargs["instance"] = app_id
         return super(PushiBase, cls).get(cls, *args, **kwargs)
 
     @classmethod
     def find(cls, *args, **kwargs):
         request = appier.get_request()
         app_id = request.session.get("app_id", None)
-        if app_id: kwargs["instance"] = app_id
+        if app_id:
+            kwargs["instance"] = app_id
         return super(PushiBase, cls).find(cls, *args, **kwargs)
 
     @classmethod
     def count(cls, *args, **kwargs):
         request = appier.get_request()
         app_id = request.session.get("app_id", None)
-        if app_id: kwargs["instance"] = app_id
+        if app_id:
+            kwargs["instance"] = app_id
         return super(PushiBase, cls).count(cls, *args, **kwargs)
 
     @classmethod
@@ -76,7 +66,8 @@ class PushiBase(appier_extras.admin.Base):
 
     def pre_create(self):
         appier_extras.admin.Base.pre_create(self)
-        if self.app_id: self.instance = self.app_id
+        if self.app_id:
+            self.instance = self.app_id
 
     @property
     def state(self):
@@ -85,11 +76,13 @@ class PushiBase(appier_extras.admin.Base):
 
     @property
     def app_id(self):
-        if hasattr(self, "instance"): return self.instance
+        if hasattr(self, "instance"):
+            return self.instance
         request = appier.get_request()
         return request.session.get("app_id", None)
 
     @property
     def app_key(self):
-        if not self.app_id: return None
+        if not self.app_id:
+            return None
         return self.state.app_id_to_app_key(self.app_id)

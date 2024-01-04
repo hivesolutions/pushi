@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 # Hive Pushi System
-# Copyright (c) 2008-2020 Hive Solutions Lda.
+# Copyright (c) 2008-2024 Hive Solutions Lda.
 #
 # This file is part of Hive Pushi System.
 #
@@ -22,16 +22,7 @@
 __author__ = "João Magalhães <joamag@hive.pt>"
 """ The author(s) of the module """
 
-__version__ = "1.0.0"
-""" The version of the module """
-
-__revision__ = "$LastChangedRevision$"
-""" The revision number of the module """
-
-__date__ = "$LastChangedDate$"
-""" The last change date of the module """
-
-__copyright__ = "Copyright (c) 2008-2020 Hive Solutions Lda."
+__copyright__ = "Copyright (c) 2008-2024 Hive Solutions Lda."
 """ The copyright for the module """
 
 __license__ = "Apache License, Version 2.0"
@@ -45,6 +36,7 @@ import pushi
 
 from . import handler
 
+
 class WebHandler(handler.Handler):
     """
     Event handler to be used for web based "hooks".
@@ -53,13 +45,13 @@ class WebHandler(handler.Handler):
     """
 
     def __init__(self, owner):
-        handler.Handler.__init__(self, owner, name = "web")
+        handler.Handler.__init__(self, owner, name="web")
         self.subs = {}
 
-    def send(self, app_id, event, json_d, invalid = {}):
+    def send(self, app_id, event, json_d, invalid={}):
         # retrieves the reference to the app structure associated with the
         # id for which the message is being send
-        app = self.owner.get_app(app_id = app_id)
+        app = self.owner.get_app(app_id=app_id)
 
         # retrieves the app key for the retrieved app by unpacking the current
         # app structure into the appropriate values
@@ -98,9 +90,7 @@ class WebHandler(handler.Handler):
         # the HTTP client to the endpoints and then creates the map of headers
         # that is going to be used in the post messages to be sent
         data = json.dumps(json_d)
-        headers = {
-            "content-type" : "application/json"
-        }
+        headers = {"content-type": "application/json"}
 
         # creates the on message function that is going to be used at the end of
         # the request to be able to close the protocol, this is a clojure and so
@@ -120,7 +110,8 @@ class WebHandler(handler.Handler):
             # in case the current token is present in the current
             # map of invalid items must skip iteration as the message
             # has probably already been sent "to the target URL"
-            if url in invalid: continue
+            if url in invalid:
+                continue
 
             # prints a debug message about the web message that
             # is going to be sent (includes URL)
@@ -130,9 +121,7 @@ class WebHandler(handler.Handler):
             # sets the headers and the data then registers for the message
             # event so that the loop and protocol may be closed
             loop, protocol = netius.clients.HTTPClient.post_s(
-                url,
-                headers = headers,
-                data = data
+                url, headers=headers, data=data
             )
             protocol.bind("message", on_message)
             protocol.bind("finish", on_finish)
@@ -160,46 +149,51 @@ class WebHandler(handler.Handler):
     def remove(self, app_id, url, event):
         events = self.subs.get(app_id, {})
         urls = events.get(event, [])
-        if url in urls: urls.remove(url)
+        if url in urls:
+            urls.remove(url)
 
-    def subscriptions(self, url = None, event = None):
+    def subscriptions(self, url=None, event=None):
         filter = dict()
-        if url: filter["url"] = url
-        if event: filter["event"] = event
-        subscriptions = pushi.Web.find(map = True, **filter)
-        return dict(
-            subscriptions = subscriptions
-        )
+        if url:
+            filter["url"] = url
+        if event:
+            filter["event"] = event
+        subscriptions = pushi.Web.find(map=True, **filter)
+        return dict(subscriptions=subscriptions)
 
-    def subscribe(self, web, auth = None, unsubscribe = True):
+    def subscribe(self, web, auth=None, unsubscribe=True):
         self.logger.debug("Subscribing '%s' for '%s'" % (web.url, web.event))
 
-        is_private = web.event.startswith("private-") or\
-            web.event.startswith("presence-") or web.event.startswith("peer-") or\
-            web.event.startswith("personal-")
+        is_private = (
+            web.event.startswith("private-")
+            or web.event.startswith("presence-")
+            or web.event.startswith("peer-")
+            or web.event.startswith("personal-")
+        )
 
         is_private and self.owner.verify(web.app_key, web.url, web.event, auth)
-        unsubscribe and self.unsubscribe(web.url, force = False)
+        unsubscribe and self.unsubscribe(web.url, force=False)
 
-        exists = pushi.Web.exists(
-            url = web.url,
-            event = web.event
-        )
-        if exists: web = exists
-        else: web.save()
+        exists = pushi.Web.exists(url=web.url, event=web.event)
+        if exists:
+            web = exists
+        else:
+            web.save()
 
         self.logger.debug("Subscribed '%s' for '%s'" % (web.url, web.event))
 
         return web
 
-    def unsubscribe(self, url, event = None, force = True):
+    def unsubscribe(self, url, event=None, force=True):
         self.logger.debug("Unsubscribing '%s' from '%s'" % (url, event or "*"))
 
-        kwargs = dict(url = url, raise_e = force)
-        if event: kwargs["event"] = event
+        kwargs = dict(url=url, raise_e=force)
+        if event:
+            kwargs["event"] = event
 
         web = pushi.Web.get(**kwargs)
-        if not web: return None
+        if not web:
+            return None
 
         web.delete()
 
@@ -207,11 +201,13 @@ class WebHandler(handler.Handler):
 
         return web
 
-    def unsubscribes(self, url, event = None):
-        kwargs = dict(token = url)
-        if event: kwargs["event"] = event
+    def unsubscribes(self, url, event=None):
+        kwargs = dict(token=url)
+        if event:
+            kwargs["event"] = event
 
         webs = pushi.Web.find(**kwargs)
-        for web in webs: web.delete()
+        for web in webs:
+            web.delete()
 
         return webs

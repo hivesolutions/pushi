@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 # Hive Pushi System
-# Copyright (c) 2008-2020 Hive Solutions Lda.
+# Copyright (c) 2008-2024 Hive Solutions Lda.
 #
 # This file is part of Hive Pushi System.
 #
@@ -22,41 +22,25 @@
 __author__ = "João Magalhães <joamag@hive.pt>"
 """ The author(s) of the module """
 
-__version__ = "1.0.0"
-""" The version of the module """
-
-__revision__ = "$LastChangedRevision$"
-""" The revision number of the module """
-
-__date__ = "$LastChangedDate$"
-""" The last change date of the module """
-
-__copyright__ = "Copyright (c) 2008-2020 Hive Solutions Lda."
+__copyright__ = "Copyright (c) 2008-2024 Hive Solutions Lda."
 """ The copyright for the module """
 
 __license__ = "Apache License, Version 2.0"
 """ The license for the module """
 
-class EventAPI(object):
 
-    def create_event(self, channel, data, event = "message", persist = True, **kwargs):
+class EventAPI(object):
+    def create_event(self, channel, data, event="message", persist=True, **kwargs):
         # creates the initial JSON data structure to be used as the message
         # and then "extends" it with the extra key word arguments passed
         # to this methods as a method of extension
-        data_j = dict(
-            data = data,
-            event = event,
-            channel = channel,
-            persist = persist
-        )
-        for key in kwargs: data_j[key] = kwargs[key]
+        data_j = dict(data=data, event=event, channel=channel, persist=persist)
+        for key in kwargs:
+            data_j[key] = kwargs[key]
 
         # performs the concrete event trigger operation creating an event
         # with the provided information using a secure channel
-        result = self.post(
-            self.base_url + "events",
-            data_j = data_j
-        )
+        result = self.post(self.base_url + "events", data_j=data_j)
         return result
 
     def trigger_event(self, *args, **kwargs):

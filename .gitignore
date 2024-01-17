@@ -2,6 +2,12 @@
 
 *.shelve*
 
+.DS_Store
+
+/.vscode/settings.json
+
+/.venv
+
 /dist
 /build
 /src/pushi_service.egg-info

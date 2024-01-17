@@ -124,6 +124,7 @@ pushi.bind("message", function(event, data) {
     jQuery("body").append("<div>" + data + "</div>");
 });
 ```
+
 ### Server Side
 
 ```python

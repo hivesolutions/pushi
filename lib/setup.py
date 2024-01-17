@@ -32,7 +32,7 @@ import setuptools
 
 setuptools.setup(
     name="pushi",
-    version="0.3.0",
+    version="0.3.1",
     author="Hive Solutions Lda.",
     author_email="development@hive.pt",
     description="Pushi System API",
@@ -58,5 +58,10 @@ setuptools.setup(
         "Programming Language :: Python :: 3.5",
         "Programming Language :: Python :: 3.6",
         "Programming Language :: Python :: 3.7",
+        "Programming Language :: Python :: 3.8",
+        "Programming Language :: Python :: 3.9",
+        "Programming Language :: Python :: 3.10",
+        "Programming Language :: Python :: 3.11",
+        "Programming Language :: Python :: 3.12",
     ],
 )

@@ -140,3 +140,15 @@ proxy.trigger_event(
     event = "message"
 )
 ```
+
+## License
+
+Pushi System is currently licensed under the [Apache License, Version 2.0](http://www.apache.org/licenses/).
+
+## Build Automation
+
+[![Build Status](https://app.travis-ci.com/hivesolutions/pushi.svg?branch=master)](https://travis-ci.com/github/hivesolutions/pushi)
+[![Build Status GitHub](https://github.com/hivesolutions/pushi/workflows/Main%20Workflow/badge.svg)](https://github.com/hivesolutions/pushi/actions)
+[![Coverage Status](https://coveralls.io/repos/hivesolutions/pushi/badge.svg?branch=master)](https://coveralls.io/r/hivesolutions/pushi?branch=master)
+[![PyPi Status](https://img.shields.io/pypi/v/pushi.svg)](https://pypi.python.org/pypi/pushi)
+[![License](https://img.shields.io/badge/license-Apache%202.0-blue.svg)](https://www.apache.org/licenses/)

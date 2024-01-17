@@ -79,7 +79,7 @@ class PushiApp(appier.APIApp):
 
     def _observations(self):
         return (
-            "Simple yet powerful infra-structure for handling of WebSocket connections."
+            "Simple yet powerful infra-structure for handling of WebSocket connections"
         )
 
 

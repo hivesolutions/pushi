@@ -26,12 +26,3 @@ script: if [[ $TRAVIS_PYTHON_VERSION != pypy* ]]; then coverage run --source=pus
 after_success: if [[ $TRAVIS_PYTHON_VERSION != pypy* ]]; then coveralls; fi
 git:
   submodules: false
-deploy:
-  provider: pypi
-  user: joamag
-  password:
-    secure: ZIeojaBou+TLg11g+yMRE+lopAi1gkfXaBy6dKjXT20urFZd/lUL87su11OJq1QigJJ6XMkrOI3NMyGva1//eTYB/V2OdHER5BGV1HRUYvcOLl4gPccC4dLwqz2SG18pbh2Pj6aj2yTL3/Q7RWqGVvt2wpFEoM+s3NscLXkSj5k=
-  distributions: sdist bdist_wheel
-  on:
-    tags: true
-    python: "2.7"

@@ -32,7 +32,7 @@ import os
 import setuptools
 
 setuptools.setup(
-    name="pushi_service",
+    name="pushi-service",
     version="0.2.1",
     author="Hive Solutions Lda.",
     author_email="development@hive.pt",

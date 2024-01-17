@@ -40,7 +40,7 @@ class PushiEvent(base.PushiBase):
 
     owner_id = appier.field(immutable=True, description="Owner ID")
 
-    timestamp = appier.field(type=float, immutable=True, meta="datetime")
+    timestamp = appier.field(type=float, index=True, immutable=True, meta="datetime")
 
     data = appier.field(type=dict, immutable=True, meta="longtext")
 

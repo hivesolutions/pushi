@@ -1,13 +1,13 @@
-# [![Pushi Websockets](res/logo.png)](http://pushi.hive.pt)
+# [![Pushi WebSocket](res/logo.png)](http://pushi.hive.pt)
 
-Simple yet powerful infra-structure for handling of websocket connections.
+Simple yet powerful infra-structure for handling of WebSocket connections.
 
 ## Objectives
 
 The server itself should be based on a common infra-structure like the one
 present in frameworks like node.js that should abstract the socket connection
 layer (select layer) on an event driven basis. The infra-structure itself should
-be nonblocking and asynchronous for performance and scalability.
+be non-blocking and asynchronous for performance and scalability.
 
 The API layer should be provided by a simple WSGI application implemented using
 the [Appier Framework](https://github.com/hivesolutions/appier) to keep things
@@ -89,7 +89,7 @@ as part of the `channel_data` structure.
 
 ## Running
 
-To be able to run the pushi infra-structure under a normal non ecrypted connection
+To be able to run the pushi infra-structure under a normal non encrypted connection
 and bind to the complete set of network interfaces in the host the following command:
 
     APP_HOST=0.0.0.0 \

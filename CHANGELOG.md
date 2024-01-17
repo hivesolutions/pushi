@@ -9,13 +9,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+*
+
+### Changed
+
+*
+
+### Fixed
+
+*
+
+## [0.2.0] - 2024-01-17
+
+### Added
+
 * Initial version of `CHANGELOG.md`
 
 ### Changed
 
 * Made the `timestamp` field indexed in the event
 * Changed default sorting field from `_id` to `id`
-
-### Fixed
-
-*

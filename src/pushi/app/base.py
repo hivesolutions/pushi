@@ -71,6 +71,17 @@ class PushiApp(appier.APIApp):
         if "app_secret" in self.session:
             del self.session["app_secret"]
 
+    def _version(self):
+        return "0.2.0"
+
+    def _description(self):
+        return "Pushi"
+
+    def _observations(self):
+        return (
+            "Simple yet powerful infra-structure for handling of WebSocket connections."
+        )
+
 
 if __name__ == "__main__":
     app = PushiApp()

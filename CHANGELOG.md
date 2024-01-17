@@ -13,12 +13,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
-* Moved CI/CD to GitHub Actions
-* Bumped dependencies
+*
 
 ### Fixed
 
 *
+
+## [0.2.1] - 2024-01-17
+
+### Changed
+
+* Moved CI/CD to GitHub Actions
+* Bumped dependencies
 
 ## [0.2.0] - 2024-01-17
 

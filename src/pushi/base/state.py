@@ -1112,7 +1112,7 @@ class State(appier.Mongo):
             channel=channel,
             skip=skip,
             limit=count,
-            sort=[("_id", -1)],
+            sort=[("id", -1)],
             map=map,
         )
         for event in events:
@@ -1124,12 +1124,12 @@ class State(appier.Mongo):
         app_id = self.app_key_to_app_id(app_key)
 
         assocs = pushi.Association.find(
-            instance=app_id, user_id=user_id, skip=skip, limit=count, sort=[("_id", -1)]
+            instance=app_id, user_id=user_id, skip=skip, limit=count, sort=[("id", -1)]
         )
         mids = [assoc.mid for assoc in assocs]
 
         events = pushi.PushiEvent.find(
-            instance=app_id, mid={"$in": mids}, sort=[("_id", -1)], map=map
+            instance=app_id, mid={"$in": mids}, sort=[("id", -1)], map=map
         )
         for event in events:
             del event["_id"]

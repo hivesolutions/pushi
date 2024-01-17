@@ -14,6 +14,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 * Made the `timestamp` field indexed in the event
+* Changed default sorting field from `_id` to `id`
 
 ### Fixed
 

@@ -41,7 +41,7 @@ class EventController(appier.Controller):
         events = pushi.PushiEvent.find(
             limit=count,
             sort=[
-                ("_id", -1),
+                ("id", -1),
             ],
             map=True,
         )

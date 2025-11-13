@@ -32,4 +32,6 @@ import unittest
 
 
 class BaseTest(unittest.TestCase):
-    pass
+
+    def test_basic(self):
+        self.assertEqual(1 + 1, 2)

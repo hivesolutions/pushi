@@ -33,9 +33,9 @@ from . import handler
 
 class PushAPIHandler(handler.Handler):
     """
-    Pushi handler (adapter) for the Push API infra-structure
-    (APN) infra-structure, so that it's possible to send
-    push notification to modern Web browsers.
+    Pushi handler (adapter) for the Push API infra-structure,
+    so that it's possible to send push notifications
+    to modern Web browsers.
 
     :see: https://w3c.github.io/push-api
     """

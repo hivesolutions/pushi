@@ -39,9 +39,13 @@ from . import handler
 
 class WebHandler(handler.Handler):
     """
-    Event handler to be used for web based "hooks".
+    Event handler to be used for Web based "hooks".
+
     This handler provides the abstraction for the HTTP
     client based callbacks.
+
+    Notification here will be sent using a HTTP POST
+    request to the URL specified in the subscription.
     """
 
     def __init__(self, owner):

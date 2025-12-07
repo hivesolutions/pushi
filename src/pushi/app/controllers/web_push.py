@@ -91,9 +91,6 @@ class WebPushController(appier.Controller):
         """
         Deletes all subscriptions for a given endpoint.
 
-        Query parameters:
-        - force: Whether to raise error if not found (default: false)
-
         :type endpoint: String
         :param endpoint: The push endpoint URL (path parameter).
         :rtype: Dictionary

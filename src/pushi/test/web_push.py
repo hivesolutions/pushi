@@ -270,7 +270,9 @@ class WebPushHandlerTest(unittest.TestCase):
             # Mock subscription
             mock_subscription = mock.MagicMock()
             mock_subscription.id = "sub123"
-            mock_subscription.endpoint = "https://fcm.googleapis.com/fcm/send/endpoint123"
+            mock_subscription.endpoint = (
+                "https://fcm.googleapis.com/fcm/send/endpoint123"
+            )
             mock_subscription.p256dh = "test_p256dh_key"
             mock_subscription.auth = "test_auth_secret"
             mock_web_push_model.get.return_value = mock_subscription
@@ -296,8 +298,12 @@ class WebPushHandlerTest(unittest.TestCase):
             self.assertEqual(subscription_info["keys"]["auth"], "test_auth_secret")
 
             # Verify VAPID claims
-            self.assertEqual(call_args[1]["vapid_private_key"], "test_vapid_private_key")
-            self.assertEqual(call_args[1]["vapid_claims"]["sub"], "mailto:test@example.com")
+            self.assertEqual(
+                call_args[1]["vapid_private_key"], "test_vapid_private_key"
+            )
+            self.assertEqual(
+                call_args[1]["vapid_claims"]["sub"], "mailto:test@example.com"
+            )
         finally:
             web_push.pywebpush = original_pywebpush
 
@@ -337,7 +343,9 @@ class WebPushHandlerTest(unittest.TestCase):
             # Mock subscription - needs to be returned when queried by ID
             mock_subscription = mock.MagicMock()
             mock_subscription.id = "sub123"
-            mock_subscription.endpoint = "https://fcm.googleapis.com/fcm/send/endpoint123"
+            mock_subscription.endpoint = (
+                "https://fcm.googleapis.com/fcm/send/endpoint123"
+            )
             mock_subscription.p256dh = "test_p256dh_key"
             mock_subscription.auth = "test_auth_secret"
 

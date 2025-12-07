@@ -19,8 +19,7 @@ Try to run the unit tests whenever making changes to the codebase, before commit
 ```bash
 pip install -r requirements.txt
 pip install -r extra.txt
-cpm require plugins.txt
-RUN_MODE=development DB_ENGINE=sqlite HTTPBIN=httpbin.bemisc.com PLUGIN_PATH=./*/src;./*/*src python setup.py test
+python setup.py test
 ```
 
 ## Style Guide

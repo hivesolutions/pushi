@@ -29,7 +29,11 @@ __license__ = "Apache License, Version 2.0"
 """ The license for the module """
 
 import unittest
-import unittest.mock as mock
+
+try:
+    from unittest import mock
+except ImportError:
+    import mock
 
 from pushi.base import web_push
 

@@ -212,7 +212,6 @@ class WebPushHandlerTest(unittest.TestCase):
 
             # Verify warning was logged
             self.mock_owner.app.logger.warning.assert_called()
-
         finally:
             web_push.pywebpush = original_pywebpush
 
@@ -241,7 +240,6 @@ class WebPushHandlerTest(unittest.TestCase):
 
             # Verify warning was logged
             self.mock_owner.app.logger.warning.assert_called()
-
         finally:
             web_push.pywebpush = original_pywebpush
 
@@ -300,7 +298,6 @@ class WebPushHandlerTest(unittest.TestCase):
             # Verify VAPID claims
             self.assertEqual(call_args[1]["vapid_private_key"], "test_vapid_private_key")
             self.assertEqual(call_args[1]["vapid_claims"]["sub"], "mailto:test@example.com")
-
         finally:
             web_push.pywebpush = original_pywebpush
 
@@ -378,7 +375,6 @@ class WebPushHandlerTest(unittest.TestCase):
             # the delete should have been called.
             # We can't reliably assert on webpush being called due to test isolation issues.
             # The key behavior we're testing is that the handler doesn't crash.
-
         finally:
             web_push.pywebpush = original_pywebpush
 
@@ -538,6 +534,5 @@ class WebPushHandlerTest(unittest.TestCase):
                     self.fail(
                         "Handler crashed with message format %s: %s" % (json_d, str(e))
                     )
-
         finally:
             web_push.pywebpush = original_pywebpush

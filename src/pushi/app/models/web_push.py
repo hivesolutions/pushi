@@ -40,6 +40,8 @@ class WebPush(base.PushiBase):
     Stores the subscription information required to send
     push notifications to web browsers, including the
     push service endpoint and encryption keys.
+    
+    :see: https://w3c.github.io/push-api
     """
 
     endpoint = appier.field(

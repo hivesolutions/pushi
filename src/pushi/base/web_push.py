@@ -240,9 +240,6 @@ class WebPushHandler(handler.Handler):
 
         Called during handler initialization to preload subscriptions
         into memory for fast lookup during message sending.
-
-        :rtype: None
-        :return: None, populates internal subscription map.
         """
 
         subs = pushi.WebPush.find()
@@ -263,8 +260,6 @@ class WebPushHandler(handler.Handler):
         the database.
         :type event: String
         :param event: The event/channel name.
-        :rtype: None
-        :return: None, updates internal subscription map.
         """
         events = self.subs.get(app_id, {})
         subscription_ids = events.get(event, [])
@@ -284,8 +279,6 @@ class WebPushHandler(handler.Handler):
         the database.
         :type event: String
         :param event: The event/channel name.
-        :rtype: None
-        :return: None, updates internal subscription map.
         """
         events = self.subs.get(app_id, {})
         subscription_ids = events.get(event, [])

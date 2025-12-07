@@ -234,130 +234,142 @@ class WebPushHandlerTest(unittest.TestCase):
         # Verify warning was logged
         self.mock_owner.app.logger.warning.assert_called()
 
-    @mock.patch("pushi.base.web_push.pywebpush")
     @mock.patch("pushi.WebPush")
-    def test_send_success(self, mock_web_push_model, mock_pywebpush_module):
+    def test_send_success(self, mock_web_push_model):
         """
         Tests successful send of web push notification.
         """
 
-        # Setup pywebpush mock
-        mock_webpush = mock.MagicMock()
-        mock_pywebpush_module.webpush = mock_webpush
-        web_push.pywebpush = mock_pywebpush_module
+        # Save original pywebpush reference
+        original_pywebpush = web_push.pywebpush
 
-        # Mock app with VAPID credentials
-        mock_app = mock.MagicMock()
-        mock_app.key = "appkey123"
-        mock_app.vapid_key = "test_vapid_private_key"
-        mock_app.vapid_email = "mailto:test@example.com"
-        self.mock_owner.get_app.return_value = mock_app
-        self.mock_owner.get_channels.return_value = []
+        try:
+            # Setup pywebpush mock
+            mock_webpush = mock.MagicMock()
+            mock_pywebpush_module = mock.MagicMock()
+            mock_pywebpush_module.webpush = mock_webpush
+            web_push.pywebpush = mock_pywebpush_module
 
-        # Mock subscription
-        mock_subscription = mock.MagicMock()
-        mock_subscription.id = "sub123"
-        mock_subscription.endpoint = "https://fcm.googleapis.com/fcm/send/endpoint123"
-        mock_subscription.p256dh = "test_p256dh_key"
-        mock_subscription.auth = "test_auth_secret"
-        mock_web_push_model.get.return_value = mock_subscription
+            # Mock app with VAPID credentials
+            mock_app = mock.MagicMock()
+            mock_app.key = "appkey123"
+            mock_app.vapid_key = "test_vapid_private_key"
+            mock_app.vapid_email = "mailto:test@example.com"
+            self.mock_owner.get_app.return_value = mock_app
+            self.mock_owner.get_channels.return_value = []
 
-        # Add subscription to handler
-        self.handler.add("app123", "sub123", "notifications")
+            # Mock subscription
+            mock_subscription = mock.MagicMock()
+            mock_subscription.id = "sub123"
+            mock_subscription.endpoint = "https://fcm.googleapis.com/fcm/send/endpoint123"
+            mock_subscription.p256dh = "test_p256dh_key"
+            mock_subscription.auth = "test_auth_secret"
+            mock_web_push_model.get.return_value = mock_subscription
 
-        # Send notification
-        json_d = {"data": {"title": "Test", "body": "Test message"}}
-        self.handler.send("app123", "notifications", json_d)
+            # Add subscription to handler
+            self.handler.add("app123", "sub123", "notifications")
 
-        # Verify webpush was called
-        mock_webpush.assert_called_once()
-        call_args = mock_webpush.call_args
+            # Send notification
+            json_d = {"data": {"title": "Test", "body": "Test message"}}
+            self.handler.send("app123", "notifications", json_d)
 
-        # Verify subscription info
-        subscription_info = call_args[1]["subscription_info"]
-        self.assertEqual(
-            subscription_info["endpoint"],
-            "https://fcm.googleapis.com/fcm/send/endpoint123",
-        )
-        self.assertEqual(subscription_info["keys"]["p256dh"], "test_p256dh_key")
-        self.assertEqual(subscription_info["keys"]["auth"], "test_auth_secret")
+            # Verify webpush was called
+            mock_webpush.assert_called_once()
+            call_args = mock_webpush.call_args
 
-        # Verify VAPID claims
-        self.assertEqual(call_args[1]["vapid_private_key"], "test_vapid_private_key")
-        self.assertEqual(call_args[1]["vapid_claims"]["sub"], "mailto:test@example.com")
+            # Verify subscription info
+            subscription_info = call_args[1]["subscription_info"]
+            self.assertEqual(
+                subscription_info["endpoint"],
+                "https://fcm.googleapis.com/fcm/send/endpoint123",
+            )
+            self.assertEqual(subscription_info["keys"]["p256dh"], "test_p256dh_key")
+            self.assertEqual(subscription_info["keys"]["auth"], "test_auth_secret")
 
-    @mock.patch("pushi.base.web_push.pywebpush")
+            # Verify VAPID claims
+            self.assertEqual(call_args[1]["vapid_private_key"], "test_vapid_private_key")
+            self.assertEqual(call_args[1]["vapid_claims"]["sub"], "mailto:test@example.com")
+
+        finally:
+            web_push.pywebpush = original_pywebpush
+
     @mock.patch("pushi.WebPush")
-    def test_send_with_web_push_exception(
-        self, mock_web_push_model, mock_pywebpush_module
-    ):
+    def test_send_with_web_push_exception(self, mock_web_push_model):
         """
         Tests send method when WebPushException is raised.
         """
 
-        # Create mock WebPushException class
-        class MockWebPushException(Exception):
-            def __init__(self, message):
-                super(MockWebPushException, self).__init__(message)
-                self.response = None
+        # Save original pywebpush reference
+        original_pywebpush = web_push.pywebpush
 
-        # Setup pywebpush module mock
-        mock_webpush_func = mock.MagicMock()
-        mock_pywebpush_module.webpush = mock_webpush_func
-        mock_pywebpush_module.WebPushException = MockWebPushException
-
-        # Replace the pywebpush reference in the handler's module
-        web_push.pywebpush = mock_pywebpush_module
-
-        # Mock app with VAPID credentials
-        mock_app = mock.MagicMock()
-        mock_app.key = "appkey123"
-        mock_app.vapid_key = "test_vapid_private_key"
-        mock_app.vapid_email = "mailto:test@example.com"
-        self.mock_owner.get_app.return_value = mock_app
-        self.mock_owner.get_channels.return_value = []
-
-        # Mock subscription - needs to be returned when queried by ID
-        mock_subscription = mock.MagicMock()
-        mock_subscription.id = "sub123"
-        mock_subscription.endpoint = "https://fcm.googleapis.com/fcm/send/endpoint123"
-        mock_subscription.p256dh = "test_p256dh_key"
-        mock_subscription.auth = "test_auth_secret"
-
-        # Configure mock to return subscription when get() is called with id=sub123
-        def get_side_effect(*args, **kwargs):
-            if kwargs.get("id") == "sub123":
-                return mock_subscription
-            return None
-
-        mock_web_push_model.get.side_effect = get_side_effect
-
-        # Add subscription to handler
-        self.handler.add("app123", "sub123", "notifications")
-
-        # Mock WebPushException with 410 status code
-        mock_response = mock.MagicMock()
-        mock_response.status_code = 410  # Gone - subscription expired
-
-        mock_exception = MockWebPushException("Subscription expired")
-        mock_exception.response = mock_response
-        mock_webpush_func.side_effect = mock_exception
-
-        # Send notification (should not raise exception)
-        json_d = {"data": {"title": "Test", "body": "Test message"}}
-
-        # Should not raise exception even when webpush raises WebPushException
         try:
-            self.handler.send("app123", "notifications", json_d)
-        except Exception as e:
-            self.fail("Handler should not raise exception, but raised: %s" % str(e))
+            # Create mock WebPushException class
+            class MockWebPushException(Exception):
+                def __init__(self, message):
+                    super(MockWebPushException, self).__init__(message)
+                    self.response = None
 
-        # Since webpush may or may not be called depending on test isolation,
-        # we'll just verify that IF an exception occurred, the subscription
-        # deletion happened. If webpush was called and raised the exception,
-        # the delete should have been called.
-        # We can't reliably assert on webpush being called due to test isolation issues.
-        # The key behavior we're testing is that the handler doesn't crash.
+            # Setup pywebpush module mock
+            mock_webpush_func = mock.MagicMock()
+            mock_pywebpush_module = mock.MagicMock()
+            mock_pywebpush_module.webpush = mock_webpush_func
+            mock_pywebpush_module.WebPushException = MockWebPushException
+
+            # Replace the pywebpush reference in the handler's module
+            web_push.pywebpush = mock_pywebpush_module
+
+            # Mock app with VAPID credentials
+            mock_app = mock.MagicMock()
+            mock_app.key = "appkey123"
+            mock_app.vapid_key = "test_vapid_private_key"
+            mock_app.vapid_email = "mailto:test@example.com"
+            self.mock_owner.get_app.return_value = mock_app
+            self.mock_owner.get_channels.return_value = []
+
+            # Mock subscription - needs to be returned when queried by ID
+            mock_subscription = mock.MagicMock()
+            mock_subscription.id = "sub123"
+            mock_subscription.endpoint = "https://fcm.googleapis.com/fcm/send/endpoint123"
+            mock_subscription.p256dh = "test_p256dh_key"
+            mock_subscription.auth = "test_auth_secret"
+
+            # Configure mock to return subscription when get() is called with id=sub123
+            def get_side_effect(*args, **kwargs):
+                if kwargs.get("id") == "sub123":
+                    return mock_subscription
+                return None
+
+            mock_web_push_model.get.side_effect = get_side_effect
+
+            # Add subscription to handler
+            self.handler.add("app123", "sub123", "notifications")
+
+            # Mock WebPushException with 410 status code
+            mock_response = mock.MagicMock()
+            mock_response.status_code = 410  # Gone - subscription expired
+
+            mock_exception = MockWebPushException("Subscription expired")
+            mock_exception.response = mock_response
+            mock_webpush_func.side_effect = mock_exception
+
+            # Send notification (should not raise exception)
+            json_d = {"data": {"title": "Test", "body": "Test message"}}
+
+            # Should not raise exception even when webpush raises WebPushException
+            try:
+                self.handler.send("app123", "notifications", json_d)
+            except Exception as e:
+                self.fail("Handler should not raise exception, but raised: %s" % str(e))
+
+            # Since webpush may or may not be called depending on test isolation,
+            # we'll just verify that IF an exception occurred, the subscription
+            # deletion happened. If webpush was called and raised the exception,
+            # the delete should have been called.
+            # We can't reliably assert on webpush being called due to test isolation issues.
+            # The key behavior we're testing is that the handler doesn't crash.
+
+        finally:
+            web_push.pywebpush = original_pywebpush
 
     @mock.patch("pushi.WebPush")
     def test_subscribe(self, mock_web_push_model):
@@ -472,43 +484,49 @@ class WebPushHandlerTest(unittest.TestCase):
         mock_sub2.delete.assert_called_once()
         self.assertEqual(len(result), 2)
 
-    @mock.patch("pushi.base.web_push.pywebpush")
-    def test_message_extraction_from_json(self, mock_pywebpush):
+    def test_message_extraction_from_json(self):
         """
         Tests that messages are correctly extracted from various JSON structures.
         """
 
-        # Setup pywebpush mock
-        web_push.pywebpush = mock.MagicMock()
+        # Save original pywebpush reference
+        original_pywebpush = web_push.pywebpush
 
-        mock_app = mock.MagicMock()
-        mock_app.key = "appkey123"
-        mock_app.vapid_key = "test_vapid_private_key"
-        mock_app.vapid_email = "mailto:test@example.com"
-        self.mock_owner.get_app.return_value = mock_app
-        self.mock_owner.get_channels.return_value = []
+        try:
+            # Setup pywebpush mock
+            web_push.pywebpush = mock.MagicMock()
 
-        # Test with different message formats - all should be handled without crashing
-        test_cases = [
-            {"data": "test message"},
-            {"push": "test message"},
-            {"web_push": "test message"},
-            {"message": "test message"},
-            {"data": {"title": "Test", "body": "Message"}},
-        ]
+            mock_app = mock.MagicMock()
+            mock_app.key = "appkey123"
+            mock_app.vapid_key = "test_vapid_private_key"
+            mock_app.vapid_email = "mailto:test@example.com"
+            self.mock_owner.get_app.return_value = mock_app
+            self.mock_owner.get_channels.return_value = []
 
-        for json_d in test_cases:
-            # Clear subscriptions
-            self.handler.subs = {}
+            # Test with different message formats - all should be handled without crashing
+            test_cases = [
+                {"data": "test message"},
+                {"push": "test message"},
+                {"web_push": "test message"},
+                {"message": "test message"},
+                {"data": {"title": "Test", "body": "Message"}},
+            ]
 
-            # Reset mock
-            self.mock_owner.app.logger.reset_mock()
+            for json_d in test_cases:
+                # Clear subscriptions
+                self.handler.subs = {}
 
-            # Send (should not crash, even with no subscriptions)
-            # This verifies that message extraction works for all formats
-            try:
-                self.handler.send("app123", "notifications", json_d)
-            except Exception as e:
-                self.fail(
-                    "Handler crashed with message format %s: %s" % (json_d, str(e))
-                )
+                # Reset mock
+                self.mock_owner.app.logger.reset_mock()
+
+                # Send (should not crash, even with no subscriptions)
+                # This verifies that message extraction works for all formats
+                try:
+                    self.handler.send("app123", "notifications", json_d)
+                except Exception as e:
+                    self.fail(
+                        "Handler crashed with message format %s: %s" % (json_d, str(e))
+                    )
+
+        finally:
+            web_push.pywebpush = original_pywebpush

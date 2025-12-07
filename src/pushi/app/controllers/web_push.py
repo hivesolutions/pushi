@@ -101,7 +101,7 @@ class WebPushController(appier.Controller):
         return dict(subscriptions=[web_push.map() for web_push in web_pushes])
 
     @appier.private
-    @appier.route("/web_pushes/<endpoint>/<regex('[\.\w-]+'):event>", "DELETE")
+    @appier.route(r"/web_pushes/<endpoint>/<regex('[\.\w-]+'):event>", "DELETE")
     def delete(self, endpoint, event):
         """
         Deletes a specific subscription for an endpoint and event.

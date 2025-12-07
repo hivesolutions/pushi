@@ -59,7 +59,7 @@ class Subscription(base.PushiBase):
         )
 
     def post_create(self):
-        base.PushiBase.pre_create(self)
+        base.PushiBase.post_create(self)
         self.state and self.state.add_alias(
             self.app_key, "personal-" + self.user_id, self.event
         )

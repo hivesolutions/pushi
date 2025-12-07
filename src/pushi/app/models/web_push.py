@@ -96,7 +96,7 @@ class WebPush(base.PushiBase):
         )
 
     def post_create(self):
-        base.PushiBase.pre_create(self)
+        base.PushiBase.post_create(self)
         self.state and self.state.web_push_handler.add(self.app_id, self.id, self.event)
 
     def post_update(self):

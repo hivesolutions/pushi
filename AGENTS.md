@@ -36,7 +36,7 @@ RUN_MODE=development DB_ENGINE=sqlite HTTPBIN=httpbin.bemisc.com PLUGIN_PATH=./*
 - Prefer `item not in list` over `not item in list`.
 - Prefer `item == None` over `item is None`.
 - The commenting style of the project is unique, try to keep commenting style consistent.
-- Use Python docstrings with the `:type:`, `:args:`, `:rtype:`, `:return:`, etc. structure.
+- Use Python docstrings with the `:type:`, `:args:`, `:rtype:`, `:return:`, etc. structure and with a newline after the docstring end (`"""`).
 
 ## Pre-Commit Checklist
 

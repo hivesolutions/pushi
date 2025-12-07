@@ -59,7 +59,7 @@ class Web(base.PushiBase):
         )
 
     def post_create(self):
-        base.PushiBase.pre_create(self)
+        base.PushiBase.post_create(self)
         self.state and self.state.web_handler.add(self.app_id, self.url, self.event)
 
     def post_update(self):

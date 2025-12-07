@@ -51,9 +51,10 @@ class WebPushController(appier.Controller):
         - endpoint: Filter by endpoint URL
         - event: Filter by event/channel name
 
-        Returns:
-            Dictionary containing list of subscriptions
+        :rtype: Dictionary
+        :return: Dictionary containing list of subscriptions.
         """
+
         endpoint = self.field("endpoint", None)
         event = self.field("event", None)
         return self.state.web_push_handler.subscriptions(endpoint=endpoint, event=event)
@@ -72,9 +73,10 @@ class WebPushController(appier.Controller):
         - auth: Optional authentication token for private channels
         - unsubscribe: Whether to remove existing subscriptions (default: false)
 
-        Returns:
-            The created subscription object
+        :rtype: Dictionary
+        :return: The created subscription object.
         """
+
         auth = self.field("auth", None)
         unsubscribe = self.field("unsubscribe", False, cast=bool)
         web_push = pushi.WebPush.new()
@@ -89,12 +91,15 @@ class WebPushController(appier.Controller):
         """
         Deletes all subscriptions for a given endpoint.
 
-        Path parameters:
-        - endpoint: The push endpoint URL
+        Query parameters:
+        - force: Whether to raise error if not found (default: false)
 
-        Returns:
-            Dictionary containing list of deleted subscriptions
+        :type endpoint: String
+        :param endpoint: The push endpoint URL (path parameter).
+        :rtype: Dictionary
+        :return: Dictionary containing list of deleted subscriptions.
         """
+
         web_pushes = self.state.web_push_handler.unsubscribes(endpoint)
         return dict(subscriptions=[web_push.map() for web_push in web_pushes])
 
@@ -104,16 +109,17 @@ class WebPushController(appier.Controller):
         """
         Deletes a specific subscription for an endpoint and event.
 
-        Path parameters:
-        - endpoint: The push endpoint URL
-        - event: The event/channel name
-
         Query parameters:
         - force: Whether to raise error if not found (default: false)
 
-        Returns:
-            The deleted subscription object
+        :type endpoint: String
+        :param endpoint: The push endpoint URL (path parameter).
+        :type event: String
+        :param event: The event/channel name (path parameter).
+        :rtype: Dictionary
+        :return: The deleted subscription object map, or empty dict if not found.
         """
+
         force = self.field("force", False, cast=bool)
         web_push = self.state.web_push_handler.unsubscribe(
             endpoint, event=event, force=force

@@ -195,44 +195,55 @@ class WebPushHandlerTest(unittest.TestCase):
         )
         self.assertEqual(result, {"subscriptions": mock_subs})
 
-    @mock.patch("pushi.base.web_push.pywebpush")
     @mock.patch("pushi.WebPush")
-    def test_send_with_pywebpush_unavailable(self, mock_web_push_model, mock_pywebpush):
+    def test_send_with_pywebpush_unavailable(self, mock_web_push_model):
         """
         Tests send method when pywebpush library is not available.
         """
 
-        # Set pywebpush to None to simulate unavailable library
-        mock_pywebpush.return_value = None
-        web_push.pywebpush = None
+        # Save original pywebpush reference
+        original_pywebpush = web_push.pywebpush
 
-        self.handler.send("app123", "notifications", {"data": "test"})
+        try:
+            # Set pywebpush to None to simulate unavailable library
+            web_push.pywebpush = None
 
-        # Verify warning was logged
-        self.mock_owner.app.logger.warning.assert_called()
+            self.handler.send("app123", "notifications", {"data": "test"})
 
-    @mock.patch("pushi.base.web_push.pywebpush")
+            # Verify warning was logged
+            self.mock_owner.app.logger.warning.assert_called()
+
+        finally:
+            web_push.pywebpush = original_pywebpush
+
     @mock.patch("pushi.WebPush")
-    def test_send_without_vapid_credentials(self, mock_web_push_model, mock_pywebpush):
+    def test_send_without_vapid_credentials(self, mock_web_push_model):
         """
         Tests send method when VAPID credentials are not configured.
         """
 
-        # Enable pywebpush mock
-        web_push.pywebpush = mock.MagicMock()
+        # Save original pywebpush reference
+        original_pywebpush = web_push.pywebpush
 
-        # Mock app without VAPID credentials
-        # Create an object that doesn't have vapid_key attribute
-        class MockApp:
-            key = "appkey123"
+        try:
+            # Enable pywebpush mock
+            web_push.pywebpush = mock.MagicMock()
 
-        mock_app = MockApp()
-        self.mock_owner.get_app.return_value = mock_app
+            # Mock app without VAPID credentials
+            # Create an object that doesn't have vapid_key attribute
+            class MockApp:
+                key = "appkey123"
 
-        self.handler.send("app123", "notifications", {"data": "test"})
+            mock_app = MockApp()
+            self.mock_owner.get_app.return_value = mock_app
 
-        # Verify warning was logged
-        self.mock_owner.app.logger.warning.assert_called()
+            self.handler.send("app123", "notifications", {"data": "test"})
+
+            # Verify warning was logged
+            self.mock_owner.app.logger.warning.assert_called()
+
+        finally:
+            web_push.pywebpush = original_pywebpush
 
     @mock.patch("pushi.WebPush")
     def test_send_success(self, mock_web_push_model):

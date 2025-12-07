@@ -37,13 +37,36 @@ from . import base
 
 
 class App(base.PushiBase):
-    name = appier.field(index=True, default=True)
+    name = appier.field(
+        index=True,
+        default=True,
+        observations="""The human readable name of the Pushi application,
+        used for identification and display purposes""",
+    )
 
-    ident = appier.field(index=True, safe=True, immutable=True)
+    ident = appier.field(
+        index=True,
+        safe=True,
+        immutable=True,
+        observations="""The unique identifier of the application, automatically
+        generated as a SHA256 hash of a UUID on creation""",
+    )
 
-    key = appier.field(index=True, safe=True, immutable=True)
+    key = appier.field(
+        index=True,
+        safe=True,
+        immutable=True,
+        observations="""The API key used for authenticating requests to the
+        Pushi system, automatically generated as a SHA256 hash on creation""",
+    )
 
-    secret = appier.field(index=True, safe=True, immutable=True)
+    secret = appier.field(
+        index=True,
+        safe=True,
+        immutable=True,
+        observations="""The secret key used for secure operations and signing,
+        automatically generated as a SHA256 hash on creation""",
+    )
 
     apn_sandbox = appier.field(
         type=bool,
@@ -64,6 +87,19 @@ class App(base.PushiBase):
         description="APN Cer",
         observations="""The certificate in PEM format to be used
         in messages to be sent using APN (Apple Push Notifications)""",
+    )
+
+    vapid_key = appier.field(
+        meta="longtext",
+        description="VAPID Private Key",
+        observations="""The private key in PEM or base64url format to be used
+        for VAPID authentication in Web Push notifications (RFC 8292)""",
+    )
+
+    vapid_email = appier.field(
+        description="VAPID Email",
+        observations="""The contact email for VAPID claims (usually mailto: format),
+        used as the subject in VAPID JWT tokens for Web Push""",
     )
 
     @classmethod

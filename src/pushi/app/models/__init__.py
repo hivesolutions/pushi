@@ -32,6 +32,7 @@ from . import base
 from . import event
 from . import subscription
 from . import web
+from . import web_push
 
 from .apn import APN
 from .app import App
@@ -40,3 +41,4 @@ from .base import PushiBase
 from .event import PushiEvent
 from .subscription import Subscription
 from .web import Web
+from .web_push import WebPush

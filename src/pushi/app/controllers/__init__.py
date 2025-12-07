@@ -32,6 +32,7 @@ from . import event
 from . import socket
 from . import subscription
 from . import web
+from . import web_push
 
 from .apn import APNController
 from .app import AppController
@@ -40,3 +41,4 @@ from .event import EventController
 from .socket import SocketController
 from .subscription import SubscriptionController
 from .web import WebController
+from .web_push import WebPushController

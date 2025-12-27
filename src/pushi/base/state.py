@@ -49,6 +49,10 @@ import appier
 from pushi.base import apn
 from pushi.base import web
 
+# subscription limit configuration
+MAX_CHANNELS_PER_SOCKET = int(os.environ.get("PUSHI_MAX_CHANNELS_PER_SOCKET", "100"))
+MAX_SOCKETS_PER_CHANNEL = int(os.environ.get("PUSHI_MAX_SOCKETS_PER_CHANNEL", "10000"))
+
 
 class AppState(object):
     """
@@ -254,11 +258,29 @@ class State(appier.Mongo):
         # then uses it to retrieve the complete set of channels that the
         # socket is subscribed and then unsubscribe it from them then
         # removes the reference of the socket in the socket channels map
-        state = self.get_state(app_key=app_key)
+        try:
+            state = self.get_state(app_key=app_key)
+        except Exception:
+            # if we can't get the state, nothing to clean up
+            return
+
         channels = state.socket_channels.get(socket_id, [])
         channels = copy.copy(channels)
+
+        # unsubscribe from each channel with error handling to ensure
+        # all channels are attempted even if one fails
         for channel in channels:
-            self.unsubscribe(connection, app_key, socket_id, channel)
+            try:
+                self.unsubscribe(connection, app_key, socket_id, channel)
+            except Exception as exception:
+                # log the error but continue cleaning up other channels
+                if self.app:
+                    self.app.logger.warning(
+                        "Error unsubscribing from channel '%s' during disconnect: %s"
+                        % (channel, appier.legacy.UNICODE(exception))
+                    )
+
+        # ensure socket is removed from socket_channels even if unsubscribe failed
         if socket_id in state.socket_channels:
             del state.socket_channels[socket_id]
 
@@ -329,6 +351,11 @@ class State(appier.Mongo):
         subscribed = channel in channels
         if subscribed:
             raise RuntimeError("Channel already subscribed")
+
+        # check if socket has reached the maximum number of channels
+        if len(channels) >= MAX_CHANNELS_PER_SOCKET:
+            raise RuntimeError("Maximum channels per socket exceeded")
+
         channels.append(channel)
         state.socket_channels[socket_id] = channels
 
@@ -339,6 +366,13 @@ class State(appier.Mongo):
         subscribed = socket_id in sockets
         if subscribed:
             raise RuntimeError("Socket already subscribed")
+
+        # check if channel has reached the maximum number of sockets
+        if len(sockets) >= MAX_SOCKETS_PER_CHANNEL:
+            # remove the channel from the socket's channel list since we can't complete
+            channels.remove(channel)
+            raise RuntimeError("Maximum sockets per channel exceeded")
+
         sockets.append(socket_id)
         state.channel_sockets[channel] = sockets
 

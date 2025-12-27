@@ -40,6 +40,7 @@ class AppController(appier.Controller):
         apps = pushi.App.find(map=True)
         return dict(apps=apps)
 
+    @appier.private
     @appier.route("/apps", "POST")
     def create(self):
         app = pushi.App.new()

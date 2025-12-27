@@ -28,13 +28,19 @@ __copyright__ = "Copyright (c) 2008-2024 Hive Solutions Lda."
 __license__ = "Apache License, Version 2.0"
 """ The license for the module """
 
+import os
 import json
+import threading
 
 import netius.clients
 
 import pushi
 
 from . import handler
+
+# webhook configuration
+WEBHOOK_TIMEOUT = int(os.environ.get("PUSHI_WEBHOOK_TIMEOUT", "10"))
+WEBHOOK_MAX_CONCURRENT = int(os.environ.get("PUSHI_WEBHOOK_MAX_CONCURRENT", "100"))
 
 
 class WebHandler(handler.Handler):
@@ -51,6 +57,8 @@ class WebHandler(handler.Handler):
     def __init__(self, owner):
         handler.Handler.__init__(self, owner, name="web")
         self.subs = {}
+        self._active_requests = 0
+        self._lock = threading.Lock()
 
     def send(self, app_id, event, json_d, invalid={}):
         # retrieves the reference to the app structure associated with the
@@ -96,17 +104,6 @@ class WebHandler(handler.Handler):
         data = json.dumps(json_d)
         headers = {"content-type": "application/json"}
 
-        # creates the on message function that is going to be used at the end of
-        # the request to be able to close the protocol, this is a clojure and so
-        # current local variables will be exposed to the method
-        def on_message(protocol, parser, message):
-            protocol.close()
-
-        # creates the on close function that will be responsible for the stopping
-        # of the loop as defined by the web implementation
-        def on_finish(protocol):
-            netius.compat_loop(loop).stop()
-
         # iterates over the complete set of URLs that are going to
         # be notified about the message, each of them is going to
         # received an HTTP post request with the data
@@ -117,23 +114,101 @@ class WebHandler(handler.Handler):
             if url in invalid:
                 continue
 
-            # prints a debug message about the web message that
-            # is going to be sent (includes URL)
-            self.logger.debug("Sending POST request to '%s'" % url)
-
-            # creates the HTTP protocol to be used in the POST request and
-            # sets the headers and the data then registers for the message
-            # event so that the loop and protocol may be closed
-            loop, protocol = netius.clients.HTTPClient.post_s(
-                url, headers=headers, data=data
-            )
-            protocol.bind("message", on_message)
-            protocol.bind("finish", on_finish)
-            loop.run_forever()
+            # check if we have reached the maximum concurrent requests
+            with self._lock:
+                if self._active_requests >= WEBHOOK_MAX_CONCURRENT:
+                    self.logger.warning(
+                        "Maximum concurrent webhook requests reached, skipping '%s'"
+                        % url
+                    )
+                    continue
 
             # adds the current URL to the list of invalid items for
-            # the current message sending stream
+            # the current message sending stream (do this before sending
+            # to prevent duplicate sends in case of rapid events)
             invalid[url] = True
+
+            # send the webhook in a separate thread to avoid blocking
+            self._send_webhook_async(url, headers, data)
+
+    def _send_webhook_async(self, url, headers, data):
+        """
+        Sends a webhook POST request asynchronously with timeout handling.
+        This method spawns a thread to handle the HTTP request without blocking.
+        """
+
+        def do_send():
+            with self._lock:
+                self._active_requests += 1
+
+            try:
+                self.logger.debug("Sending POST request to '%s'" % url)
+
+                # track if we've completed or timed out
+                completed = threading.Event()
+
+                # creates the on message function that is going to be used at the end of
+                # the request to be able to close the protocol
+                def on_message(protocol, parser, message):
+                    protocol.close()
+
+                # creates the on close function that will be responsible for the stopping
+                # of the loop as defined by the web implementation
+                def on_finish(protocol):
+                    completed.set()
+                    try:
+                        netius.compat_loop(loop).stop()
+                    except Exception:
+                        pass
+
+                # creates a timeout function to stop the request if it takes too long
+                def on_timeout():
+                    if not completed.is_set():
+                        self.logger.warning(
+                            "Webhook request to '%s' timed out after %d seconds"
+                            % (url, WEBHOOK_TIMEOUT)
+                        )
+                        try:
+                            protocol.close()
+                            netius.compat_loop(loop).stop()
+                        except Exception:
+                            pass
+
+                # creates the HTTP protocol to be used in the POST request and
+                # sets the headers and the data then registers for the message
+                # event so that the loop and protocol may be closed
+                loop, protocol = netius.clients.HTTPClient.post_s(
+                    url, headers=headers, data=data
+                )
+                protocol.bind("message", on_message)
+                protocol.bind("finish", on_finish)
+
+                # start a timer for timeout
+                timer = threading.Timer(WEBHOOK_TIMEOUT, on_timeout)
+                timer.daemon = True
+                timer.start()
+
+                try:
+                    loop.run_forever()
+                except Exception as exception:
+                    self.logger.warning(
+                        "Error sending webhook to '%s': %s" % (url, str(exception))
+                    )
+                finally:
+                    timer.cancel()
+
+            except Exception as exception:
+                self.logger.warning(
+                    "Error in webhook thread for '%s': %s" % (url, str(exception))
+                )
+            finally:
+                with self._lock:
+                    self._active_requests -= 1
+
+        # start the thread as a daemon so it doesn't block shutdown
+        thread = threading.Thread(target=do_send)
+        thread.daemon = True
+        thread.start()
 
     def load(self):
         subs = pushi.Web.find()

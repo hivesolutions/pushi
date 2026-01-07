@@ -1,0 +1,4 @@
+redis
+pywebpush
+py_vapid
+mock

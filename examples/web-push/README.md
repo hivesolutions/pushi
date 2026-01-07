@@ -33,7 +33,7 @@ var pushi = new Pushi(APP_KEY, {
 python -m http.server 8181 --directory .
 ```
 
-4. Open `https://localhost:8181/` in your browser and click "Enable Notifications".
+4. Open `http://localhost:8181/` in your browser and click "Enable Notifications".
 
 ## Sending Notifications
 

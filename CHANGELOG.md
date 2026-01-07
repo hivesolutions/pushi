@@ -15,6 +15,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * WebPushController with REST API endpoints for subscription management
 * WebPushHandler for sending notifications to web browsers
 * Unit tests for WebPushHandler
+* Module entry point to run app via `python -m pushi.app`
 
 ### Changed
 

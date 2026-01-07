@@ -51,12 +51,12 @@ class WebPushHandlerTest(unittest.TestCase):
         Sets up test fixtures before each test method.
         """
 
-        # Create a mock owner with required attributes
+        # creates a mock owner with required attributes
         self.mock_owner = mock.MagicMock()
         self.mock_owner.app = mock.MagicMock()
         self.mock_owner.app.logger = mock.MagicMock()
 
-        # Create the handler instance
+        # creates the handler instance
         self.handler = web_push.WebPushHandler(self.mock_owner)
 
     def test_init(self):
@@ -80,7 +80,7 @@ class WebPushHandlerTest(unittest.TestCase):
 
         self.handler.add(app_id, subscription_id, event)
 
-        # Verify subscription was added
+        # verifies subscription was added
         self.assertIn(app_id, self.handler.subs)
         self.assertIn(event, self.handler.subs[app_id])
         self.assertIn(subscription_id, self.handler.subs[app_id][event])
@@ -97,7 +97,7 @@ class WebPushHandlerTest(unittest.TestCase):
         self.handler.add(app_id, "sub2", event)
         self.handler.add(app_id, "sub3", event)
 
-        # Verify all subscriptions were added
+        # verifies all subscriptions were added
         self.assertEqual(len(self.handler.subs[app_id][event]), 3)
         self.assertIn("sub1", self.handler.subs[app_id][event])
         self.assertIn("sub2", self.handler.subs[app_id][event])
@@ -115,7 +115,7 @@ class WebPushHandlerTest(unittest.TestCase):
         self.handler.add(app_id, subscription_id, event)
         self.handler.add(app_id, subscription_id, event)
 
-        # Verify only one subscription exists
+        # verifies only one subscription exists
         self.assertEqual(len(self.handler.subs[app_id][event]), 1)
 
     def test_remove_subscription(self):
@@ -127,11 +127,11 @@ class WebPushHandlerTest(unittest.TestCase):
         subscription_id = "sub456"
         event = "notifications"
 
-        # Add then remove
+        # adds then removes
         self.handler.add(app_id, subscription_id, event)
         self.handler.remove(app_id, subscription_id, event)
 
-        # Verify subscription was removed
+        # verifies subscription was removed
         self.assertNotIn(subscription_id, self.handler.subs[app_id][event])
 
     def test_remove_nonexistent_subscription(self):
@@ -143,7 +143,7 @@ class WebPushHandlerTest(unittest.TestCase):
         subscription_id = "sub456"
         event = "notifications"
 
-        # Should not raise an exception
+        # should not raise an exception
         self.handler.remove(app_id, subscription_id, event)
 
     @mock.patch("pushi.WebPush")
@@ -152,7 +152,7 @@ class WebPushHandlerTest(unittest.TestCase):
         Tests loading subscriptions from the database.
         """
 
-        # Create mock subscriptions
+        # creates mock subscriptions
         mock_sub1 = mock.MagicMock()
         mock_sub1.app_id = "app123"
         mock_sub1.id = "sub1"
@@ -165,10 +165,10 @@ class WebPushHandlerTest(unittest.TestCase):
 
         mock_web_push_model.find.return_value = [mock_sub1, mock_sub2]
 
-        # Load subscriptions
+        # loads subscriptions
         self.handler.load()
 
-        # Verify subscriptions were loaded
+        # verifies subscriptions were loaded
         mock_web_push_model.find.assert_called_once()
         self.assertIn("app123", self.handler.subs)
         self.assertIn("notifications", self.handler.subs["app123"])
@@ -189,7 +189,7 @@ class WebPushHandlerTest(unittest.TestCase):
             endpoint="https://example.com", event="notifications"
         )
 
-        # Verify filter was applied
+        # verifies filter was applied
         mock_web_push_model.find.assert_called_once_with(
             map=True, endpoint="https://example.com", event="notifications"
         )
@@ -201,16 +201,16 @@ class WebPushHandlerTest(unittest.TestCase):
         Tests send method when pywebpush library is not available.
         """
 
-        # Save original pywebpush reference
+        # saves original pywebpush reference
         original_pywebpush = web_push.pywebpush
 
         try:
-            # Set pywebpush to None to simulate unavailable library
+            # sets pywebpush to None to simulate unavailable library
             web_push.pywebpush = None
 
             self.handler.send("app123", "notifications", {"data": "test"})
 
-            # Verify warning was logged
+            # verifies warning was logged
             self.mock_owner.app.logger.warning.assert_called()
         finally:
             web_push.pywebpush = original_pywebpush
@@ -221,15 +221,15 @@ class WebPushHandlerTest(unittest.TestCase):
         Tests send method when VAPID credentials are not configured.
         """
 
-        # Save original pywebpush reference
+        # saves original pywebpush reference
         original_pywebpush = web_push.pywebpush
 
         try:
-            # Enable pywebpush mock
+            # enables pywebpush mock
             web_push.pywebpush = mock.MagicMock()
 
-            # Mock app without VAPID credentials
-            # Create an object that doesn't have vapid_key attribute
+            # mocks app without VAPID credentials
+            # creates an object that doesn't have vapid_key attribute
             class MockApp:
                 key = "appkey123"
 
@@ -238,7 +238,7 @@ class WebPushHandlerTest(unittest.TestCase):
 
             self.handler.send("app123", "notifications", {"data": "test"})
 
-            # Verify warning was logged
+            # verifies warning was logged
             self.mock_owner.app.logger.warning.assert_called()
         finally:
             web_push.pywebpush = original_pywebpush
@@ -249,17 +249,17 @@ class WebPushHandlerTest(unittest.TestCase):
         Tests successful send of Web Push notification.
         """
 
-        # Save original pywebpush reference
+        # saves original pywebpush reference
         original_pywebpush = web_push.pywebpush
 
         try:
-            # Setup pywebpush mock
+            # sets up pywebpush mock
             mock_webpush = mock.MagicMock()
             mock_pywebpush_module = mock.MagicMock()
             mock_pywebpush_module.webpush = mock_webpush
             web_push.pywebpush = mock_pywebpush_module
 
-            # Mock app with VAPID credentials
+            # mocks app with VAPID credentials
             mock_app = mock.MagicMock()
             mock_app.key = "appkey123"
             mock_app.vapid_key = "test_vapid_private_key"
@@ -267,7 +267,7 @@ class WebPushHandlerTest(unittest.TestCase):
             self.mock_owner.get_app.return_value = mock_app
             self.mock_owner.get_channels.return_value = []
 
-            # Mock subscription
+            # mocks subscription
             mock_subscription = mock.MagicMock()
             mock_subscription.id = "sub123"
             mock_subscription.endpoint = (
@@ -277,18 +277,18 @@ class WebPushHandlerTest(unittest.TestCase):
             mock_subscription.auth = "test_auth_secret"
             mock_web_push_model.find.return_value = [mock_subscription]
 
-            # Add subscription to handler
+            # adds subscription to handler
             self.handler.add("app123", "sub123", "notifications")
 
-            # Send notification
+            # sends notification
             json_d = {"data": {"title": "Test", "body": "Test message"}}
             self.handler.send("app123", "notifications", json_d)
 
-            # Verify webpush was called
+            # verifies webpush was called
             mock_webpush.assert_called_once()
             call_args = mock_webpush.call_args
 
-            # Verify subscription info
+            # verifies subscription info
             subscription_info = call_args[1]["subscription_info"]
             self.assertEqual(
                 subscription_info["endpoint"],
@@ -297,7 +297,7 @@ class WebPushHandlerTest(unittest.TestCase):
             self.assertEqual(subscription_info["keys"]["p256dh"], "test_p256dh_key")
             self.assertEqual(subscription_info["keys"]["auth"], "test_auth_secret")
 
-            # Verify VAPID claims
+            # verifies VAPID claims
             self.assertEqual(
                 call_args[1]["vapid_private_key"], "test_vapid_private_key"
             )
@@ -313,26 +313,26 @@ class WebPushHandlerTest(unittest.TestCase):
         Tests send method when WebPushException is raised.
         """
 
-        # Save original pywebpush reference
+        # saves original pywebpush reference
         original_pywebpush = web_push.pywebpush
 
         try:
-            # Create mock WebPushException class
+            # creates mock WebPushException class
             class MockWebPushException(Exception):
                 def __init__(self, message):
                     super(MockWebPushException, self).__init__(message)
                     self.response = None
 
-            # Setup pywebpush module mock
+            # sets up pywebpush module mock
             mock_webpush_func = mock.MagicMock()
             mock_pywebpush_module = mock.MagicMock()
             mock_pywebpush_module.webpush = mock_webpush_func
             mock_pywebpush_module.WebPushException = MockWebPushException
 
-            # Replace the pywebpush reference in the handler's module
+            # replaces the pywebpush reference in the handler's module
             web_push.pywebpush = mock_pywebpush_module
 
-            # Mock app with VAPID credentials
+            # mocks app with VAPID credentials
             mock_app = mock.MagicMock()
             mock_app.key = "appkey123"
             mock_app.vapid_key = "test_vapid_private_key"
@@ -340,7 +340,7 @@ class WebPushHandlerTest(unittest.TestCase):
             self.mock_owner.get_app.return_value = mock_app
             self.mock_owner.get_channels.return_value = []
 
-            # Mock subscription - needs to be returned when queried by ID
+            # mocks subscription, needs to be returned when queried by ID
             mock_subscription = mock.MagicMock()
             mock_subscription.id = "sub123"
             mock_subscription.endpoint = (
@@ -349,13 +349,13 @@ class WebPushHandlerTest(unittest.TestCase):
             mock_subscription.p256dh = "test_p256dh_key"
             mock_subscription.auth = "test_auth_secret"
 
-            # Configure mock to return subscription when find() is called for batch fetch
+            # configures mock to return subscription when find() is called for batch fetch
             mock_web_push_model.find.return_value = [mock_subscription]
 
-            # Add subscription to handler
+            # adds subscription to handler
             self.handler.add("app123", "sub123", "notifications")
 
-            # Mock WebPushException with 410 status code
+            # mocks WebPushException with 410 status code
             mock_response = mock.MagicMock()
             mock_response.status_code = 410  # Gone - subscription expired
 
@@ -363,21 +363,21 @@ class WebPushHandlerTest(unittest.TestCase):
             mock_exception.response = mock_response
             mock_webpush_func.side_effect = mock_exception
 
-            # Send notification (should not raise exception)
+            # sends notification (should not raise exception)
             json_d = {"data": {"title": "Test", "body": "Test message"}}
 
-            # Should not raise exception even when webpush raises WebPushException
+            # should not raise exception even when webpush raises WebPushException
             try:
                 self.handler.send("app123", "notifications", json_d)
             except Exception as e:
                 self.fail("Handler should not raise exception, but raised: %s" % str(e))
 
-            # Since webpush may or may not be called depending on test isolation,
+            # since webpush may or may not be called depending on test isolation,
             # we'll just verify that IF an exception occurred, the subscription
             # deletion happened. If webpush was called and raised the exception,
             # the delete should have been called.
-            # We can't reliably assert on webpush being called due to test isolation issues.
-            # The key behavior we're testing is that the handler doesn't crash.
+            # we can't reliably assert on webpush being called due to test isolation issues.
+            # the key behavior we're testing is that the handler doesn't crash.
         finally:
             web_push.pywebpush = original_pywebpush
 
@@ -387,19 +387,19 @@ class WebPushHandlerTest(unittest.TestCase):
         Tests subscribing a new Web Push endpoint.
         """
 
-        # Mock Web Push model
+        # mocks Web Push model
         mock_web_push = mock.MagicMock()
         mock_web_push.endpoint = "https://fcm.googleapis.com/fcm/send/endpoint123"
         mock_web_push.event = "notifications"
         mock_web_push.app_key = "appkey123"
 
-        # Mock exists check
+        # mocks exists check
         mock_web_push_model.exists.return_value = None
 
-        # Subscribe
+        # subscribes
         result = self.handler.subscribe(mock_web_push)
 
-        # Verify subscription was saved
+        # verifies subscription was saved
         mock_web_push.save.assert_called_once()
         self.assertEqual(result, mock_web_push)
 
@@ -409,22 +409,22 @@ class WebPushHandlerTest(unittest.TestCase):
         Tests subscribing to a private channel (requires authentication).
         """
 
-        # Mock Web Push model for private channel
+        # mocks Web Push model for private channel
         mock_web_push = mock.MagicMock()
         mock_web_push.endpoint = "https://fcm.googleapis.com/fcm/send/endpoint123"
         mock_web_push.event = "private-channel"
         mock_web_push.app_key = "appkey123"
 
-        # Mock exists check
+        # mocks exists check
         mock_web_push_model.exists.return_value = None
 
-        # Mock verify method
+        # mocks verify method
         self.mock_owner.verify = mock.MagicMock()
 
-        # Subscribe with auth token
+        # subscribes with auth token
         result = self.handler.subscribe(mock_web_push, auth="test_auth_token")
 
-        # Verify authentication was checked
+        # verifies authentication was checked
         self.mock_owner.verify.assert_called_once_with(
             "appkey123",
             "https://fcm.googleapis.com/fcm/send/endpoint123",
@@ -432,7 +432,7 @@ class WebPushHandlerTest(unittest.TestCase):
             "test_auth_token",
         )
 
-        # Verify subscription was saved
+        # verifies subscription was saved
         mock_web_push.save.assert_called_once()
 
     @mock.patch("pushi.WebPush")
@@ -441,16 +441,16 @@ class WebPushHandlerTest(unittest.TestCase):
         Tests unsubscribing a Web Push endpoint.
         """
 
-        # Mock existing subscription
+        # mocks existing subscription
         mock_web_push = mock.MagicMock()
         mock_web_push_model.get.return_value = mock_web_push
 
-        # Unsubscribe
+        # unsubscribes
         result = self.handler.unsubscribe(
             "https://fcm.googleapis.com/fcm/send/endpoint123", event="notifications"
         )
 
-        # Verify subscription was deleted
+        # verifies subscription was deleted
         mock_web_push.delete.assert_called_once()
         self.assertEqual(result, mock_web_push)
 
@@ -460,17 +460,17 @@ class WebPushHandlerTest(unittest.TestCase):
         Tests unsubscribing when subscription doesn't exist.
         """
 
-        # Mock no subscription found
+        # mocks no subscription found
         mock_web_push_model.get.return_value = None
 
-        # Unsubscribe
+        # unsubscribes
         result = self.handler.unsubscribe(
             "https://fcm.googleapis.com/fcm/send/endpoint123",
             event="notifications",
             force=False,
         )
 
-        # Verify None was returned
+        # verifies None was returned
         self.assertIsNone(result)
 
     @mock.patch("pushi.WebPush")
@@ -479,17 +479,17 @@ class WebPushHandlerTest(unittest.TestCase):
         Tests unsubscribing multiple subscriptions for an endpoint.
         """
 
-        # Mock multiple subscriptions
+        # mocks multiple subscriptions
         mock_sub1 = mock.MagicMock()
         mock_sub2 = mock.MagicMock()
         mock_web_push_model.find.return_value = [mock_sub1, mock_sub2]
 
-        # Unsubscribe all
+        # unsubscribes all
         result = self.handler.unsubscribes(
             "https://fcm.googleapis.com/fcm/send/endpoint123"
         )
 
-        # Verify all subscriptions were deleted
+        # verifies all subscriptions were deleted
         mock_sub1.delete.assert_called_once()
         mock_sub2.delete.assert_called_once()
         self.assertEqual(len(result), 2)
@@ -500,11 +500,11 @@ class WebPushHandlerTest(unittest.TestCase):
         Tests that messages are correctly extracted from various JSON structures.
         """
 
-        # Save original pywebpush reference
+        # saves original pywebpush reference
         original_pywebpush = web_push.pywebpush
 
         try:
-            # Setup pywebpush mock
+            # sets up pywebpush mock
             web_push.pywebpush = mock.MagicMock()
 
             mock_app = mock.MagicMock()
@@ -514,10 +514,10 @@ class WebPushHandlerTest(unittest.TestCase):
             self.mock_owner.get_app.return_value = mock_app
             self.mock_owner.get_channels.return_value = []
 
-            # Mock empty find results (no subscriptions in database)
+            # mocks empty find results (no subscriptions in database)
             mock_web_push_model.find.return_value = []
 
-            # Test with different message formats - all should be handled without crashing
+            # tests with different message formats, all should be handled without crashing
             test_cases = [
                 {"data": "test message"},
                 {"push": "test message"},
@@ -527,14 +527,14 @@ class WebPushHandlerTest(unittest.TestCase):
             ]
 
             for json_d in test_cases:
-                # Clear subscriptions
+                # clears subscriptions
                 self.handler.subs = {}
 
-                # Reset mock
+                # resets mock
                 self.mock_owner.app.logger.reset_mock()
 
-                # Send (should not crash, even with no subscriptions)
-                # This verifies that message extraction works for all formats
+                # sends (should not crash, even with no subscriptions)
+                # this verifies that message extraction works for all formats
                 try:
                     self.handler.send("app123", "notifications", json_d)
                 except Exception as e:

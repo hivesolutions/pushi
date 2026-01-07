@@ -39,30 +39,14 @@ api = pushi.API(
     base_url="http://localhost:8080/",
 )
 
-# retrieves the VAPID public key that is required
-# by browsers to subscribe to push notifications
-vapid_info = api.get_vapid_public_key()
-print("VAPID Public Key:", vapid_info["vapid_public_key"])
-
-# subscribes a browser endpoint to notifications,
-# these values come from the browser's PushSubscription
-# object obtained via the Web Push API
-result = api.create_web_push(
-    endpoint="https://fcm.googleapis.com/fcm/send/...",
-    p256dh="BNcRdreALRFX...",
-    auth="tBHItJI5...",
-    event="notifications",
+# sends a Web Push notification to all subscribers
+# of the "notifications" channel
+print("Sending Web Push notification...")
+api.trigger_event(
+    channel="notifications",
+    data={
+        "title": "Hello from Pushi!",
+        "body": "This is a test Web Push notification.",
+    },
 )
-print("Subscribed:", result)
-
-# lists all the Web Push subscriptions currently
-# registered for the application
-subscriptions = api.list_web_pushes()
-print("Subscriptions:", subscriptions)
-
-# unsubscribes the endpoint from the notifications
-# event, removing it from the server
-api.delete_web_push(
-    endpoint="https://fcm.googleapis.com/fcm/send/...", event="notifications"
-)
-print("Unsubscribed")
+print("Notification sent!")

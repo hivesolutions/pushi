@@ -146,7 +146,7 @@ class WebPush(base.PushiBase):
 
     @classmethod
     def list_names(cls):
-        return ["endpoint", "event"]
+        return ["id", "endpoint", "event"]
 
     def pre_update(self):
         base.PushiBase.pre_update(self)

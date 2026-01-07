@@ -6,7 +6,10 @@
     <style>
         body { font-family: sans-serif; max-width: 600px; margin: 40px auto; padding: 20px; }
         button { padding: 12px 24px; font-size: 16px; cursor: pointer; margin: 8px 4px; }
+        button:disabled { opacity: 0.5; cursor: not-allowed; }
         #status { margin-top: 20px; padding: 12px; background: #f0f0f0; border-radius: 4px; }
+        #status.subscribed { background: #d4edda; color: #155724; }
+        #status.error { background: #f8d7da; color: #721c24; }
     </style>
 </head>
 <body>
@@ -22,37 +25,77 @@
         // sets up the application key and creates the pushi
         // instance that will be used to manage subscriptions
         var APP_KEY = "YOUR_APP_KEY";
-        var status = document.getElementById("status");
+        var statusEl = document.getElementById("status");
+        var subscribeBtn = document.getElementById("subscribe");
+        var unsubscribeBtn = document.getElementById("unsubscribe");
+
+        console.log("[Pushi] Initializing Web Push example");
 
         var pushi = new Pushi(APP_KEY, {
             baseUrl: "wss://localhost:9090/",
             baseWebUrl: "http://localhost:8080/"
         });
 
+        // updates the UI to reflect the current subscription state
+        function updateUI(isSubscribed, message) {
+            statusEl.textContent = message || (isSubscribed ? "Status: Subscribed" : "Status: Not subscribed");
+            statusEl.className = isSubscribed ? "subscribed" : "";
+            subscribeBtn.disabled = isSubscribed;
+            unsubscribeBtn.disabled = !isSubscribed;
+        }
+
+        // checks if already subscribed on page load
+        updateUI(false);
+        if ("serviceWorker" in navigator) {
+            console.log("[Pushi] Checking for existing subscription...");
+            navigator.serviceWorker.ready.then(function(registration) {
+                registration.pushManager.getSubscription().then(function(subscription) {
+                    if (subscription) {
+                        console.log("[Pushi] Found existing subscription:", subscription.endpoint);
+                    } else {
+                        console.log("[Pushi] No existing subscription found");
+                    }
+                    updateUI(!!subscription);
+                });
+            });
+        }
+
         // handles the subscribe button click, requests permission
         // and registers the browser for push notifications
-        document.getElementById("subscribe").onclick = function() {
-            status.textContent = "Status: Requesting permission...";
+        subscribeBtn.onclick = function() {
+            console.log("[Pushi] Subscribe button clicked");
+            statusEl.textContent = "Status: Subscribing...";
+            statusEl.className = "";
 
             pushi.setupWebPush("notifications", { swPath: "sw.js" })
                 .then(function(result) {
-                    status.textContent = "Status: Subscribed! Endpoint: " +
-                        result.subscriptionInfo.endpoint.substring(0, 50) + "...";
+                    console.log("[Pushi] Successfully subscribed");
+                    console.log("[Pushi] Endpoint:", result.subscriptionInfo.endpoint);
+                    updateUI(true);
                 })
                 .catch(function(error) {
-                    status.textContent = "Status: Error - " + error.message;
+                    console.error("[Pushi] Subscribe error:", error);
+                    statusEl.textContent = "Status: Error - " + error.message;
+                    statusEl.className = "error";
                 });
         };
 
         // handles the unsubscribe button click, removes the
         // subscription from both the browser and the server
-        document.getElementById("unsubscribe").onclick = function() {
+        unsubscribeBtn.onclick = function() {
+            console.log("[Pushi] Unsubscribe button clicked");
+            statusEl.textContent = "Status: Unsubscribing...";
+            statusEl.className = "";
+
             pushi.teardownWebPush("notifications")
                 .then(function() {
-                    status.textContent = "Status: Unsubscribed";
+                    console.log("[Pushi] Successfully unsubscribed");
+                    updateUI(false);
                 })
                 .catch(function(error) {
-                    status.textContent = "Status: Error - " + error.message;
+                    console.error("[Pushi] Unsubscribe error:", error);
+                    statusEl.textContent = "Status: Error - " + error.message;
+                    statusEl.className = "error";
                 });
         };
     </script>

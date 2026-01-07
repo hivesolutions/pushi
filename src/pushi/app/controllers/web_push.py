@@ -42,7 +42,7 @@ class WebPushController(appier.Controller):
     """
 
     @appier.private
-    @appier.route("/web_pushes", "GET")
+    @appier.route("/web_pushes", "GET", opts=dict(cors=True))
     def list(self):
         """
         Lists Web Push subscriptions with optional filtering.
@@ -60,7 +60,7 @@ class WebPushController(appier.Controller):
         return self.state.web_push_handler.subscriptions(endpoint=endpoint, event=event)
 
     @appier.private
-    @appier.route("/web_pushes", "POST")
+    @appier.route("/web_pushes", "POST", opts=dict(cors=True))
     def create(self):
         """
         Creates a new Web Push subscription.
@@ -86,7 +86,7 @@ class WebPushController(appier.Controller):
         return web_push.map()
 
     @appier.private
-    @appier.route("/web_pushes/<endpoint>", "DELETE")
+    @appier.route("/web_pushes/<endpoint>", "DELETE", opts=dict(cors=True))
     def deletes(self, endpoint):
         """
         Deletes all subscriptions for a given endpoint.
@@ -101,7 +101,11 @@ class WebPushController(appier.Controller):
         return dict(subscriptions=[web_push.map() for web_push in web_pushes])
 
     @appier.private
-    @appier.route(r"/web_pushes/<endpoint>/<regex('[\.\w-]+'):event>", "DELETE")
+    @appier.route(
+        r"/web_pushes/<endpoint>/<regex('[\.\w-]+'):event>",
+        "DELETE",
+        opts=dict(cors=True),
+    )
     def delete(self, endpoint, event):
         """
         Deletes a specific subscription for an endpoint and event.

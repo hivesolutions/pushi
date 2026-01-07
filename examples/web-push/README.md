@@ -27,13 +27,19 @@ var pushi = new Pushi(APP_KEY, {
 });
 ```
 
-3. Serve the files over HTTPS (required for service workers):
+3. Start the Pushi server with CORS enabled:
 
- ```bash
+```bash
+CORS=1 python -m pushi.app
+```
+
+4. Serve the example files (localhost works for service workers):
+
+```bash
 python -m http.server 8181 --directory .
 ```
 
-4. Open `http://localhost:8181/` in your browser and click "Enable Notifications".
+5. Open `http://localhost:8181/examples/web-push/` in your browser and click "Enable Notifications".
 
 ## Sending Notifications
 

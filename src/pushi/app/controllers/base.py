@@ -28,8 +28,77 @@ __copyright__ = "Copyright (c) 2008-2024 Hive Solutions Lda."
 __license__ = "Apache License, Version 2.0"
 """ The license for the module """
 
+import base64
+
 import appier
+
+import pushi
 
 
 class BaseController(appier.Controller):
-    pass
+
+    @appier.route("/vapid_key", "GET")
+    def vapid_key(self):
+        """
+        Retrieves the VAPID public key for Web Push subscription.
+
+        The public key is derived from the configured VAPID private key
+        and is needed by browsers to subscribe to push notifications
+        using the Web Push API (applicationServerKey).
+
+        :rtype: Dictionary
+        :return: Dictionary containing the VAPID public key in base64url format.
+        """
+
+        # retrieves the app key from the request parameters
+        # going to be used to obtain the App instance
+        app_key = self.field("app_key", mandatory=True)
+
+        # retrieves the current application and verifies
+        # that VAPID credentials are properly configured
+        app = pushi.App.get(key=app_key)
+        if not app.vapid_key:
+            raise appier.OperationalError(
+                message="VAPID credentials not configured for this app"
+            )
+
+        # derives the public key from the private key using
+        # the py_vapid library, which handles both PEM and
+        # raw key formats
+        try:
+            import py_vapid
+        except ImportError:
+            raise appier.OperationalError(
+                message="py_vapid library not available, required for Web Push"
+            )
+
+        try:
+            import cryptography.hazmat.primitives
+        except ImportError:
+            raise appier.OperationalError(
+                message="cryptography library not available, required for Web Push"
+            )
+
+        try:
+            # detects the key format and uses the appropriate
+            # method to load it (PEM or raw base64url)
+            if app.vapid_key.strip().startswith("-----BEGIN"):
+                vapid = py_vapid.Vapid.from_pem(app.vapid_key.encode("utf-8"))
+            else:
+                vapid = py_vapid.Vapid.from_string(app.vapid_key)
+
+            # serializes the public key to uncompressed point format
+            # and encodes it as base64url for browser consumption
+            public_bytes = vapid.public_key.public_bytes(
+                encoding=cryptography.hazmat.primitives.serialization.Encoding.X962,
+                format=cryptography.hazmat.primitives.serialization.PublicFormat.UncompressedPoint,
+            )
+            public_key = (
+                base64.urlsafe_b64encode(public_bytes).decode("utf-8").rstrip("=")
+            )
+        except Exception as exception:
+            raise appier.OperationalError(
+                message="Failed to derive VAPID public key: %s" % str(exception)
+            )
+
+        return dict(vapid_public_key=public_key)

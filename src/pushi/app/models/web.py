@@ -113,7 +113,7 @@ class Web(base.PushiBase):
 
     @classmethod
     def list_names(cls):
-        return ["url", "event"]
+        return ["id", "url", "event"]
 
     def pre_update(self):
         base.PushiBase.pre_update(self)

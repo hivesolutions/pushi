@@ -30,6 +30,8 @@ __license__ = "Apache License, Version 2.0"
 
 import json
 
+import appier
+
 import pushi
 
 from . import handler
@@ -59,7 +61,7 @@ class WebPushHandler(handler.Handler):
 
     def send(self, app_id, event, json_d, invalid={}):
         """
-        Sends web push notifications to all subscribed endpoints for
+        Sends Web Push notifications to all subscribed endpoints for
         the provided event/channel.
 
         Uses the pywebpush library to send encrypted notifications
@@ -83,7 +85,7 @@ class WebPushHandler(handler.Handler):
         # logs a warning and returns immediately
         if not pywebpush:
             self.logger.warning(
-                "pywebpush library not available, skipping web push notifications"
+                "pywebpush library not available, skipping Web Push notifications"
             )
             return
 
@@ -103,7 +105,7 @@ class WebPushHandler(handler.Handler):
         # logs a warning and returns immediately
         if not vapid_private_key:
             self.logger.warning(
-                "VAPID credentials not configured for app '%s', skipping web push"
+                "VAPID credentials not configured for app '%s', skipping Web Push"
                 % app_id
             )
             return
@@ -129,7 +131,7 @@ class WebPushHandler(handler.Handler):
         extra = self.owner.get_channels(app_key, event)
         events = [event] + extra
 
-        # retrieves the complete set of subscriptions for the current web push
+        # retrieves the complete set of subscriptions for the current Web Push
         # infrastructure to be able to resolve the appropriate subscription objects
         subs = self.subs.get(app_id, {})
 
@@ -144,23 +146,32 @@ class WebPushHandler(handler.Handler):
         subscriptions = list(set(subscriptions))
         count = len(subscriptions)
 
-        # prints a logging message about the various (web push) subscriptions
+        # prints a logging message about the various (Web Push) subscriptions
         # that were found for the event that was triggered
         self.logger.debug(
-            "Found %d web push subscription(s) for '%s'" % (count, root_event)
+            "Found %d Web Push subscription(s) for '%s'" % (count, root_event)
         )
 
         # prepares the notification payload, ensuring it's a JSON string
-        if isinstance(message, dict):
+        # handles the case where message could be None or various types
+        if message == None:
+            payload = json.dumps({})
+        elif isinstance(message, dict):
             payload = json.dumps(message)
-        elif isinstance(message, str):
+        elif type(message) in appier.legacy.STRINGS:
             payload = message
         else:
             payload = json.dumps({"message": str(message)})
 
+        # batch fetch all subscription objects from the database to avoid N+1 queries
+        # filters out subscriptions that are already in the invalid map
+        subscription_ids_to_fetch = [sid for sid in subscriptions if sid not in invalid]
+        subscription_objects = pushi.WebPush.find(id={"$in": subscription_ids_to_fetch})
+        subscription_map = {sub.id: sub for sub in subscription_objects}
+
         # iterates over the complete set of subscriptions that are going to
         # be notified about the message, each of them is going to receive
-        # a web push notification
+        # a Web Push notification
         for subscription_id in subscriptions:
             # in case the current subscription ID is present in the current
             # map of invalid items must skip iteration as the message
@@ -168,8 +179,8 @@ class WebPushHandler(handler.Handler):
             if subscription_id in invalid:
                 continue
 
-            # retrieves the subscription object from the database
-            subscription_obj = pushi.WebPush.get(id=subscription_id, raise_e=False)
+            # retrieves the subscription object from the pre-fetched map
+            subscription_obj = subscription_map.get(subscription_id)
             if not subscription_obj:
                 self.logger.warning(
                     "Web push subscription '%s' not found in database" % subscription_id
@@ -185,14 +196,14 @@ class WebPushHandler(handler.Handler):
                 },
             }
 
-            # prints a debug message about the web push notification that
+            # prints a debug message about the Web Push notification that
             # is going to be sent (includes endpoint)
             self.logger.debug(
-                "Sending web push notification to '%s'" % subscription_obj.endpoint
+                "Sending Web Push notification to '%s'" % subscription_obj.endpoint
             )
 
             try:
-                # sends the web push notification using pywebpush library
+                # sends the Web Push notification using pywebpush library
                 # with VAPID authentication
                 pywebpush.webpush(
                     subscription_info=subscription_info,
@@ -206,9 +217,9 @@ class WebPushHandler(handler.Handler):
                 invalid[subscription_id] = True
 
             except pywebpush.WebPushException as exception:
-                # logs the error that occurred during the web push send
+                # logs the error that occurred during the Web Push send
                 self.logger.warning(
-                    "Failed to send web push to '%s': %s"
+                    "Failed to send Web Push to '%s': %s"
                     % (subscription_obj.endpoint, str(exception))
                 )
 
@@ -216,7 +227,7 @@ class WebPushHandler(handler.Handler):
                 # or 404 Not Found), removes the subscription from the database
                 if exception.response and exception.response.status_code in (404, 410):
                     self.logger.info(
-                        "Removing expired web push subscription '%s'" % subscription_id
+                        "Removing expired Web Push subscription '%s'" % subscription_id
                     )
                     try:
                         subscription_obj.delete()
@@ -229,13 +240,13 @@ class WebPushHandler(handler.Handler):
             except Exception as exception:
                 # logs any other unexpected errors
                 self.logger.error(
-                    "Unexpected error sending web push to '%s': %s"
+                    "Unexpected error sending Web Push to '%s': %s"
                     % (subscription_obj.endpoint, str(exception))
                 )
 
     def load(self):
         """
-        Loads all web push subscriptions from the database and
+        Loads all Web Push subscriptions from the database and
         populates the in-memory subscription map.
 
         Called during handler initialization to preload subscriptions
@@ -251,7 +262,7 @@ class WebPushHandler(handler.Handler):
 
     def add(self, app_id, subscription_id, event):
         """
-        Adds a web push subscription to the in-memory map.
+        Adds a Web Push subscription to the in-memory map.
 
         :type app_id: String
         :param app_id: The application identifier.
@@ -270,7 +281,7 @@ class WebPushHandler(handler.Handler):
 
     def remove(self, app_id, subscription_id, event):
         """
-        Removes a web push subscription from the in-memory map.
+        Removes a Web Push subscription from the in-memory map.
 
         :type app_id: String
         :param app_id: The application identifier.
@@ -287,7 +298,7 @@ class WebPushHandler(handler.Handler):
 
     def subscriptions(self, endpoint=None, event=None):
         """
-        Retrieves web push subscriptions from the database with optional filtering.
+        Retrieves Web Push subscriptions from the database with optional filtering.
 
         :type endpoint: String
         :param endpoint: Optional endpoint URL to filter by (default: None).
@@ -298,17 +309,17 @@ class WebPushHandler(handler.Handler):
         the 'subscriptions' key.
         """
 
-        filter = dict()
+        kwargs = dict()
         if endpoint:
-            filter["endpoint"] = endpoint
+            kwargs["endpoint"] = endpoint
         if event:
-            filter["event"] = event
-        subscriptions = pushi.WebPush.find(map=True, **filter)
+            kwargs["event"] = event
+        subscriptions = pushi.WebPush.find(map=True, **kwargs)
         return dict(subscriptions=subscriptions)
 
     def subscribe(self, web_push, auth=None, unsubscribe=True):
         """
-        Subscribes a web push endpoint to an event/channel.
+        Subscribes a Web Push endpoint to an event/channel.
 
         Validates private channel access and optionally removes existing
         subscriptions for the same endpoint to prevent duplicates.
@@ -338,13 +349,13 @@ class WebPushHandler(handler.Handler):
         )
 
         # if the channel is private, verifies the authentication token
-        is_private and self.owner.verify(
-            web_push.app_key, web_push.endpoint, web_push.event, auth
-        )
+        if is_private:
+            self.owner.verify(web_push.app_key, web_push.endpoint, web_push.event, auth)
 
         # if unsubscribe is enabled, removes any existing subscriptions
         # for the same endpoint (prevents duplicates)
-        unsubscribe and self.unsubscribe(web_push.endpoint, force=False)
+        if unsubscribe:
+            self.unsubscribe(web_push.endpoint, force=False)
 
         # checks if a subscription already exists for this endpoint and event
         exists = pushi.WebPush.exists(endpoint=web_push.endpoint, event=web_push.event)
@@ -361,7 +372,7 @@ class WebPushHandler(handler.Handler):
 
     def unsubscribe(self, endpoint, event=None, force=True):
         """
-        Unsubscribes a web push endpoint from an event/channel.
+        Unsubscribes a Web Push endpoint from an event/channel.
 
         :type endpoint: String
         :param endpoint: The push endpoint URL to unsubscribe.
@@ -393,7 +404,7 @@ class WebPushHandler(handler.Handler):
 
     def unsubscribes(self, endpoint, event=None):
         """
-        Unsubscribes a web push endpoint from multiple events/channels.
+        Unsubscribes a Web Push endpoint from multiple events/channels.
 
         Finds and deletes all matching subscriptions for the given
         endpoint, optionally filtered by event name.

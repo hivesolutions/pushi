@@ -37,7 +37,7 @@ class WebPushController(appier.Controller):
     """
     Controller for Web Push API endpoints.
 
-    Provides REST API for managing web push subscriptions,
+    Provides REST API for managing Web Push subscriptions,
     including subscribe and unsubscribe operations.
     """
 
@@ -45,7 +45,7 @@ class WebPushController(appier.Controller):
     @appier.route("/web_pushes", "GET")
     def list(self):
         """
-        Lists web push subscriptions with optional filtering.
+        Lists Web Push subscriptions with optional filtering.
 
         Query parameters:
         - endpoint: Filter by endpoint URL
@@ -63,7 +63,7 @@ class WebPushController(appier.Controller):
     @appier.route("/web_pushes", "POST")
     def create(self):
         """
-        Creates a new web push subscription.
+        Creates a new Web Push subscription.
 
         Form/JSON parameters:
         - endpoint: The push service endpoint URL (required)

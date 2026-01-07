@@ -42,7 +42,7 @@ class WebPushHandlerTest(unittest.TestCase):
     """
     Unit tests for the WebPushHandler class.
 
-    Tests the web push notification handler functionality including
+    Tests the Web Push notification handler functionality including
     subscription management, message sending, and error handling.
     """
 
@@ -246,7 +246,7 @@ class WebPushHandlerTest(unittest.TestCase):
     @mock.patch("pushi.WebPush")
     def test_send_success(self, mock_web_push_model):
         """
-        Tests successful send of web push notification.
+        Tests successful send of Web Push notification.
         """
 
         # Save original pywebpush reference
@@ -275,7 +275,7 @@ class WebPushHandlerTest(unittest.TestCase):
             )
             mock_subscription.p256dh = "test_p256dh_key"
             mock_subscription.auth = "test_auth_secret"
-            mock_web_push_model.get.return_value = mock_subscription
+            mock_web_push_model.find.return_value = [mock_subscription]
 
             # Add subscription to handler
             self.handler.add("app123", "sub123", "notifications")
@@ -349,13 +349,8 @@ class WebPushHandlerTest(unittest.TestCase):
             mock_subscription.p256dh = "test_p256dh_key"
             mock_subscription.auth = "test_auth_secret"
 
-            # Configure mock to return subscription when get() is called with id=sub123
-            def get_side_effect(*args, **kwargs):
-                if kwargs.get("id") == "sub123":
-                    return mock_subscription
-                return None
-
-            mock_web_push_model.get.side_effect = get_side_effect
+            # Configure mock to return subscription when find() is called for batch fetch
+            mock_web_push_model.find.return_value = [mock_subscription]
 
             # Add subscription to handler
             self.handler.add("app123", "sub123", "notifications")
@@ -389,10 +384,10 @@ class WebPushHandlerTest(unittest.TestCase):
     @mock.patch("pushi.WebPush")
     def test_subscribe(self, mock_web_push_model):
         """
-        Tests subscribing a new web push endpoint.
+        Tests subscribing a new Web Push endpoint.
         """
 
-        # Mock web push model
+        # Mock Web Push model
         mock_web_push = mock.MagicMock()
         mock_web_push.endpoint = "https://fcm.googleapis.com/fcm/send/endpoint123"
         mock_web_push.event = "notifications"
@@ -414,7 +409,7 @@ class WebPushHandlerTest(unittest.TestCase):
         Tests subscribing to a private channel (requires authentication).
         """
 
-        # Mock web push model for private channel
+        # Mock Web Push model for private channel
         mock_web_push = mock.MagicMock()
         mock_web_push.endpoint = "https://fcm.googleapis.com/fcm/send/endpoint123"
         mock_web_push.event = "private-channel"
@@ -443,7 +438,7 @@ class WebPushHandlerTest(unittest.TestCase):
     @mock.patch("pushi.WebPush")
     def test_unsubscribe(self, mock_web_push_model):
         """
-        Tests unsubscribing a web push endpoint.
+        Tests unsubscribing a Web Push endpoint.
         """
 
         # Mock existing subscription
@@ -499,7 +494,8 @@ class WebPushHandlerTest(unittest.TestCase):
         mock_sub2.delete.assert_called_once()
         self.assertEqual(len(result), 2)
 
-    def test_message_extraction_from_json(self):
+    @mock.patch("pushi.WebPush")
+    def test_message_extraction_from_json(self, mock_web_push_model):
         """
         Tests that messages are correctly extracted from various JSON structures.
         """
@@ -517,6 +513,9 @@ class WebPushHandlerTest(unittest.TestCase):
             mock_app.vapid_email = "mailto:test@example.com"
             self.mock_owner.get_app.return_value = mock_app
             self.mock_owner.get_channels.return_value = []
+
+            # Mock empty find results (no subscriptions in database)
+            mock_web_push_model.find.return_value = []
 
             # Test with different message formats - all should be handled without crashing
             test_cases = [

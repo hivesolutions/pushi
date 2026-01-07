@@ -34,9 +34,67 @@ from . import base
 
 
 class Association(base.PushiBase):
-    user_id = appier.field(index=True, description="User ID")
+    """
+    Join model that links users to events they have been targeted to receive.
 
-    mid = appier.field(index=True, description="MID")
+    This model creates a many-to-many relationship between users and events,
+    enabling the retrieval of personal events for a specific user. Each
+    association record represents a single user's entitlement to receive
+    a specific event.
+
+    Cardinality:
+        - One User (user_id) can have many Associations (one per event received).
+        - One Event (mid) can have many Associations (one per recipient user).
+        - This forms an N:M relationship between users and the PushiEvent model.
+
+    Lifecycle:
+        - Created automatically when an event is triggered to a channel that has
+          subscribed users (via Subscription model).
+        - Used by `get_events_personal()` to retrieve all events for a given user
+          by collecting association mids and fetching corresponding PushiEvent records.
+
+    Cautions:
+        - Volume growth: Each triggered event creates N associations where N equals
+          the number of subscribed users on the target channel. High-traffic systems
+          may accumulate associations rapidly.
+        - No automatic cleanup: Old associations are not automatically purged; consider
+          implementing a retention policy or periodic cleanup for long-running systems.
+        - Duplicate prevention: The event sending logic uses an `invalid` dict to prevent
+          duplicate associations within a single send operation, but does not check for
+          existing associations in the database.
+        - Instance scoping: Associations are scoped to an app instance (via PushiBase),
+          ensuring multi-tenant isolation.
+
+    Related models:
+        - PushiEvent: The event model referenced by the `mid` field.
+        - Subscription: Determines which users receive events on a channel.
+    """
+
+    user_id = appier.field(
+        index=True,
+        description="User ID",
+        observations="""External identifier of the user entitled to receive the event""",
+    )
+    """
+    The unique identifier of the user who is entitled to receive the
+    associated event. This is an external identifier, not a foreign key
+    to a local user model.
+
+    :type: str
+    """
+
+    mid = appier.field(
+        index=True,
+        description="MID",
+        observations="""Message ID (UUID) referencing the PushiEvent""",
+    )
+    """
+    The Message ID (UUID) of the event. This references the `mid` field
+    in the PushiEvent model and serves as the logical foreign key linking
+    this association to its corresponding event.
+
+    :type: str
+    """
 
     @classmethod
     def validate(cls):

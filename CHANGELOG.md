@@ -9,7 +9,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-*
+* Web Push notification support using W3C Push API (RFC 8030)
+* VAPID authentication for Web Push (RFC 8292)
+* WebPush model for storing push subscriptions
+* WebPushController with REST API endpoints for subscription management
+* WebPushHandler for sending notifications to web browsers
+* Unit tests for WebPushHandler
+* Module entry point to run app via `python -m pushi.app`
+* Documentation for all models (Association, Subscription, PushiEvent, WebPush, App, Web, PushiBase, APN) with purpose, cardinality, lifecycle, and cautions
 
 ### Changed
 

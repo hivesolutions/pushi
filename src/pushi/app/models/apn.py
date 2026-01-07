@@ -34,9 +34,70 @@ from . import base
 
 
 class APN(base.PushiBase):
-    token = appier.field(index=True)
+    """
+    Apple Push Notification (APN) subscription model for iOS devices.
 
-    event = appier.field(index=True)
+    This model stores device tokens registered for push notifications via
+    Apple's APNs service. Each record represents a single iOS device's
+    subscription to a specific event channel.
+
+    Cardinality:
+        - One device token can subscribe to multiple events (multiple records).
+        - One event can have many APN subscriptions (many devices).
+        - This forms an N:M relationship between device tokens and events.
+
+    Lifecycle:
+        - Created when an iOS device registers for push notifications.
+        - On create/update: Registers the token with the APNHandler in the
+          application state for event delivery.
+        - On delete: Removes the token from the APNHandler.
+        - The handler maintains an in-memory mapping for efficient event routing.
+
+    Token management:
+        - Device tokens are provided by iOS and may change over time
+          (app reinstall, device restore, etc.).
+        - Invalid or expired tokens will cause delivery failures; Apple's
+          feedback service should be used to clean up stale tokens.
+
+    Cautions:
+        - Token invalidation: iOS device tokens can become invalid; implement
+          feedback handling to remove stale subscriptions.
+        - Certificate requirements: The parent App must have valid `apn_key`
+          and `apn_cer` configured, matching the `apn_sandbox` environment.
+        - Sandbox vs Production: Ensure `apn_sandbox` flag matches the token's
+          environment; sandbox tokens won't work in production and vice versa.
+        - State synchronization: If application state is unavailable, handler
+          operations are silently skipped (guard: `self.state and ...`).
+        - No uniqueness constraint: Duplicate token/event combinations can exist.
+        - Instance scoping: APN subscriptions are scoped to an app instance via PushiBase.
+
+    Related models:
+        - App: Provides APN credentials and sandbox configuration.
+        - PushiEvent: The events that trigger push notifications.
+    """
+
+    token = appier.field(
+        index=True,
+        observations="""iOS device token from Apple Push Notification service""",
+    )
+    """
+    The iOS device token provided by Apple's Push Notification service.
+    This is a unique identifier for a specific app installation on a
+    specific device, used to route push notifications.
+
+    :type: str
+    """
+
+    event = appier.field(
+        index=True,
+        observations="""Event channel name this device subscribes to""",
+    )
+    """
+    The name of the event channel this device is subscribed to.
+    Can include channel prefixes like `private-` or `presence-`.
+
+    :type: str
+    """
 
     @classmethod
     def validate(cls):
@@ -67,7 +128,7 @@ class APN(base.PushiBase):
         )
 
     def post_create(self):
-        base.PushiBase.pre_create(self)
+        base.PushiBase.post_create(self)
         self.state and self.state.apn_handler.add(self.app_id, self.token, self.event)
 
     def post_update(self):

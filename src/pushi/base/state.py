@@ -48,6 +48,7 @@ import appier
 
 from pushi.base import apn
 from pushi.base import web
+from pushi.base import web_push
 
 
 class AppState(object):
@@ -164,12 +165,15 @@ class State(appier.Mongo):
     def load_handlers(self):
         self.apn_handler = apn.APNHandler(self)
         self.web_handler = web.WebHandler(self)
+        self.web_push_handler = web_push.WebPushHandler(self)
 
         self.apn_handler.load()
         self.web_handler.load()
+        self.web_push_handler.load()
 
         self.handlers.append(self.apn_handler)
         self.handlers.append(self.web_handler)
+        self.handlers.append(self.web_push_handler)
 
     def load_alias(self):
         """

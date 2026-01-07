@@ -1,0 +1,13 @@
+{
+    "version": "0.2.0",
+    "configurations": [{
+        "name": "Pushi App",
+        "type": "debugpy",
+        "request": "launch",
+        "module": "pushi.app",
+        "justMyCode": false,
+        "env": {
+            "PYTHONPATH": "src"
+        }
+    }]
+}

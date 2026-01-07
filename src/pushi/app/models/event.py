@@ -34,15 +34,108 @@ from . import base
 
 
 class PushiEvent(base.PushiBase):
-    mid = appier.field(index=True, immutable=True, default=True, description="MID")
+    """
+    Immutable record of an event published through the Pushi system.
 
-    channel = appier.field(index=True, immutable=True)
+    This model persists the complete event payload including metadata and
+    user-provided data. Events are write-once and cannot be modified after
+    creation, ensuring an auditable history of all published messages.
 
-    owner_id = appier.field(immutable=True, description="Owner ID")
+    Cardinality:
+        - One PushiEvent can have many Associations (one per recipient user).
+        - Events are identified globally by their `mid` (Message ID).
+        - Multiple events can belong to the same channel.
 
-    timestamp = appier.field(type=float, index=True, immutable=True, meta="datetime")
+    Lifecycle:
+        - Created automatically when `state.log_channel()` or `state.send_event()`
+          is called with persistence enabled.
+        - The `mid` and `timestamp` are system-generated and cannot be overridden
+          in the event data payload.
+        - Events are immutable post-creation (all fields marked immutable).
 
-    data = appier.field(type=dict, immutable=True, meta="longtext")
+    Data integrity:
+        - The `pre_save` hook verifies that the `data` dict does not contain
+          `mid` or `timestamp` keys to prevent payload conflicts.
+        - System fields are kept separate from user-provided data.
+
+    Cautions:
+        - Storage growth: Events accumulate indefinitely; consider implementing
+          retention policies for high-volume deployments.
+        - Large payloads: The `data` field stores arbitrary dicts; no size limit
+          is enforced at the model level.
+        - Instance scoping: Events are scoped to an app instance via PushiBase.
+
+    Related models:
+        - Association: Links events to users for personal event retrieval.
+        - Subscription: Determines which users receive events on a channel.
+    """
+
+    mid = appier.field(
+        index=True,
+        immutable=True,
+        default=True,
+        description="MID",
+        observations="""Unique Message ID (UUID), auto-generated on creation""",
+    )
+    """
+    The Message ID, a unique UUID identifying this event globally.
+    Auto-generated on event creation and used as the primary lookup key
+    for event retrieval and association linking.
+
+    :type: str
+    """
+
+    channel = appier.field(
+        index=True,
+        immutable=True,
+        observations="""Channel name this event was published to""",
+    )
+    """
+    The name of the channel this event was published to. Used for
+    filtering and routing events to subscribed clients.
+
+    :type: str
+    """
+
+    owner_id = appier.field(
+        immutable=True,
+        description="Owner ID",
+        observations="""Optional identifier of the entity that triggered this event""",
+    )
+    """
+    Optional identifier of the entity that triggered this event.
+    Can represent a user, service, or system component for auditing purposes.
+
+    :type: str
+    """
+
+    timestamp = appier.field(
+        type=float,
+        index=True,
+        immutable=True,
+        meta="datetime",
+        observations="""Unix timestamp (with fractional seconds) of event creation""",
+    )
+    """
+    Unix timestamp (with fractional seconds) when the event was created.
+    System-generated and cannot be provided in the event data.
+
+    :type: float
+    """
+
+    data = appier.field(
+        type=dict,
+        immutable=True,
+        meta="longtext",
+        observations="""Event payload dict; must not contain reserved keys (mid, timestamp)""",
+    )
+    """
+    The event payload containing arbitrary user-provided data.
+    Must not contain `mid` or `timestamp` keys as these are reserved
+    for system use and validated on save.
+
+    :type: dict
+    """
 
     @classmethod
     def validate(cls):

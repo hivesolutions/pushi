@@ -46,6 +46,8 @@ class WebHandler(handler.Handler):
 
     Notification here will be sent using a HTTP POST
     request to the URL specified in the subscription.
+
+    :see: https://en.wikipedia.org/wiki/Webhook
     """
 
     def __init__(self, owner):

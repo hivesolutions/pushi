@@ -7,7 +7,6 @@ jobs:
       matrix:
         python-version: [
           2.7,
-          3.5,
           3.6,
           3.7,
           3.8,
@@ -15,6 +14,7 @@ jobs:
           "3.10",
           "3.11",
           "3.12",
+          "3.13",
           latest,
           rc
         ]
@@ -29,17 +29,17 @@ jobs:
       - run: |
           pip install black
           black . --check
-        if: matrix.python-version == '3.12'
+        if: matrix.python-version == '3.13'
       - run: |
           pip install pytest
           pytest
       - run: python setup.py test
-        if: ${{ !contains(fromJson('["3.9", "3.10", "3.11", "3.12", "latest"]'), matrix.python-version) }}
+        if: ${{ !contains(fromJson('["3.9", "3.10", "3.11", "3.12", "3.13", "latest"]'), matrix.python-version) }}
   build-pypy:
     name: Build PyPy
     strategy:
       matrix:
-        python-version: [2.7, 3.6]
+        python-version: [2.7]
     runs-on: ubuntu-latest
     container: pypy:${{ matrix.python-version }}
     steps:
@@ -51,9 +51,9 @@ jobs:
       - run: |
           pip install black
           black . --check
-        if: matrix.python-version == '3.12'
+        if: matrix.python-version == '3.13'
       - run: |
           pip install pytest
           pytest
       - run: pypy setup.py test
-        if: ${{ !contains(fromJson('["3.9", "3.10", "3.11", "3.12", "latest"]'), matrix.python-version) }}
+        if: ${{ !contains(fromJson('["3.9", "3.10", "3.11", "3.12", "3.13", "latest"]'), matrix.python-version) }}

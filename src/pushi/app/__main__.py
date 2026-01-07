@@ -28,18 +28,6 @@ __copyright__ = "Copyright (c) 2008-2024 Hive Solutions Lda."
 __license__ = "Apache License, Version 2.0"
 """ The license for the module """
 
-from . import handler
+from .base import PushiApp
 
-
-class PushAPIHandler(handler.Handler):
-    """
-    Pushi handler (adapter) for the Push API infra-structure,
-    so that it's possible to send push notifications
-    to modern Web browsers.
-
-    :see: https://w3c.github.io/push-api
-    """
-
-    def __init__(self, owner):
-        handler.Handler.__init__(self, owner, name="push_api")
-        self.subs = {}
+PushiApp().serve()

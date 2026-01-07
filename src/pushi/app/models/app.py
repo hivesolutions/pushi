@@ -223,3 +223,33 @@ class App(base.PushiBase):
         self.secret = hashlib.sha256(secret).hexdigest()
 
         self.instance = self.ident
+
+    @appier.operation(
+        name="Generate VAPID",
+        description="""Generates a new VAPID key pair for Web Push notifications,
+        setting the private key on this application""",
+        parameters=(("Email", "email", str, ""),),
+    )
+    def generate_vapid_s(self, email=""):
+        # tries to import the py_vapid library which is
+        # required for generating the VAPID key pair
+        try:
+            import py_vapid
+        except ImportError:
+            raise appier.OperationalError(
+                message="py_vapid library not available, required for VAPID generation"
+            )
+
+        # generates a new VAPID key pair using the py_vapid
+        # library and extracts the private key
+        vapid = py_vapid.Vapid()
+        vapid.generate_keys()
+
+        # sets the private key on the model in PEM format
+        # and optionally sets the email if provided
+        self.vapid_key = vapid.private_pem().decode("utf-8")
+        if email:
+            self.vapid_email = email
+
+        # saves the model with the new VAPID credentials
+        self.save()

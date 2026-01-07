@@ -11,24 +11,27 @@ Simple example demonstrating Web Push notifications with Pushi.
 ## Setup
 
 1. Configure your Pushi server with VAPID credentials:
-   ```
-   vapid_key: <your-vapid-private-key>
-   vapid_email: mailto:your@email.com
-   ```
+
+```text
+vapid_key: <your-vapid-private-key>
+vapid_email: mailto:your@email.com
+```
 
 2. Update `index.html` with your app key and server URLs:
-   ```javascript
-   var APP_KEY = "YOUR_APP_KEY";
-   var pushi = new Pushi(APP_KEY, {
-       baseUrl: "wss://your-server:9090/",
-       baseWebUrl: "https://your-server:9090/"
-   });
-   ```
+
+```javascript
+var APP_KEY = "YOUR_APP_KEY";
+var pushi = new Pushi(APP_KEY, {
+    baseUrl: "wss://your-server:9090/",
+    baseWebUrl: "https://your-server:9090/"
+});
+```
 
 3. Serve the files over HTTPS (required for service workers):
-   ```bash
-   python -m http.server 8080 --directory .
-   ```
+
+ ```bash
+python -m http.server 8080 --directory .
+```
 
 4. Open `https://localhost:8080/` in your browser and click "Enable Notifications".
 

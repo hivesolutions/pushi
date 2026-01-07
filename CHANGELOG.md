@@ -22,6 +22,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * VAPID public key endpoint (`GET /apps/vapid_key`) for browser subscription
 * High-level `setupWebPush()` and `teardownWebPush()` methods in JavaScript client
 * Service worker registration helpers in JavaScript client
+* Added `baseWebUrl` option in JavaScript client for configuring HTTP API URL separately from WebSocket URL
+* Web Push example application with client, service worker, and server
 
 ### Changed
 

@@ -120,6 +120,10 @@ Channel.prototype.trigger = Observable.prototype.trigger;
 Channel.prototype.bind = Observable.prototype.bind;
 Channel.prototype.unbind = Observable.prototype.unbind;
 
+// ===========================================
+// Pushi Base Implementation
+// ===========================================
+
 var Pushi = function(appKey, options) {
     this.init(appKey, options);
 };
@@ -169,6 +173,7 @@ Pushi.prototype.config = function(appKey, options) {
     // to the pre-defined (constant) values if that's required
     var timeout = options.timeout || TIMEOUT;
     var baseUrl = options.baseUrl || BASE_URL;
+    var baseWebUrl = options.baseWebUrl || null;
 
     // removes any previously registered configuration for the
     // the current instance app key (for cases of re-configuration)
@@ -179,6 +184,7 @@ Pushi.prototype.config = function(appKey, options) {
     this.timeout = timeout;
     this.url = baseUrl + appKey;
     this.baseUrl = baseUrl;
+    this.baseWebUrl = baseWebUrl;
     this.appKey = appKey;
     this.options = options || {};
 
@@ -199,6 +205,7 @@ Pushi.prototype.clone = function(base) {
     this.timeout = base.timeout;
     this.url = base.url;
     this.baseUrl = base.baseUrl;
+    this.baseWebUrl = base.baseWebUrl;
     this.appKey = base.appKey;
     this.options = base.options;
     this.socket = base.socket;
@@ -578,7 +585,7 @@ Pushi.prototype.latest = function(channel, skip, count, callback) {
         return;
     }
 
-    // sends the event for the latest (retrival) of the channel through
+    // sends the event for the latest (retrieval) of the channel through
     // the current pushi socket so that the latest messages are retrieved
     this.sendEvent("pusher:latest", {
         channel: channel,
@@ -617,7 +624,7 @@ Pushi.prototype.subscribePublic = function(channel) {
 };
 
 Pushi.prototype.subscribePrivate = function(channel) {
-    // in case no authentication endpoint exists returns imediately
+    // in case no authentication endpoint exists returns immediately
     // because there's not enough information to proceed with the
     // authentication process for the private channel
     if (!this.authEndpoint) {
@@ -647,7 +654,7 @@ Pushi.prototype.subscribePrivate = function(channel) {
             return;
         }
 
-        // retrieves the reponse data and parses it as a json
+        // retrieves the response data and parses it as a json
         // message and returns immediately in case no auth
         // information is provided as part of the response
         var result = JSON.parse(request.responseText);
@@ -670,6 +677,10 @@ Pushi.prototype.subscribePrivate = function(channel) {
 Pushi.prototype.isValid = function(appKey, baseUrl) {
     return appKey === this.appKey && baseUrl === this.baseUrl;
 };
+
+// ===========================================
+// Observable Support
+// ===========================================
 
 Pushi.prototype.trigger = Observable.prototype.trigger;
 Pushi.prototype.bind = Observable.prototype.bind;
@@ -989,16 +1000,16 @@ Pushi.prototype.teardownWebPush = function(event) {
  * @private
  */
 Pushi.prototype._buildApiUrl = function(path) {
-    // determines the API base URL from options or derives it
+    // determines the HTTP API base URL from options or derives it
     // from the WebSocket URL by replacing the protocol
-    var apiUrl = this.options.apiUrl;
-    if (!apiUrl) {
-        apiUrl = this.baseUrl.replace("wss://", "https://").replace("ws://", "http://");
+    var baseWebUrl = this.baseWebUrl;
+    if (!baseWebUrl) {
+        baseWebUrl = this.baseUrl.replace("wss://", "https://").replace("ws://", "http://");
     }
-    apiUrl = apiUrl.replace(/\/$/, "");
+    baseWebUrl = baseWebUrl.replace(/\/$/, "");
 
     // builds the complete URL with app key parameter
-    var url = apiUrl + path;
+    var url = baseWebUrl + path;
     url += (url.indexOf("?") === -1 ? "?" : "&") + "app_key=" + this.appKey;
     return url;
 };

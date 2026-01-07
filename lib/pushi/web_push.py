@@ -32,7 +32,9 @@ import appier
 
 
 class WebPushAPI(object):
-    def create_web_push(self, endpoint, p256dh, auth, event, auth_token=None, unsubscribe=True):
+    def create_web_push(
+        self, endpoint, p256dh, auth, event, auth_token=None, unsubscribe=True
+    ):
         # runs the Web Push subscription operation for the provided
         # endpoint and event, this operation uses the currently
         # defined app id for the operation, then returns the

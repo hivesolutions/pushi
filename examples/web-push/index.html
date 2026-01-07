@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>Pushi Web Push Example</title>
+    <style>
+        body { font-family: sans-serif; max-width: 600px; margin: 40px auto; padding: 20px; }
+        button { padding: 12px 24px; font-size: 16px; cursor: pointer; margin: 8px 4px; }
+        #status { margin-top: 20px; padding: 12px; background: #f0f0f0; border-radius: 4px; }
+    </style>
+</head>
+<body>
+    <h1>Pushi Web Push Example</h1>
+
+    <button id="subscribe">Enable Notifications</button>
+    <button id="unsubscribe">Disable Notifications</button>
+
+    <div id="status">Status: Not subscribed</div>
+
+    <script src="../../js/pushi.js"></script>
+    <script>
+        // sets up the application key and creates the pushi
+        // instance that will be used to manage subscriptions
+        var APP_KEY = "YOUR_APP_KEY";
+        var status = document.getElementById("status");
+
+        var pushi = new Pushi(APP_KEY, {
+            baseUrl: "wss://localhost:9090/",
+            baseWebUrl: "https://localhost:9090/"
+        });
+
+        // handles the subscribe button click, requests permission
+        // and registers the browser for push notifications
+        document.getElementById("subscribe").onclick = function() {
+            status.textContent = "Status: Requesting permission...";
+
+            pushi.setupWebPush("notifications")
+                .then(function(result) {
+                    status.textContent = "Status: Subscribed! Endpoint: " +
+                        result.subscriptionInfo.endpoint.substring(0, 50) + "...";
+                })
+                .catch(function(error) {
+                    status.textContent = "Status: Error - " + error.message;
+                });
+        };
+
+        // handles the unsubscribe button click, removes the
+        // subscription from both the browser and the server
+        document.getElementById("unsubscribe").onclick = function() {
+            pushi.teardownWebPush("notifications")
+                .then(function() {
+                    status.textContent = "Status: Unsubscribed";
+                })
+                .catch(function(error) {
+                    status.textContent = "Status: Error - " + error.message;
+                });
+        };
+    </script>
+</body>
+</html>

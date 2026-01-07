@@ -5,6 +5,7 @@
         "type": "debugpy",
         "request": "launch",
         "module": "pushi.app",
+        "justMyCode": false,
         "env": {
             "PYTHONPATH": "src"
         }

@@ -23,17 +23,17 @@ vapid_email: mailto:your@email.com
 var APP_KEY = "YOUR_APP_KEY";
 var pushi = new Pushi(APP_KEY, {
     baseUrl: "wss://your-server:9090/",
-    baseWebUrl: "https://your-server:9090/"
+    baseWebUrl: "https://your-server:8080/"
 });
 ```
 
 3. Serve the files over HTTPS (required for service workers):
 
  ```bash
-python -m http.server 8080 --directory .
+python -m http.server 8181 --directory .
 ```
 
-4. Open `https://localhost:8080/` in your browser and click "Enable Notifications".
+4. Open `https://localhost:8181/` in your browser and click "Enable Notifications".
 
 ## Sending Notifications
 
@@ -46,7 +46,7 @@ api = pushi.API(
     app_id="YOUR_APP_ID",
     app_key="YOUR_APP_KEY",
     app_secret="YOUR_APP_SECRET",
-    base_url="https://your-server:9090/"
+    base_url="https://your-server:8080/"
 )
 
 api.trigger_event("notifications", {

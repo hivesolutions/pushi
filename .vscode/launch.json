@@ -9,5 +9,14 @@
         "env": {
             "PYTHONPATH": "src"
         }
+    }, {
+        "name": "Pushi Base",
+        "type": "debugpy",
+        "request": "launch",
+        "module": "pushi.base",
+        "justMyCode": false,
+        "env": {
+            "PYTHONPATH": "src"
+        }
     }]
 }

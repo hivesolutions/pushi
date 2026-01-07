@@ -36,7 +36,7 @@ api = pushi.API(
     app_id="YOUR_APP_ID",
     app_key="YOUR_APP_KEY",
     app_secret="YOUR_APP_SECRET",
-    base_url="https://localhost:9090/",
+    base_url="https://localhost:8080/",
 )
 
 # retrieves the VAPID public key that is required

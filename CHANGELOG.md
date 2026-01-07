@@ -16,6 +16,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * WebPushHandler for sending notifications to web browsers
 * Unit tests for WebPushHandler
 * Module entry point to run app via `python -m pushi.app`
+* Module entry point to run base via `python -m pushi.base`
 * Documentation for all models (Association, Subscription, PushiEvent, WebPush, App, Web, PushiBase, APN) with purpose, cardinality, lifecycle, and cautions
 * WebPushAPI mixin for Python client library with subscription management methods
 * Web Push support in JavaScript client library with full browser integration

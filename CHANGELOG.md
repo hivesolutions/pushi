@@ -25,6 +25,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 * Refactored Web model lifecycle methods to use explicit if statements instead of short-circuit evaluation
+* Refactored APN, Subscription, and WebPush model lifecycle methods to use explicit if statements instead of short-circuit evaluation
 
 ## [0.3.1] - 2024-01-17
 

@@ -151,20 +151,22 @@ class WebPush(base.PushiBase):
     def pre_update(self):
         base.PushiBase.pre_update(self)
         previous = self.__class__.get(id=self.id)
-        self.state and self.state.web_push_handler.remove(
-            previous.app_id, previous.id, previous.event
-        )
+        if self.state:
+            self.state.web_push_handler.remove(
+                previous.app_id, previous.id, previous.event
+            )
 
     def post_create(self):
         base.PushiBase.post_create(self)
-        self.state and self.state.web_push_handler.add(self.app_id, self.id, self.event)
+        if self.state:
+            self.state.web_push_handler.add(self.app_id, self.id, self.event)
 
     def post_update(self):
         base.PushiBase.post_update(self)
-        self.state and self.state.web_push_handler.add(self.app_id, self.id, self.event)
+        if self.state:
+            self.state.web_push_handler.add(self.app_id, self.id, self.event)
 
     def post_delete(self):
         base.PushiBase.post_delete(self)
-        self.state and self.state.web_push_handler.remove(
-            self.app_id, self.id, self.event
-        )
+        if self.state:
+            self.state.web_push_handler.remove(self.app_id, self.id, self.event)

@@ -81,6 +81,13 @@ class WebPush(base.PushiBase):
         observations="""The push service endpoint URL where
         notifications will be sent (provided by the browser)""",
     )
+    """
+    The push service endpoint URL provided by the browser's Push API.
+    This URL is unique per browser/device and is where notifications
+    are sent via HTTP POST requests.
+
+    :type: str
+    """
 
     p256dh = appier.field(
         description="P256DH Key",
@@ -88,6 +95,13 @@ class WebPush(base.PushiBase):
         observations="""The client's public key for encryption
         (base64url-encoded, used for message encryption)""",
     )
+    """
+    The client's P-256 ECDH public key in base64url encoding.
+    Used for encrypting push message payloads so only the
+    intended browser can decrypt them.
+
+    :type: str
+    """
 
     auth = appier.field(
         description="Auth Secret",
@@ -95,6 +109,13 @@ class WebPush(base.PushiBase):
         observations="""The authentication secret for encryption
         (base64url-encoded, used for message authentication)""",
     )
+    """
+    The authentication secret in base64url encoding.
+    Provides an additional layer of message authentication
+    to prevent tampering with encrypted payloads.
+
+    :type: str
+    """
 
     event = appier.field(
         index=True,
@@ -102,6 +123,13 @@ class WebPush(base.PushiBase):
         observations="""The channel/event name this subscription
         is registered for (can include private-, presence-, etc.)""",
     )
+    """
+    The event channel name this subscription is registered for.
+    Can include channel prefixes like `private-` or `presence-`
+    for access control purposes.
+
+    :type: str
+    """
 
     @classmethod
     def validate(cls):

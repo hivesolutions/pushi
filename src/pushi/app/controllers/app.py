@@ -65,3 +65,44 @@ class AppController(appier.Controller):
     def ping(self):
         app = pushi.App.get()
         self.state.trigger(app.id, "ping", "ping", persist=False)
+
+    @appier.route("/apps/vapid_key", "GET")
+    def vapid_key(self):
+        """
+        Retrieves the VAPID public key for Web Push subscription.
+
+        The public key is derived from the configured VAPID private key
+        and is needed by browsers to subscribe to push notifications
+        using the Web Push API (applicationServerKey).
+
+        :rtype: Dictionary
+        :return: Dictionary containing the VAPID public key in base64url format.
+        """
+
+        # retrieves the current application and verifies
+        # that VAPID credentials are properly configured
+        app = pushi.App.get()
+        if not app.vapid_key:
+            raise appier.OperationalError(
+                message="VAPID credentials not configured for this app"
+            )
+
+        # derives the public key from the private key using
+        # the py_vapid library, which handles both PEM and
+        # raw key formats
+        try:
+            from py_vapid import Vapid
+        except ImportError:
+            raise appier.OperationalError(
+                message="py_vapid library not available, required for Web Push"
+            )
+
+        try:
+            vapid = Vapid.from_string(app.vapid_key)
+            public_key = vapid.public_key
+        except Exception as exception:
+            raise appier.OperationalError(
+                message="Failed to derive VAPID public key: %s" % str(exception)
+            )
+
+        return dict(vapid_public_key=public_key)

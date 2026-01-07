@@ -17,6 +17,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Unit tests for WebPushHandler
 * Module entry point to run app via `python -m pushi.app`
 * Documentation for all models (Association, Subscription, PushiEvent, WebPush, App, Web, PushiBase, APN) with purpose, cardinality, lifecycle, and cautions
+* WebPushAPI mixin for Python client library with subscription management methods
+* Web Push support in JavaScript client library with full browser integration
+* VAPID public key endpoint (`GET /apps/vapid_key`) for browser subscription
+* High-level `setupWebPush()` and `teardownWebPush()` methods in JavaScript client
+* Service worker registration helpers in JavaScript client
 
 ### Changed
 

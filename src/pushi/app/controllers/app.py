@@ -91,14 +91,14 @@ class AppController(appier.Controller):
         # the py_vapid library, which handles both PEM and
         # raw key formats
         try:
-            from py_vapid import Vapid
+            import py_vapid
         except ImportError:
             raise appier.OperationalError(
                 message="py_vapid library not available, required for Web Push"
             )
 
         try:
-            vapid = Vapid.from_string(app.vapid_key)
+            vapid = py_vapid.Vapid.from_string(app.vapid_key)
             public_key = vapid.public_key
         except Exception as exception:
             raise appier.OperationalError(

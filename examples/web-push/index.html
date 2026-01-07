@@ -34,7 +34,7 @@
         document.getElementById("subscribe").onclick = function() {
             status.textContent = "Status: Requesting permission...";
 
-            pushi.setupWebPush("notifications")
+            pushi.setupWebPush("notifications", { swPath: "sw.js" })
                 .then(function(result) {
                     status.textContent = "Status: Subscribed! Endpoint: " +
                         result.subscriptionInfo.endpoint.substring(0, 50) + "...";

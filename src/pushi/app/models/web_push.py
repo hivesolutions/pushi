@@ -37,9 +37,39 @@ class WebPush(base.PushiBase):
     """
     Database model for W3C Web Push API subscriptions.
 
-    Stores the subscription information required to send
-    push notifications to web browsers, including the
-    push service endpoint and encryption keys.
+    Stores the subscription information required to send push notifications
+    to web browsers, including the push service endpoint and encryption keys.
+    Each record represents a single browser's subscription to a specific event.
+
+    Cardinality:
+        - One browser endpoint can subscribe to multiple events (multiple records).
+        - One event can have many WebPush subscriptions (many browser endpoints).
+        - This forms an N:M relationship between browser endpoints and events.
+
+    Lifecycle:
+        - Created when a browser subscribes to push notifications via the API.
+        - On create/update: Registers the subscription with the WebPushHandler
+          in the application state for event delivery.
+        - On delete: Removes the subscription from the WebPushHandler.
+        - The handler maintains an in-memory mapping for efficient event routing.
+
+    Encryption:
+        - The `p256dh` and `auth` fields contain browser-generated encryption keys.
+        - Messages are encrypted using ECDH with the p256dh public key.
+        - The auth secret provides an additional authentication layer.
+
+    Cautions:
+        - Endpoint expiration: Browser endpoints can become invalid over time
+          (user clears data, changes permissions). Handle delivery failures gracefully.
+        - State synchronization: If application state is unavailable, handler
+          operations are silently skipped (guard: `self.state and ...`).
+        - VAPID required: The parent App must have `vapid_key` and `vapid_email`
+          configured for Web Push to function.
+        - Instance scoping: Subscriptions are scoped to an app instance via PushiBase.
+
+    Related models:
+        - App: Provides VAPID credentials for authentication.
+        - PushiEvent: The events that trigger push notifications.
 
     :see: https://w3c.github.io/push-api
     """

@@ -33,7 +33,62 @@ import appier_extras
 
 
 class PushiBase(appier_extras.admin.Base):
-    instance = appier.field(index=True, safe=True, immutable=True)
+    """
+    Abstract base model providing multi-tenancy and application scoping.
+
+    This is the foundation class for all Pushi domain models. It extends the
+    Appier admin base model with instance-based isolation, ensuring that each
+    application (App) has its own isolated namespace for all related entities.
+
+    Multi-tenancy mechanism:
+        - The `instance` field stores the owning App's `ident` value.
+        - Query methods (get, find, count) automatically filter by the current
+          session's `app_id` when available.
+        - On creation, the `instance` is set from the current `app_id`.
+
+    Query behavior:
+        - All queries automatically scope to the current app context.
+        - The `app_id` is retrieved from the request session.
+        - If no `app_id` is in session, queries return cross-tenant results
+          (admin access pattern).
+
+    Properties:
+        - `state`: Returns the global Pushi application state object.
+        - `app_id`: Returns the owning application's identifier.
+        - `app_key`: Returns the owning application's API key (via state lookup).
+
+    Lifecycle:
+        - On pre_create: Sets `instance` from the current `app_id` if available.
+        - The `instance` field is immutable after creation.
+
+    Cautions:
+        - Session dependency: Multi-tenancy relies on `app_id` being present in
+          the request session. Ensure proper authentication sets this value.
+        - Admin access: Without `app_id` in session, queries are not scoped,
+          which may expose data across tenants if not handled carefully.
+        - State availability: The `state` property may return None if the
+          application state is not initialized.
+        - Inheritance order: Child classes calling super() in hooks must ensure
+          proper call chain to maintain multi-tenancy behavior.
+
+    Related models:
+        - App: The application model whose `ident` is stored in `instance`.
+        - All domain models: Subscription, Association, PushiEvent, APN, Web, WebPush.
+    """
+
+    instance = appier.field(
+        index=True,
+        safe=True,
+        immutable=True,
+        observations="""App instance identifier for multi-tenant scoping""",
+    )
+    """
+    The application instance identifier that scopes this record.
+    Set automatically to the owning App's `ident` on creation.
+    Used for multi-tenant isolation in all query operations.
+
+    :type: str
+    """
 
     @classmethod
     def get(cls, *args, **kwargs):

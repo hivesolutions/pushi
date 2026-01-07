@@ -34,9 +34,73 @@ from . import base
 
 
 class Web(base.PushiBase):
-    url = appier.field(index=True, description="URL", meta="url")
+    """
+    Webhook registration model for HTTP callback notifications.
 
-    event = appier.field(index=True)
+    This model enables server-to-server push notifications by registering
+    external URLs (webhooks) that will receive HTTP POST requests when
+    events are published to specific channels.
+
+    Cardinality:
+        - One URL can subscribe to multiple events (multiple records).
+        - One event can have many webhook subscriptions (many URLs).
+        - This forms an N:M relationship between URLs and event channels.
+
+    Lifecycle:
+        - Created when an external service registers a webhook endpoint.
+        - On create/update: Registers the webhook with the WebHandler in the
+          application state for event delivery.
+        - On delete: Removes the webhook from the WebHandler.
+        - The handler maintains an in-memory mapping for efficient event routing.
+
+    Delivery behavior:
+        - When an event is published to a subscribed channel, an HTTP POST
+          request is sent to the registered URL with the event payload.
+        - Delivery is typically asynchronous and may include retry logic
+          (implementation dependent on WebHandler).
+
+    Cautions:
+        - URL validation: No URL format validation at model level; invalid URLs
+          will cause delivery failures at runtime.
+        - Endpoint availability: External endpoints may become unavailable;
+          implement proper error handling and retry policies.
+        - Security: Consider implementing webhook signatures or authentication
+          to verify payload authenticity at the receiving end.
+        - State synchronization: If application state is unavailable, handler
+          operations are silently skipped (guard: `self.state and ...`).
+        - No uniqueness constraint: Duplicate URL/event combinations can exist.
+        - Instance scoping: Webhooks are scoped to an app instance via PushiBase.
+
+    Related models:
+        - PushiEvent: The events that trigger webhook calls.
+        - App: The parent application that owns this webhook registration.
+
+    :see: https://en.wikipedia.org/wiki/Webhook
+    """
+
+    url = appier.field(
+        index=True,
+        description="URL",
+        meta="url",
+        observations="""Webhook endpoint URL that receives HTTP POST on event publish""",
+    )
+    """
+    The webhook endpoint URL that will receive HTTP POST requests
+    when events are published to the subscribed channel.
+
+    :type: str
+    """
+
+    event = appier.field(
+        index=True,
+        observations="""Event channel name this webhook subscribes to""",
+    )
+    """
+    The name of the event channel this webhook is subscribed to.
+    Can include channel prefixes like `private-` or `presence-`.
+
+    :type: str
+    """
 
     @classmethod
     def validate(cls):

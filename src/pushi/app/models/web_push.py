@@ -38,7 +38,7 @@ class WebPush(base.PushiBase):
     Database model for W3C Web Push API subscriptions.
 
     Stores the subscription information required to send push notifications
-    to web browsers, including the push service endpoint and encryption keys.
+    to Web browsers, including the push service endpoint and encryption keys.
     Each record represents a single browser's subscription to a specific event.
 
     Cardinality:

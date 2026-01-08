@@ -88,9 +88,9 @@ class WebHandler(handler.Handler):
         urls = set(urls)
         count = len(urls)
 
-        # prints a logging message about the various (web) subscriptions
+        # prints a logging message about the various (Web) subscriptions
         # that were found for the event that was triggered
-        self.logger.debug("Found %d web subscription(s) for '%s'" % (count, root_event))
+        self.logger.debug("Found %d Web (Hook) subscription(s) for '%s'" % (count, root_event))
 
         # serializes the JSON message so that it's possible to send it using
         # the HTTP client to the endpoints and then creates the map of headers
@@ -105,7 +105,7 @@ class WebHandler(handler.Handler):
             protocol.close()
 
         # creates the on close function that will be responsible for the stopping
-        # of the loop as defined by the web implementation
+        # of the loop as defined by the Web (Hook) implementation
         def on_finish(protocol):
             netius.compat_loop(loop).stop()
 
@@ -119,7 +119,7 @@ class WebHandler(handler.Handler):
             if url in invalid:
                 continue
 
-            # prints a debug message about the web message that
+            # prints a debug message about the Web (Hook) message that
             # is going to be sent (includes URL)
             self.logger.debug("Sending POST request to '%s'" % url)
 

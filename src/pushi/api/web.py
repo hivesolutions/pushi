@@ -31,7 +31,7 @@ __license__ = "Apache License, Version 2.0"
 
 class WebAPI(object):
     def create_web(self, url, event, auth=None, unsubscribe=True):
-        # runs the web subscription operation for the provided
+        # runs the Web (Hook) subscription operation for the provided
         # URL and event, this operation uses the currently
         # defined app id for the operation, then returns the
         # resulting dictionary to the caller method

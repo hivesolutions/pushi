@@ -285,8 +285,10 @@ Data:
             or smtp.event.startswith("personal-")
         )
 
-        is_private and self.owner.verify(smtp.app_key, smtp.email, smtp.event, auth)
-        unsubscribe and self.unsubscribe(smtp.email, force=False)
+        if is_private:
+            self.owner.verify(smtp.app_key, smtp.email, smtp.event, auth)
+        if unsubscribe:
+            self.unsubscribe(smtp.email, force=False)
 
         exists = pushi.SMTP.exists(email=smtp.email, event=smtp.event)
         if exists:

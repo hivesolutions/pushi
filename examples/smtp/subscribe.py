@@ -27,7 +27,7 @@ Initializes the API client with application credentials and subscribes
 the provided email address to the "notifications" channel. When events
 are triggered on this channel, an email will be sent via SMTP.
 
-Run from the examples/mail directory with:
+Run from the examples/smtp directory with:
     python subscribe.py user@example.com
 
 Before running:
@@ -68,7 +68,7 @@ email = sys.argv[1] if len(sys.argv) > 1 else "user@example.com"
 # when events are triggered on this channel, an email will be sent
 print("Subscribing %s to 'notifications' channel..." % email)
 result = api.post(
-    api.base_url + "mails",
+    api.base_url + "smtps",
     data_j=dict(email=email, event="notifications"),
 )
 print("Subscription created with ID: %s" % result.get("id"))

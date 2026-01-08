@@ -47,7 +47,7 @@ import pushi
 import appier
 
 from pushi.base import apn
-from pushi.base import mail
+from pushi.base import smtp
 from pushi.base import web
 from pushi.base import web_push
 
@@ -90,7 +90,7 @@ class State(appier.Mongo):
         self.app = None
         self.server = None
         self.apn_handler = None
-        self.mail_handler = None
+        self.smtp_handler = None
         self.handlers = []
         self.app_id_state = {}
         self.app_key_state = {}
@@ -166,17 +166,17 @@ class State(appier.Mongo):
 
     def load_handlers(self):
         self.apn_handler = apn.APNHandler(self)
-        self.mail_handler = mail.MailHandler(self)
+        self.smtp_handler = smtp.SMTPHandler(self)
         self.web_handler = web.WebHandler(self)
         self.web_push_handler = web_push.WebPushHandler(self)
 
         self.apn_handler.load()
-        self.mail_handler.load()
+        self.smtp_handler.load()
         self.web_handler.load()
         self.web_push_handler.load()
 
         self.handlers.append(self.apn_handler)
-        self.handlers.append(self.mail_handler)
+        self.handlers.append(self.smtp_handler)
         self.handlers.append(self.web_handler)
         self.handlers.append(self.web_push_handler)
 

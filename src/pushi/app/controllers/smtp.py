@@ -33,34 +33,34 @@ import appier
 import pushi
 
 
-class MailController(appier.Controller):
+class SMTPController(appier.Controller):
     @appier.private
-    @appier.route("/mails", "GET")
+    @appier.route("/smtps", "GET")
     def list(self):
         email = self.field("email", None)
         event = self.field("event", None)
-        return self.state.mail_handler.subscriptions(email=email, event=event)
+        return self.state.smtp_handler.subscriptions(email=email, event=event)
 
     @appier.private
-    @appier.route("/mails", "POST")
+    @appier.route("/smtps", "POST")
     def create(self):
         auth = self.field("auth", None)
         unsubscribe = self.field("unsubscribe", False, cast=bool)
-        mail = pushi.Mail.new()
-        mail = self.state.mail_handler.subscribe(
-            mail, auth=auth, unsubscribe=unsubscribe
+        smtp = pushi.SMTP.new()
+        smtp = self.state.smtp_handler.subscribe(
+            smtp, auth=auth, unsubscribe=unsubscribe
         )
-        return mail.map()
+        return smtp.map()
 
     @appier.private
-    @appier.route("/mails/<email>", "DELETE")
+    @appier.route("/smtps/<email>", "DELETE")
     def deletes(self, email):
-        mails = self.state.mail_handler.unsubscribes(email)
-        return dict(subscriptions=[mail.map() for mail in mails])
+        smtps = self.state.smtp_handler.unsubscribes(email)
+        return dict(subscriptions=[smtp.map() for smtp in smtps])
 
     @appier.private
-    @appier.route(r"/mails/<email>/<regex('[\.\w-]+'):event>", "DELETE")
+    @appier.route(r"/smtps/<email>/<regex('[\.\w-]+'):event>", "DELETE")
     def delete(self, email, event):
         force = self.field("force", False, cast=bool)
-        mail = self.state.mail_handler.unsubscribe(email, event=event, force=force)
-        return mail.map()
+        smtp = self.state.smtp_handler.unsubscribe(email, event=event, force=force)
+        return smtp.map()

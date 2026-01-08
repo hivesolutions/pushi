@@ -33,7 +33,7 @@ import appier
 from . import base
 
 
-class Mail(base.PushiBase):
+class SMTP(base.PushiBase):
     """
     Email subscription model for SMTP-based push notifications.
 
@@ -47,9 +47,9 @@ class Mail(base.PushiBase):
 
     Lifecycle:
         - Created when an email address is registered for notifications.
-        - On create/update: Registers the email with the MailHandler in the
+        - On create/update: Registers the email with the SMTPHandler in the
           application state for event delivery.
-        - On delete: Removes the email from the MailHandler.
+        - On delete: Removes the email from the SMTPHandler.
         - The handler maintains an in-memory mapping for efficient event routing.
 
     Delivery behavior:
@@ -100,7 +100,7 @@ class Mail(base.PushiBase):
 
     @classmethod
     def validate(cls):
-        return super(Mail, cls).validate() + [
+        return super(SMTP, cls).validate() + [
             appier.not_null("email"),
             appier.not_empty("email"),
             appier.not_null("event"),
@@ -111,25 +111,33 @@ class Mail(base.PushiBase):
     def list_names(cls):
         return ["id", "email", "event"]
 
+    @classmethod
+    def _underscore(cls, plural=True):
+        return "smtps" if plural else "smtp"
+
+    @classmethod
+    def _readable(cls, plural=False):
+        return "SMTPs" if plural else "SMTP"
+
     def pre_update(self):
         base.PushiBase.pre_update(self)
         previous = self.__class__.get(id=self.id)
         if self.state:
-            self.state.mail_handler.remove(
+            self.state.smtp_handler.remove(
                 previous.app_id, previous.email, previous.event
             )
 
     def post_create(self):
         base.PushiBase.post_create(self)
         if self.state:
-            self.state.mail_handler.add(self.app_id, self.email, self.event)
+            self.state.smtp_handler.add(self.app_id, self.email, self.event)
 
     def post_update(self):
         base.PushiBase.post_update(self)
         if self.state:
-            self.state.mail_handler.add(self.app_id, self.email, self.event)
+            self.state.smtp_handler.add(self.app_id, self.email, self.event)
 
     def post_delete(self):
         base.PushiBase.post_delete(self)
         if self.state:
-            self.state.mail_handler.remove(self.app_id, self.email, self.event)
+            self.state.smtp_handler.remove(self.app_id, self.email, self.event)

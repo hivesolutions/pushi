@@ -46,7 +46,7 @@ except ImportError:
     import urlparse
 
 
-class MailHandler(handler.Handler):
+class SMTPHandler(handler.Handler):
     """
     Event handler to be used for email (SMTP) based notifications.
 
@@ -73,11 +73,11 @@ class MailHandler(handler.Handler):
     """
 
     def __init__(self, owner):
-        handler.Handler.__init__(self, owner, name="mail")
+        handler.Handler.__init__(self, owner, name="smtp")
         self.subs = {}
 
     def send(self, app_id, event, json_d, invalid={}):
-        self.logger.debug("Mail handler send called for event '%s'" % event)
+        self.logger.debug("SMTP handler send called for event '%s'" % event)
 
         # retrieves the reference to the app structure associated with the
         # id for which the message is being sent
@@ -100,13 +100,13 @@ class MailHandler(handler.Handler):
         # in case the SMTP host is not configured skips the sending operation
         # as there's no way to send emails without a valid host
         if not smtp_host:
-            self.logger.warning("SMTP host not configured, skipping mail send")
+            self.logger.warning("SMTP host not configured, skipping SMTP send")
             return
 
         # in case the SMTP sender is not configured skips the sending operation
         # as a valid sender address is required for email delivery
         if not smtp_sender:
-            self.logger.warning("SMTP sender not configured, skipping mail send")
+            self.logger.warning("SMTP sender not configured, skipping SMTP send")
             return
 
         # retrieves the app key for the retrieved app by unpacking the current
@@ -123,11 +123,11 @@ class MailHandler(handler.Handler):
         extra = self.owner.get_channels(app_key, event)
         events = [event] + extra
 
-        # retrieves the complete set of subscriptions for the current mail
+        # retrieves the complete set of subscriptions for the current SMTP
         # infra-structure to be able to resolve the appropriate emails
         subs = self.subs.get(app_id, {})
         self.logger.debug(
-            "Mail subscriptions for app_id=%s: %s (events=%s)"
+            "SMTP subscriptions for app_id=%s: %s (events=%s)"
             % (app_id, list(subs.keys()), events)
         )
 
@@ -142,10 +142,10 @@ class MailHandler(handler.Handler):
         emails = set(emails)
         count = len(emails)
 
-        # prints a logging message about the various (mail) subscriptions
+        # prints a logging message about the various (SMTP) subscriptions
         # that were found for the event that was triggered
         self.logger.debug(
-            "Found %d Mail subscription(s) for '%s'" % (count, root_event)
+            "Found %d SMTP subscription(s) for '%s'" % (count, root_event)
         )
 
         # in case there are no emails to notify returns immediately
@@ -207,7 +207,7 @@ Data:
             if target_email in invalid:
                 continue
 
-            # prints a debug message about the mail message that
+            # prints a debug message about the SMTP message that
             # is going to be sent (includes email address)
             self.logger.debug("Sending email to '%s'" % target_email)
 
@@ -264,14 +264,14 @@ Data:
             invalid[target_email] = True
 
     def load(self):
-        subs = pushi.Mail.find()
-        self.logger.info("Loading %d mail subscription(s)" % len(subs))
+        subs = pushi.SMTP.find()
+        self.logger.info("Loading %d SMTP subscription(s)" % len(subs))
         for sub in subs:
             app_id = sub.app_id
             target_email = sub.email
             event = sub.event
             self.logger.debug(
-                "Loaded mail subscription: app_id=%s, email=%s, event=%s"
+                "Loaded SMTP subscription: app_id=%s, email=%s, event=%s"
                 % (app_id, target_email, event)
             )
             self.add(app_id, target_email, event)
@@ -295,31 +295,31 @@ Data:
             filter["email"] = email
         if event:
             filter["event"] = event
-        subscriptions = pushi.Mail.find(map=True, **filter)
+        subscriptions = pushi.SMTP.find(map=True, **filter)
         return dict(subscriptions=subscriptions)
 
-    def subscribe(self, mail, auth=None, unsubscribe=True):
-        self.logger.debug("Subscribing '%s' for '%s'" % (mail.email, mail.event))
+    def subscribe(self, smtp, auth=None, unsubscribe=True):
+        self.logger.debug("Subscribing '%s' for '%s'" % (smtp.email, smtp.event))
 
         is_private = (
-            mail.event.startswith("private-")
-            or mail.event.startswith("presence-")
-            or mail.event.startswith("peer-")
-            or mail.event.startswith("personal-")
+            smtp.event.startswith("private-")
+            or smtp.event.startswith("presence-")
+            or smtp.event.startswith("peer-")
+            or smtp.event.startswith("personal-")
         )
 
-        is_private and self.owner.verify(mail.app_key, mail.email, mail.event, auth)
-        unsubscribe and self.unsubscribe(mail.email, force=False)
+        is_private and self.owner.verify(smtp.app_key, smtp.email, smtp.event, auth)
+        unsubscribe and self.unsubscribe(smtp.email, force=False)
 
-        exists = pushi.Mail.exists(email=mail.email, event=mail.event)
+        exists = pushi.SMTP.exists(email=smtp.email, event=smtp.event)
         if exists:
-            mail = exists
+            smtp = exists
         else:
-            mail.save()
+            smtp.save()
 
-        self.logger.debug("Subscribed '%s' for '%s'" % (mail.email, mail.event))
+        self.logger.debug("Subscribed '%s' for '%s'" % (smtp.email, smtp.event))
 
-        return mail
+        return smtp
 
     def unsubscribe(self, email, event=None, force=True):
         self.logger.debug("Unsubscribing '%s' from '%s'" % (email, event or "*"))
@@ -328,26 +328,26 @@ Data:
         if event:
             kwargs["event"] = event
 
-        mail = pushi.Mail.get(**kwargs)
-        if not mail:
+        smtp = pushi.SMTP.get(**kwargs)
+        if not smtp:
             return None
 
-        mail.delete()
+        smtp.delete()
 
         self.logger.debug("Unsubscribed '%s' for '%s'" % (email, event or "*"))
 
-        return mail
+        return smtp
 
     def unsubscribes(self, email, event=None):
         kwargs = dict(email=email)
         if event:
             kwargs["event"] = event
 
-        mails = pushi.Mail.find(**kwargs)
-        for mail in mails:
-            mail.delete()
+        smtps = pushi.SMTP.find(**kwargs)
+        for smtp in smtps:
+            smtp.delete()
 
-        return mails
+        return smtps
 
     def _resolve_smtp_config(self, app):
         """

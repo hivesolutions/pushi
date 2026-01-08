@@ -3,6 +3,7 @@
 <head>
     <meta charset="utf-8">
     <title>Pushi Web Push Example</title>
+    <link rel="icon" type="image/svg+xml" href="icon.svg">
     <style>
         body { font-family: sans-serif; max-width: 600px; margin: 40px auto; padding: 20px; }
         button { padding: 12px 24px; font-size: 16px; cursor: pointer; margin: 8px 4px; }
@@ -10,6 +11,9 @@
         #status { margin-top: 20px; padding: 12px; background: #f0f0f0; border-radius: 4px; }
         #status.subscribed { background: #d4edda; color: #155724; }
         #status.error { background: #f8d7da; color: #721c24; }
+        .payload-example { margin-top: 30px; padding: 16px; background: #f8f9fa; border-radius: 4px; }
+        .payload-example h3 { margin-top: 0; }
+        .payload-example pre { background: #282c34; color: #abb2bf; padding: 12px; border-radius: 4px; overflow-x: auto; font-size: 13px; }
     </style>
 </head>
 <body>
@@ -19,6 +23,30 @@
     <button id="unsubscribe">Disable Notifications</button>
 
     <div id="status">Status: Not subscribed</div>
+
+    <div class="payload-example">
+        <h3>Notification Payload Format</h3>
+        <p>Send notifications with the following JSON payload structure:</p>
+        <pre>{
+  "title": "Hello World",
+  "body": "This is a test notification",
+  "icon": "https://example.com/icon.png",
+  "badge": "https://example.com/badge.png",
+  "image": "https://example.com/image.jpg",
+  "vibrate": [200, 100, 200, 100, 400],
+  "silent": false,
+  "tag": "message-group-1",
+  "renotify": true,
+  "requireInteraction": false,
+  "url": "https://example.com/action",
+  "actions": [
+    { "action": "view", "title": "View" },
+    { "action": "dismiss", "title": "Dismiss" }
+  ]
+}</pre>
+        <p><strong>Note:</strong> Custom notification sounds are not supported by the Web Push API.
+        Sound is controlled by OS/browser settings. Use <code>"silent": true</code> to suppress sound.</p>
+    </div>
 
     <script src="../../js/pushi.js"></script>
     <script>

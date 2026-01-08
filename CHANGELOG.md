@@ -26,6 +26,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Added `baseWebUrl` option in JavaScript client for configuring HTTP API URL separately from WebSocket URL
 * Web Push example application with client, service worker, and server
 * "Generate VAPID" operation in App model to create VAPID key pairs
+* Enhanced Web Push example with full notification payload support (icon, badge, image, vibrate, tag, actions, etc.)
+* Added notification icon and payload format documentation to Web Push example
 
 ### Changed
 

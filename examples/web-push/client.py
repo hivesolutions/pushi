@@ -40,13 +40,17 @@ api = pushi.API(
 )
 
 # sends a Web Push notification to all subscribers
-# of the "notifications" channel
+# of the "notifications" channel with full payload
 print("Sending Web Push notification...")
 api.trigger_event(
     channel="notifications",
     data={
         "title": "Hello from Pushi!",
         "body": "This is a test Web Push notification.",
+        "icon": "icon.svg",
+        "vibrate": [200, 100, 200, 100, 400],
+        "tag": "pushi-notification",
+        "url": "https://github.com/hivesolutions/pushi",
     },
 )
 print("Notification sent!")

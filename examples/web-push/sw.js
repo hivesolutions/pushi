@@ -20,6 +20,12 @@
 // __copyright__ = Copyright (c) 2008-2024 Hive Solutions Lda.
 // __license__   = Apache License, Version 2.0
 
+// default icon for notifications (can be overridden in payload)
+var DEFAULT_ICON = "icon.svg";
+
+// default vibration pattern: short-pause-short-pause-long
+var DEFAULT_VIBRATE = [200, 100, 200, 100, 400];
+
 // handles the push event triggered when a notification
 // is received from the push service, parses the payload
 // and displays the notification to the user
@@ -28,7 +34,15 @@ self.addEventListener("push", function(event) {
     var title = data.title || "Notification";
     var options = {
         body: data.body || data.message || "",
-        icon: data.icon,
+        icon: data.icon || DEFAULT_ICON,
+        badge: data.badge,
+        image: data.image,
+        vibrate: data.vibrate || DEFAULT_VIBRATE,
+        tag: data.tag,
+        renotify: data.renotify || false,
+        requireInteraction: data.requireInteraction || false,
+        silent: data.silent || false,
+        actions: data.actions,
         data: data
     };
 
@@ -43,7 +57,26 @@ self.addEventListener("push", function(event) {
 self.addEventListener("notificationclick", function(event) {
     event.notification.close();
 
-    if (event.notification.data && event.notification.data.url) {
-        event.waitUntil(clients.openWindow(event.notification.data.url));
+    var data = event.notification.data || {};
+    var action = event.action;
+
+    // handles specific action buttons if clicked
+    if (action === "dismiss") {
+        return;
+    }
+
+    // opens URL from action or default notification URL
+    var url = data.url;
+    if (action && data.actions) {
+        var actionData = data.actions.find(function(a) {
+            return a.action === action;
+        });
+        if (actionData && actionData.url) {
+            url = actionData.url;
+        }
+    }
+
+    if (url) {
+        event.waitUntil(clients.openWindow(url));
     }
 });

@@ -14,10 +14,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Mail model for storing email subscriptions to event channels
 * MailController with REST API endpoints (`/mails`) for subscription management
 * SMTP configuration via environment variables (SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASSWORD, SMTP_STARTTLS, SMTP_SENDER)
+* Example script for email subscription (`examples/mail/subscribe.py`)
+* Reorganized examples into separate directories (`examples/base/`, `examples/mail/`)
+* Comprehensive module documentation for example scripts
 
 ### Changed
 
-*
+* Moved `examples/web-push/client.py` to `examples/base/notify.py` for reusability across examples
+* Updated Web Push README to reference new examples structure
 
 ### Fixed
 

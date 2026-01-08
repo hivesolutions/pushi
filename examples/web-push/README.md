@@ -43,20 +43,8 @@ python -m http.server 8181 --directory .
 
 ## Sending Notifications
 
-Use the Python client to trigger events:
+Use the Python `notify.py` script to trigger events:
 
-```python
-import pushi
-
-api = pushi.API(
-    app_id="YOUR_APP_ID",
-    app_key="YOUR_APP_KEY",
-    app_secret="YOUR_APP_SECRET",
-    base_url="https://your-server:8080/"
-)
-
-api.trigger_event("notifications", {
-    "title": "Hello!",
-    "body": "This is a push notification"
-})
+```bash
+python examples/base/notify.py
 ```

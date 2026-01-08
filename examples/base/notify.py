@@ -19,6 +19,25 @@
 # You should have received a copy of the Apache License along with
 # Hive Pushi System. If not, see <http://www.apache.org/licenses/>.
 
+"""
+Web Push notification example that sends push notifications to all
+subscribers of a channel using the Pushi API client.
+
+Initializes the API client with application credentials and triggers
+an event on the "notifications" channel with a full notification
+payload including title, body, icon, vibration pattern, and click URL.
+
+Run from the examples/web-push directory with:
+    python notify.py
+
+Before running:
+    1. Update app_id, app_key, app_secret with your Pushi credentials
+    2. Update base_url to point to your Pushi server
+    3. Ensure at least one browser client has subscribed via index.html
+
+Requires: `pip install pushi`
+"""
+
 __author__ = "João Magalhães <joamag@hive.pt>"
 """ The author(s) of the module """
 

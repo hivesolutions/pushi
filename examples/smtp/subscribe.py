@@ -19,6 +19,25 @@
 # You should have received a copy of the Apache License along with
 # Hive Pushi System. If not, see <http://www.apache.org/licenses/>.
 
+"""
+Email subscription example that registers an email address to receive
+notifications when events are published to a channel.
+
+Initializes the API client with application credentials and subscribes
+the provided email address to the "notifications" channel. When events
+are triggered on this channel, an email will be sent via SMTP.
+
+Run from the examples/smtp directory with:
+    python subscribe.py user@example.com
+
+Before running:
+    1. Update app_id, app_key, app_secret with your Pushi credentials
+    2. Update base_url to point to your Pushi server
+    3. Ensure SMTP is configured on the Pushi server
+
+Requires: `pip install pushi`
+"""
+
 __author__ = "João Magalhães <joamag@hive.pt>"
 """ The author(s) of the module """
 
@@ -27,6 +46,8 @@ __copyright__ = "Copyright (c) 2008-2024 Hive Solutions Lda."
 
 __license__ = "Apache License, Version 2.0"
 """ The license for the module """
+
+import sys
 
 import pushi
 
@@ -39,18 +60,15 @@ api = pushi.API(
     base_url="http://localhost:8080/",
 )
 
-# sends a Web Push notification to all subscribers
-# of the "notifications" channel with full payload
-print("Sending Web Push notification...")
-api.trigger_event(
-    channel="notifications",
-    data={
-        "title": "Hello from Pushi!",
-        "body": "This is a test Web Push notification.",
-        "icon": "icon.svg",
-        "vibrate": [200, 100, 200, 100, 400],
-        "tag": "pushi-notification",
-        "url": "https://github.com/hivesolutions/pushi",
-    },
+# retrieves the email address from command line arguments
+# or uses a default value if not provided
+email = sys.argv[1] if len(sys.argv) > 1 else "user@example.com"
+
+# subscribes the email address to the notifications channel
+# when events are triggered on this channel, an email will be sent
+print("Subscribing %s to 'notifications' channel..." % email)
+result = api.post(
+    api.base_url + "smtps",
+    data_j=dict(email=email, event="notifications"),
 )
-print("Notification sent!")
+print("Subscription created with ID: %s" % result.get("id"))

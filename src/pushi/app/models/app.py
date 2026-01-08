@@ -199,6 +199,20 @@ class App(base.PushiBase):
     :type: str
     """
 
+    smtp_url = appier.field(
+        description="SMTP URL",
+        observations="""SMTP URL for email notifications in the format
+        smtp://user:password@host:port?sender=from@example.com or
+        smtps://... for STARTTLS. Falls back to global SMTP_URL if not set.""",
+    )
+    """
+    SMTP connection URL for sending email notifications.
+    Format: smtp://[user:password@]host[:port][?sender=email]
+    Use smtps:// scheme for STARTTLS connections.
+
+    :type: str
+    """
+
     @classmethod
     def validate(cls):
         return super(App, cls).validate() + [

@@ -47,6 +47,7 @@ import pushi
 import appier
 
 from pushi.base import apn
+from pushi.base import smtp
 from pushi.base import web
 from pushi.base import web_push
 
@@ -89,6 +90,7 @@ class State(appier.Mongo):
         self.app = None
         self.server = None
         self.apn_handler = None
+        self.smtp_handler = None
         self.handlers = []
         self.app_id_state = {}
         self.app_key_state = {}
@@ -164,14 +166,17 @@ class State(appier.Mongo):
 
     def load_handlers(self):
         self.apn_handler = apn.APNHandler(self)
+        self.smtp_handler = smtp.SMTPHandler(self)
         self.web_handler = web.WebHandler(self)
         self.web_push_handler = web_push.WebPushHandler(self)
 
         self.apn_handler.load()
+        self.smtp_handler.load()
         self.web_handler.load()
         self.web_push_handler.load()
 
         self.handlers.append(self.apn_handler)
+        self.handlers.append(self.smtp_handler)
         self.handlers.append(self.web_handler)
         self.handlers.append(self.web_push_handler)
 
@@ -401,7 +406,8 @@ class State(appier.Mongo):
         # subscribes all of the peer channels associated with the current
         # presence channel that is being subscribed, this may represent some
         # overhead but provides peer to peer communication
-        is_peer and self.subscribe_peer_all(app_key, connection, channel)
+        if is_peer:
+            self.subscribe_peer_all(app_key, connection, channel)
 
         # in case the connection does not represent a new user logging in must
         # return immediately, because there's nothing remaining to be done
@@ -537,7 +543,8 @@ class State(appier.Mongo):
         # unsubscribes from the complete set of peer channels associated with
         # the current presence channel, this is an expensive operation controlled
         # by the peer flat that may be set in the channel data structure
-        is_peer and self.unsubscribe_peer_all(app_key, connection, channel)
+        if is_peer:
+            self.unsubscribe_peer_all(app_key, connection, channel)
 
         # verifies if the current connection is old in case it's not no operation
         # remain for the unsubscribe operation and so the function may return

@@ -237,8 +237,10 @@ class APNHandler(handler.Handler):
             or apn.event.startswith("personal-")
         )
 
-        is_private and self.owner.verify(apn.app_key, apn.token, apn.event, auth)
-        unsubscribe and self.unsubscribe(apn.token, force=False)
+        if is_private:
+            self.owner.verify(apn.app_key, apn.token, apn.event, auth)
+        if unsubscribe:
+            self.unsubscribe(apn.token, force=False)
 
         exists = pushi.APN.exists(token=apn.token, event=apn.event)
         if exists:

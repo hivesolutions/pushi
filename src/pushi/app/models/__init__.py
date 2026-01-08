@@ -30,6 +30,7 @@ from . import app
 from . import association
 from . import base
 from . import event
+from . import smtp
 from . import subscription
 from . import web
 from . import web_push
@@ -39,6 +40,7 @@ from .app import App
 from .association import Association
 from .base import PushiBase
 from .event import PushiEvent
+from .smtp import SMTP
 from .subscription import Subscription
 from .web import Web
 from .web_push import WebPush

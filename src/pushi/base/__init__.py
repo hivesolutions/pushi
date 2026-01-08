@@ -27,14 +27,14 @@ __license__ = "Apache License, Version 2.0"
 
 from . import apn
 from . import handler
-from . import mail
+from . import smtp
 from . import state
 from . import web
 from . import web_push
 
 from .apn import APNHandler
 from .handler import Handler
-from .mail import MailHandler
+from .smtp import SMTPHandler
 from .state import AppState, State
 from .web import WebHandler
 from .web_push import WebPushHandler, is_pem_key

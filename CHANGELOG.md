@@ -10,6 +10,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 * Health check endpoints for monitoring and load balancer integration (`/health`, `/health/detailed`, `/health/live`, `/health/ready`)
+* Mail (SMTP) notification handler using netius SMTP client for email delivery
+* Mail model for storing email subscriptions to event channels
+* MailController with REST API endpoints (`/mails`) for subscription management
+* SMTP configuration via environment variables (SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASSWORD, SMTP_STARTTLS, SMTP_SENDER)
 
 ### Changed
 

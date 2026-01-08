@@ -30,6 +30,7 @@ from . import app
 from . import base
 from . import event
 from . import health
+from . import mail
 from . import socket
 from . import subscription
 from . import web
@@ -40,6 +41,7 @@ from .app import AppController
 from .base import BaseController
 from .event import EventController
 from .health import HealthController
+from .mail import MailController
 from .socket import SocketController
 from .subscription import SubscriptionController
 from .web import WebController

@@ -31,9 +31,20 @@ __license__ = "Apache License, Version 2.0"
 import os
 import setuptools
 
+# README.md file is located in the root of the project
+# and is not included in the library, so we need to check
+# if it exists and if it does not mock the long description
+readme_path = os.path.join(os.path.dirname(__file__), "../README.md")
+if os.path.exists(readme_path):
+    open(readme_path, "rb").read().decode("utf-8"),
+    long_description_content_type = ("text/markdown",)
+else:
+    long_description = "Pushi WebSocket"
+    long_description_content_type = "text/plain"
+
 setuptools.setup(
     name="pushi",
-    version="0.4.4",
+    version="0.4.5",
     author="Hive Solutions Lda.",
     author_email="development@hive.pt",
     description="Pushi System API",
@@ -65,8 +76,6 @@ setuptools.setup(
         "Programming Language :: Python :: 3.11",
         "Programming Language :: Python :: 3.12",
     ],
-    long_description=open(os.path.join(os.path.dirname(__file__), "../README.md"), "rb")
-    .read()
-    .decode("utf-8"),
-    long_description_content_type="text/markdown",
+    long_description=long_description,
+    long_description_content_type=long_description_content_type,
 )

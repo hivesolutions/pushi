@@ -72,7 +72,7 @@ class PushiApp(appier.APIApp):
             del self.session["app_secret"]
 
     def _version(self):
-        return "0.4.4"
+        return "0.4.5"
 
     def _description(self):
         return "Pushi"

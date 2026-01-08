@@ -19,6 +19,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 *
 
+## [0.4.5] - 2026-01-08
+
+### Fixed
+
+* Added fallback for README.md in library setup.py for standalone package builds
+
 ## [0.4.4] - 2026-01-08
 
 ### Added

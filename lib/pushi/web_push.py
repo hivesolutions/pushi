@@ -46,24 +46,25 @@ class WebPushAPI(object):
         )
         return result
 
-    def delete_web_push(self, endpoint, event):
+    def delete_web_push(self, endpoint, event=None):
         # runs the unsubscription operation for the provided
-        # endpoint and event, this operation uses the currently
-        # defined app id for the operation, then returns the
-        # resulting dictionary to the caller method
+        # endpoint, optionally filtered by event; this operation
+        # uses the currently defined app id for the operation,
+        # then returns the resulting dictionary to the caller method
         endpoint_encoded = appier.legacy.quote(endpoint, safe="")
+        params = dict()
+        if event:
+            params["event"] = event
         result = self.delete(
-            self.base_url + "web_pushes/%s/%s" % (endpoint_encoded, event)
+            self.base_url + "web_pushes/%s" % endpoint_encoded, params=params
         )
         return result
 
     def delete_web_pushes(self, endpoint):
         # runs the unsubscription operation for all subscriptions
-        # associated with the provided endpoint, this operation uses
-        # the currently defined app id for the operation
-        endpoint_encoded = appier.legacy.quote(endpoint, safe="")
-        result = self.delete(self.base_url + "web_pushes/%s" % endpoint_encoded)
-        return result
+        # associated with the provided endpoint, this is an alias
+        # for delete_web_push without an event filter
+        return self.delete_web_push(endpoint)
 
     def list_web_pushes(self, endpoint=None, event=None):
         # runs the list operation for the Web Push subscriptions

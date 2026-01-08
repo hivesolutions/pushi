@@ -28,11 +28,12 @@ __copyright__ = "Copyright (c) 2008-2024 Hive Solutions Lda."
 __license__ = "Apache License, Version 2.0"
 """ The license for the module """
 
+import os
 import setuptools
 
 setuptools.setup(
     name="pushi",
-    version="0.4.3",
+    version="0.4.4",
     author="Hive Solutions Lda.",
     author_email="development@hive.pt",
     description="Pushi System API",
@@ -64,4 +65,8 @@ setuptools.setup(
         "Programming Language :: Python :: 3.11",
         "Programming Language :: Python :: 3.12",
     ],
+    long_description=open(os.path.join(os.path.dirname(__file__), "../README.md"), "rb")
+    .read()
+    .decode("utf-8"),
+    long_description_content_type="text/markdown",
 )

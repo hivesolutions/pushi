@@ -19,6 +19,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 *
 
+## [0.4.4] - 2026-01-08
+
+### Added
+
+* Added long description from README.md for PyPI package pages
+
 ## [0.4.3] - 2026-01-08
 
 ### Fixed

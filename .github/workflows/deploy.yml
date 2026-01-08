@@ -22,7 +22,11 @@ jobs:
           pip install -r requirements.py2.txt
           pip install -r extra.py2.txt
         if: matrix.python-version == '2.7'
+      - run: |
+          pip install pytest
+          pytest
       - run: python setup.py test
+        if: ${{ !contains(fromJson('["3.9", "3.10", "3.11", "3.12", "3.13", "latest"]'), matrix.python-version) }}
       - run: |
           pip install black
           black . --check

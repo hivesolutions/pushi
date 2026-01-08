@@ -29,6 +29,7 @@ from . import apn
 from . import app
 from . import base
 from . import event
+from . import health
 from . import socket
 from . import subscription
 from . import web
@@ -38,6 +39,7 @@ from .apn import APNController
 from .app import AppController
 from .base import BaseController
 from .event import EventController
+from .health import HealthController
 from .socket import SocketController
 from .subscription import SubscriptionController
 from .web import WebController

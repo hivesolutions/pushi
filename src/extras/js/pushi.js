@@ -164,7 +164,7 @@ Pushi.prototype.init = function(appKey, options, callback) {
 };
 
 Pushi.prototype.config = function(appKey, options) {
-    // runs the definition of a series of contant values that
+    // runs the definition of a series of constant values that
     // will be used as defaults for some options
     var TIMEOUT = 5000;
     var BASE_URL = "wss://puxiapp.com/";

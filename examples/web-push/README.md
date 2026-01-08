@@ -22,7 +22,7 @@ vapid_email: mailto:your@email.com
 ```javascript
 var APP_KEY = "YOUR_APP_KEY";
 var pushi = new Pushi(APP_KEY, {
-    baseUrl: "wss://your-server:9090/",
+    baseUrl: "ws://your-server:9090/",
     baseWebUrl: "http://your-server:8080/"
 });
 ```

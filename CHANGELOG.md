@@ -14,14 +14,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Mail model for storing email subscriptions to event channels
 * MailController with REST API endpoints (`/mails`) for subscription management
 * SMTP configuration via environment variables (SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASSWORD, SMTP_STARTTLS, SMTP_SENDER)
+* SMTP URL support (`smtp://` and `smtps://` schemes) for simplified configuration via `SMTP_URL` environment variable
+* Per-app SMTP configuration via `smtp_url` field in App model for multi-tenant email delivery
+* SMTP URL parsing with support for credentials, port, and query parameters (e.g., `smtp://user:pass@host:587?sender=email`)
 * Example script for email subscription (`examples/mail/subscribe.py`)
 * Reorganized examples into separate directories (`examples/base/`, `examples/mail/`)
 * Comprehensive module documentation for example scripts
+* Debug and warning logging in MailHandler for better observability
 
 ### Changed
 
 * Moved `examples/web-push/client.py` to `examples/base/notify.py` for reusability across examples
 * Updated Web Push README to reference new examples structure
+* SMTP configuration now resolves with priority: app-level smtp_url → global SMTP_URL → individual SMTP_* environment variables
+* Added `.env` to `.gitignore` for local environment configuration
 
 ### Fixed
 

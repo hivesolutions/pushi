@@ -40,6 +40,11 @@ import pushi
 
 from . import handler
 
+try:
+    import urllib.parse as urlparse
+except ImportError:
+    import urlparse
+
 
 class MailHandler(handler.Handler):
     """
@@ -51,9 +56,18 @@ class MailHandler(handler.Handler):
     Notification here will be sent using the netius SMTP client
     to deliver emails to subscribed addresses.
 
-    The handler requires SMTP configuration via environment variables
-    to function. If SMTP_HOST is not configured, the handler will
-    gracefully skip sending emails.
+    SMTP configuration is resolved with the following priority:
+        1. App-level smtp_url field (per-tenant configuration)
+        2. Global SMTP_URL environment variable
+        3. Individual SMTP_* environment variables (SMTP_HOST, etc.)
+
+    SMTP URL format: smtp://[user:password@]host[:port][?sender=email]
+    Use smtps:// scheme for STARTTLS connections.
+
+    Example URLs:
+        smtp://mail.example.com
+        smtp://user:pass@mail.example.com:587?sender=noreply@example.com
+        smtps://user:pass@mail.example.com:587?sender=noreply@example.com
 
     :see: https://en.wikipedia.org/wiki/Simple_Mail_Transfer_Protocol
     """
@@ -63,28 +77,37 @@ class MailHandler(handler.Handler):
         self.subs = {}
 
     def send(self, app_id, event, json_d, invalid={}):
-        # retrieves the SMTP configuration from environment variables using
-        # the appier configuration system for proper defaults
-        smtp_host = appier.conf("SMTP_HOST", None)
-        smtp_port = appier.conf("SMTP_PORT", 25, cast=int)
-        smtp_user = appier.conf("SMTP_USER", None)
-        smtp_password = appier.conf("SMTP_PASSWORD", None)
-        smtp_starttls = appier.conf("SMTP_STARTTLS", False, cast=bool)
-        smtp_sender = appier.conf("SMTP_SENDER", None)
+        self.logger.debug("Mail handler send called for event '%s'" % event)
+
+        # retrieves the reference to the app structure associated with the
+        # id for which the message is being sent
+        app = self.owner.get_app(app_id=app_id)
+
+        # resolves SMTP configuration with priority:
+        # 1. App-level smtp_url
+        # 2. Global SMTP_URL environment variable
+        # 3. Individual SMTP_* environment variables
+        smtp_config = self._resolve_smtp_config(app)
+
+        # unpacks the SMTP configuration values
+        smtp_host = smtp_config.get("host")
+        smtp_port = smtp_config.get("port", 25)
+        smtp_user = smtp_config.get("user")
+        smtp_password = smtp_config.get("password")
+        smtp_starttls = smtp_config.get("starttls", False)
+        smtp_sender = smtp_config.get("sender")
 
         # in case the SMTP host is not configured skips the sending operation
         # as there's no way to send emails without a valid host
         if not smtp_host:
+            self.logger.warning("SMTP host not configured, skipping mail send")
             return
 
         # in case the SMTP sender is not configured skips the sending operation
         # as a valid sender address is required for email delivery
         if not smtp_sender:
+            self.logger.warning("SMTP sender not configured, skipping mail send")
             return
-
-        # retrieves the reference to the app structure associated with the
-        # id for which the message is being send
-        app = self.owner.get_app(app_id=app_id)
 
         # retrieves the app key for the retrieved app by unpacking the current
         # app structure into the appropriate values
@@ -103,6 +126,10 @@ class MailHandler(handler.Handler):
         # retrieves the complete set of subscriptions for the current mail
         # infra-structure to be able to resolve the appropriate emails
         subs = self.subs.get(app_id, {})
+        self.logger.debug(
+            "Mail subscriptions for app_id=%s: %s (events=%s)"
+            % (app_id, list(subs.keys()), events)
+        )
 
         # creates the initial list of emails to be notified and then populates
         # the list with the various emails associated with the complete set of
@@ -238,10 +265,15 @@ Data:
 
     def load(self):
         subs = pushi.Mail.find()
+        self.logger.info("Loading %d mail subscription(s)" % len(subs))
         for sub in subs:
             app_id = sub.app_id
             target_email = sub.email
             event = sub.event
+            self.logger.debug(
+                "Loaded mail subscription: app_id=%s, email=%s, event=%s"
+                % (app_id, target_email, event)
+            )
             self.add(app_id, target_email, event)
 
     def add(self, app_id, email, event):
@@ -316,3 +348,91 @@ Data:
             mail.delete()
 
         return mails
+
+    def _resolve_smtp_config(self, app):
+        """
+        Resolves SMTP configuration with the following priority:
+
+        1. App-level smtp_url field
+        2. Global SMTP_URL environment variable
+        3. Individual SMTP_* environment variables
+
+        :param app: The App instance to get configuration from.
+        :type app: App
+        :return: Dictionary with SMTP configuration values.
+        :rtype: dict
+        """
+        # tries to get SMTP URL from app-level configuration first
+        smtp_url = getattr(app, "smtp_url", None) if app else None
+
+        # falls back to global SMTP_URL environment variable
+        if not smtp_url:
+            smtp_url = appier.conf("SMTP_URL", None)
+
+        # if we have an SMTP URL, parse it and return the config
+        if smtp_url:
+            config = parse_smtp_url(smtp_url)
+            if config:
+                return config
+
+        # falls back to individual SMTP_* environment variables
+        return dict(
+            host=appier.conf("SMTP_HOST", None),
+            port=appier.conf("SMTP_PORT", 25, cast=int),
+            user=appier.conf("SMTP_USER", None),
+            password=appier.conf("SMTP_PASSWORD", None),
+            starttls=appier.conf("SMTP_STARTTLS", False, cast=bool),
+            sender=appier.conf("SMTP_SENDER", None),
+        )
+
+
+def parse_smtp_url(url):
+    """
+    Parses an SMTP URL into its components.
+
+    Supports URLs in the format:
+        smtp://[user:password@]host[:port][?sender=email]
+        smtps://[user:password@]host[:port][?sender=email]
+
+    The smtps:// scheme indicates STARTTLS should be used.
+
+    :param url: The SMTP URL to parse.
+    :type url: str
+    :return: Dictionary with host, port, user, password, starttls, sender.
+    :rtype: dict
+    """
+    if not url:
+        return None
+
+    parsed = urlparse.urlparse(url)
+
+    # determines if STARTTLS should be used based on scheme
+    starttls = parsed.scheme in ("smtps", "smtp+tls")
+
+    # extracts host and port with defaults
+    host = parsed.hostname
+    port = parsed.port or (587 if starttls else 25)
+
+    # extracts authentication credentials if present
+    user = parsed.username
+    password = parsed.password
+
+    # unquotes user and password if they were URL-encoded
+    if user:
+        user = urlparse.unquote(user)
+    if password:
+        password = urlparse.unquote(password)
+
+    # parses query string for additional options like sender
+    query = urlparse.parse_qs(parsed.query)
+    sender_list = query.get("sender", [])
+    sender = sender_list[0] if sender_list else None
+
+    return dict(
+        host=host,
+        port=port,
+        user=user,
+        password=password,
+        starttls=starttls,
+        sender=sender,
+    )

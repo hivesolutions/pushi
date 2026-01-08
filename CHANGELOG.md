@@ -19,6 +19,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 *
 
+## [0.4.1] - 2026-01-08
+
+### Changed
+
+* Updated deploy workflow to use Python 3.13 instead of Python 2.7
+* Added setuptools upgrade step in deploy workflow for compatibility
+
 ## [0.4.0] - 2026-01-08
 
 ### Added

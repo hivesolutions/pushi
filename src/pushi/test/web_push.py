@@ -249,8 +249,9 @@ class WebPushHandlerTest(unittest.TestCase):
         Tests successful send of Web Push notification.
         """
 
-        # saves original pywebpush reference
+        # saves original module references
         original_pywebpush = web_push.pywebpush
+        original_cryptography = web_push.cryptography
 
         try:
             # sets up pywebpush mock
@@ -258,6 +259,9 @@ class WebPushHandlerTest(unittest.TestCase):
             mock_pywebpush_module = mock.MagicMock()
             mock_pywebpush_module.webpush = mock_webpush
             web_push.pywebpush = mock_pywebpush_module
+
+            # sets up cryptography mock
+            web_push.cryptography = mock.MagicMock()
 
             # mocks app with VAPID credentials
             mock_app = mock.MagicMock()
@@ -306,6 +310,7 @@ class WebPushHandlerTest(unittest.TestCase):
             )
         finally:
             web_push.pywebpush = original_pywebpush
+            web_push.cryptography = original_cryptography
 
     @mock.patch("pushi.WebPush")
     def test_send_with_web_push_exception(self, mock_web_push_model):
@@ -313,8 +318,9 @@ class WebPushHandlerTest(unittest.TestCase):
         Tests send method when WebPushException is raised.
         """
 
-        # saves original pywebpush reference
+        # saves original module references
         original_pywebpush = web_push.pywebpush
+        original_cryptography = web_push.cryptography
 
         try:
             # creates mock WebPushException class
@@ -331,6 +337,9 @@ class WebPushHandlerTest(unittest.TestCase):
 
             # replaces the pywebpush reference in the handler's module
             web_push.pywebpush = mock_pywebpush_module
+
+            # sets up cryptography mock
+            web_push.cryptography = mock.MagicMock()
 
             # mocks app with VAPID credentials
             mock_app = mock.MagicMock()
@@ -383,6 +392,7 @@ class WebPushHandlerTest(unittest.TestCase):
             # the key behavior we're testing is that the handler doesn't crash.
         finally:
             web_push.pywebpush = original_pywebpush
+            web_push.cryptography = original_cryptography
 
     @mock.patch("pushi.WebPush")
     def test_subscribe(self, mock_web_push_model):

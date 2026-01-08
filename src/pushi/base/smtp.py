@@ -197,6 +197,10 @@ Data:
                 data_str,
             )
 
+        # creates a single SMTP client instance to send all emails
+        # the auto_close flag ensures the client closes after all messages are sent
+        smtp_client = netius.clients.SMTPClient(auto_close=True)
+
         # iterates over the complete set of emails that are going to
         # be notified about the message, each of them is going to
         # received an email with the event data
@@ -219,25 +223,9 @@ Data:
             mime["To"] = target_email
             contents = mime.as_string()
 
-            # creates the callback function that is going to be used when
-            # the SMTP connection is closed after sending the email
-            def on_close(connection=None):
-                netius.compat_loop(loop).stop()
-
-            # creates the callback function that handles any exceptions
-            # that may occur during the SMTP sending process
-            def on_exception(connection=None, exception=None):
-                self.logger.warning(
-                    "Failed to send email to '%s': %s"
-                    % (target_email, appier.legacy.UNICODE(exception))
-                )
-                netius.compat_loop(loop).stop()
-
-            # creates the SMTP client and sends the message using the
-            # configured SMTP settings, the auto_close flag ensures the
-            # client closes after the message is sent
-            smtp_client = netius.clients.SMTPClient(auto_close=True)
-            connection = smtp_client.message(
+            # sends the message using the SMTP client, letting netius
+            # handle the connection and delivery asynchronously
+            smtp_client.message(
                 [smtp_sender],
                 [target_email],
                 contents,
@@ -247,17 +235,6 @@ Data:
                 password=smtp_password,
                 stls=smtp_starttls,
             )
-
-            # binds the close and exception events to the connection
-            # to handle the completion of the send operation
-            if connection:
-                connection.bind("close", on_close)
-                connection.bind("exception", on_exception)
-
-                # retrieves the event loop and runs it until the email
-                # is sent and the connection is closed
-                loop = smtp_client.get_loop()
-                loop.run_forever()
 
             # adds the current email to the list of invalid items for
             # the current message sending stream

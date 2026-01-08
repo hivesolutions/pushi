@@ -50,10 +50,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Enhanced Web Push example with full notification payload support (icon, badge, image, vibrate, tag, actions, etc.)
 * Added notification icon and payload format documentation to Web Push example
 
-### Changed
-
-*
-
 ### Fixed
 
 * Refactored Web model lifecycle methods to use explicit if statements instead of short-circuit evaluation

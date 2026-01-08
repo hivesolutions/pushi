@@ -130,7 +130,7 @@ class WebPushHandler(handler.Handler):
 
         # converts the VAPID private key to base64url format if it's in PEM format
         # pywebpush expects a raw base64url-encoded 32-byte private key
-        if vapid_private_key.strip().startswith("-----BEGIN"):
+        if is_pem_key(vapid_private_key):
             private_key_obj = (
                 cryptography.hazmat.primitives.serialization.load_pem_private_key(
                     vapid_private_key.encode("utf-8"), password=None
@@ -460,3 +460,16 @@ class WebPushHandler(handler.Handler):
             web_push.delete()
 
         return web_pushes
+
+
+def is_pem_key(key):
+    """
+    Checks if the provided key is in PEM format.
+
+    :type key: String
+    :param key: The key string to check.
+    :rtype: bool
+    :return: True if the key is PEM-encoded, False otherwise.
+    """
+
+    return key and key.strip().startswith("-----BEGIN")

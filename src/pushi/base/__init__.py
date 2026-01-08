@@ -37,4 +37,4 @@ from .handler import Handler
 from .mail import MailHandler
 from .state import AppState, State
 from .web import WebHandler
-from .web_push import WebPushHandler
+from .web_push import WebPushHandler, is_pem_key

@@ -47,6 +47,12 @@ class AppController(appier.Controller):
         return app.map()
 
     @appier.private
+    @appier.route("/apps/ping", "GET")
+    def ping(self):
+        app = pushi.App.get()
+        self.state.trigger(app.id, "ping", "ping", persist=False)
+
+    @appier.private
     @appier.route("/apps/<ident>", "GET")
     def show(self, ident):
         app = pushi.App.get(map=True, ident=ident)
@@ -59,9 +65,3 @@ class AppController(appier.Controller):
         app.apply()
         app.save()
         return app
-
-    @appier.private
-    @appier.route("/apps/ping", "GET")
-    def ping(self):
-        app = pushi.App.get()
-        self.state.trigger(app.id, "ping", "ping", persist=False)

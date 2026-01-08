@@ -16,7 +16,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * WebPushHandler for sending notifications to web browsers
 * Unit tests for WebPushHandler
 * Module entry point to run app via `python -m pushi.app`
+* Module entry point to run base via `python -m pushi.base`
 * Documentation for all models (Association, Subscription, PushiEvent, WebPush, App, Web, PushiBase, APN) with purpose, cardinality, lifecycle, and cautions
+* WebPushAPI mixin for Python client library with subscription management methods
+* Web Push support in JavaScript client library with full browser integration
+* VAPID public key endpoint (`GET /vapid_key`) for browser subscription
+* High-level `setupWebPush()` and `teardownWebPush()` methods in JavaScript client
+* Service worker registration helpers in JavaScript client
+* Added `baseWebUrl` option in JavaScript client for configuring HTTP API URL separately from WebSocket URL
+* Web Push example application with client, service worker, and server
+* "Generate VAPID" operation in App model to create VAPID key pairs
+* Enhanced Web Push example with full notification payload support (icon, badge, image, vibrate, tag, actions, etc.)
+* Added notification icon and payload format documentation to Web Push example
 
 ### Changed
 

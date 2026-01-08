@@ -36,6 +36,7 @@ import appier
 from . import apn
 from . import app
 from . import web
+from . import web_push
 from . import event
 from . import subscription
 
@@ -53,6 +54,7 @@ class API(
     apn.APNAPI,
     app.AppAPI,
     web.WebAPI,
+    web_push.WebPushAPI,
     event.EventAPI,
     subscription.SubscriptionAPI,
 ):

@@ -29,6 +29,7 @@ __license__ = "Apache License, Version 2.0"
 """ The license for the module """
 
 import json
+import base64
 
 import appier
 
@@ -40,6 +41,11 @@ try:
     import pywebpush
 except ImportError:
     pywebpush = None
+
+try:
+    import cryptography.hazmat.primitives.serialization
+except ImportError:
+    cryptography = None
 
 
 class WebPushHandler(handler.Handler):
@@ -89,6 +95,14 @@ class WebPushHandler(handler.Handler):
             )
             return
 
+        # verifies if the cryptography library is available, if not
+        # logs a warning and returns immediately
+        if not cryptography:
+            self.logger.warning(
+                "cryptography library not available, skipping Web Push notifications"
+            )
+            return
+
         # retrieves the reference to the app structure associated with the
         # id for which the message is being sent
         app = self.owner.get_app(app_id=app_id)
@@ -97,9 +111,13 @@ class WebPushHandler(handler.Handler):
         vapid_private_key = app.vapid_key if hasattr(app, "vapid_key") else None
         vapid_email = (
             app.vapid_email
-            if hasattr(app, "vapid_email")
+            if hasattr(app, "vapid_email") and app.vapid_email
             else "mailto:noreply@pushi.io"
         )
+
+        # ensures the `vapid_email` has the "mailto:" prefix
+        if vapid_email and not vapid_email.startswith("mailto:"):
+            vapid_email = "mailto:" + vapid_email
 
         # verifies if VAPID credentials are configured, if not
         # logs a warning and returns immediately
@@ -109,6 +127,21 @@ class WebPushHandler(handler.Handler):
                 % app_id
             )
             return
+
+        # converts the VAPID private key to base64url format if it's in PEM format
+        # pywebpush expects a raw base64url-encoded 32-byte private key
+        if is_pem_key(vapid_private_key):
+            private_key_obj = (
+                cryptography.hazmat.primitives.serialization.load_pem_private_key(
+                    vapid_private_key.encode("utf-8"), password=None
+                )
+            )
+            private_bytes = private_key_obj.private_numbers().private_value.to_bytes(
+                32, byteorder="big"
+            )
+            vapid_private_key = (
+                base64.urlsafe_b64encode(private_bytes).decode("utf-8").rstrip("=")
+            )
 
         # retrieves the app key for the retrieved app by unpacking the current
         # app structure into the appropriate values
@@ -296,7 +329,7 @@ class WebPushHandler(handler.Handler):
         if subscription_id in subscription_ids:
             subscription_ids.remove(subscription_id)
 
-    def subscriptions(self, endpoint=None, event=None):
+    def subscriptions(self, endpoint=None, event=None, instance=None):
         """
         Retrieves Web Push subscriptions from the database with optional filtering.
 
@@ -304,6 +337,8 @@ class WebPushHandler(handler.Handler):
         :param endpoint: Optional endpoint URL to filter by (default: None).
         :type event: String
         :param event: Optional event/channel name to filter by (default: None).
+        :type instance: String
+        :param instance: Optional app instance to filter by (default: None).
         :rtype: Dictionary
         :return: Dictionary containing list of mapped subscriptions under
         the 'subscriptions' key.
@@ -314,6 +349,8 @@ class WebPushHandler(handler.Handler):
             kwargs["endpoint"] = endpoint
         if event:
             kwargs["event"] = event
+        if instance:
+            kwargs["instance"] = instance
         subscriptions = pushi.WebPush.find(map=True, **kwargs)
         return dict(subscriptions=subscriptions)
 
@@ -370,7 +407,7 @@ class WebPushHandler(handler.Handler):
 
         return web_push
 
-    def unsubscribe(self, endpoint, event=None, force=True):
+    def unsubscribe(self, endpoint, event=None, instance=None, force=True):
         """
         Unsubscribes a Web Push endpoint from an event/channel.
 
@@ -379,6 +416,8 @@ class WebPushHandler(handler.Handler):
         :type event: String
         :param event: Optional event/channel name. If None, unsubscribes
         from all events (default: None).
+        :type instance: String
+        :param instance: Optional app instance to filter by (default: None).
         :type force: bool
         :param force: Whether to raise an error if subscription not found
         (default: True).
@@ -391,6 +430,8 @@ class WebPushHandler(handler.Handler):
         kwargs = dict(endpoint=endpoint, raise_e=force)
         if event:
             kwargs["event"] = event
+        if instance:
+            kwargs["instance"] = instance
 
         web_push = pushi.WebPush.get(**kwargs)
         if not web_push:
@@ -402,7 +443,7 @@ class WebPushHandler(handler.Handler):
 
         return web_push
 
-    def unsubscribes(self, endpoint, event=None):
+    def unsubscribes(self, endpoint, event=None, instance=None):
         """
         Unsubscribes a Web Push endpoint from multiple events/channels.
 
@@ -414,6 +455,8 @@ class WebPushHandler(handler.Handler):
         :type event: String
         :param event: Optional event/channel name to filter by
         (default: None).
+        :type instance: String
+        :param instance: Optional app instance to filter by (default: None).
         :rtype: List
         :return: List of deleted WebPush model instances.
         """
@@ -421,9 +464,24 @@ class WebPushHandler(handler.Handler):
         kwargs = dict(endpoint=endpoint)
         if event:
             kwargs["event"] = event
+        if instance:
+            kwargs["instance"] = instance
 
         web_pushes = pushi.WebPush.find(**kwargs)
         for web_push in web_pushes:
             web_push.delete()
 
         return web_pushes
+
+
+def is_pem_key(key):
+    """
+    Checks if the provided key is in PEM format.
+
+    :type key: String
+    :param key: The key string to check.
+    :rtype: bool
+    :return: True if the key is PEM-encoded, False otherwise.
+    """
+
+    return key and key.strip().startswith("-----BEGIN")

@@ -249,8 +249,9 @@ class WebPushHandlerTest(unittest.TestCase):
         Tests successful send of Web Push notification.
         """
 
-        # saves original pywebpush reference
+        # saves original module references
         original_pywebpush = web_push.pywebpush
+        original_cryptography = web_push.cryptography
 
         try:
             # sets up pywebpush mock
@@ -258,6 +259,9 @@ class WebPushHandlerTest(unittest.TestCase):
             mock_pywebpush_module = mock.MagicMock()
             mock_pywebpush_module.webpush = mock_webpush
             web_push.pywebpush = mock_pywebpush_module
+
+            # sets up cryptography mock
+            web_push.cryptography = mock.MagicMock()
 
             # mocks app with VAPID credentials
             mock_app = mock.MagicMock()
@@ -306,6 +310,7 @@ class WebPushHandlerTest(unittest.TestCase):
             )
         finally:
             web_push.pywebpush = original_pywebpush
+            web_push.cryptography = original_cryptography
 
     @mock.patch("pushi.WebPush")
     def test_send_with_web_push_exception(self, mock_web_push_model):
@@ -313,8 +318,9 @@ class WebPushHandlerTest(unittest.TestCase):
         Tests send method when WebPushException is raised.
         """
 
-        # saves original pywebpush reference
+        # saves original module references
         original_pywebpush = web_push.pywebpush
+        original_cryptography = web_push.cryptography
 
         try:
             # creates mock WebPushException class
@@ -331,6 +337,9 @@ class WebPushHandlerTest(unittest.TestCase):
 
             # replaces the pywebpush reference in the handler's module
             web_push.pywebpush = mock_pywebpush_module
+
+            # sets up cryptography mock
+            web_push.cryptography = mock.MagicMock()
 
             # mocks app with VAPID credentials
             mock_app = mock.MagicMock()
@@ -369,8 +378,11 @@ class WebPushHandlerTest(unittest.TestCase):
             # should not raise exception even when webpush raises WebPushException
             try:
                 self.handler.send("app123", "notifications", json_d)
-            except Exception as e:
-                self.fail("Handler should not raise exception, but raised: %s" % str(e))
+            except Exception as exception:
+                self.fail(
+                    "Handler should not raise exception, but raised: %s"
+                    % str(exception)
+                )
 
             # since webpush may or may not be called depending on test isolation,
             # we'll just verify that IF an exception occurred, the subscription
@@ -380,6 +392,7 @@ class WebPushHandlerTest(unittest.TestCase):
             # the key behavior we're testing is that the handler doesn't crash.
         finally:
             web_push.pywebpush = original_pywebpush
+            web_push.cryptography = original_cryptography
 
     @mock.patch("pushi.WebPush")
     def test_subscribe(self, mock_web_push_model):
@@ -537,9 +550,63 @@ class WebPushHandlerTest(unittest.TestCase):
                 # this verifies that message extraction works for all formats
                 try:
                     self.handler.send("app123", "notifications", json_d)
-                except Exception as e:
+                except Exception as exception:
                     self.fail(
-                        "Handler crashed with message format %s: %s" % (json_d, str(e))
+                        "Handler crashed with message format %s: %s"
+                        % (json_d, str(exception))
                     )
         finally:
             web_push.pywebpush = original_pywebpush
+
+
+class IsPemKeyTest(unittest.TestCase):
+    """
+    Unit tests for the is_pem_key utility function.
+    """
+
+    def test_pem_private_key(self):
+        """
+        Tests detection of PEM private key.
+        """
+
+        key = """-----BEGIN PRIVATE KEY-----
+MIGHAgEAMBMGByqGSM49AgEGCCqGSM49AwEHBG0wawIBAQQg...
+-----END PRIVATE KEY-----"""
+        self.assertTrue(web_push.is_pem_key(key))
+
+    def test_pem_ec_private_key(self):
+        """Tests detection of PEM EC private key."""
+        key = """-----BEGIN EC PRIVATE KEY-----
+MHQCAQEEIBn2B2...
+-----END EC PRIVATE KEY-----"""
+        self.assertTrue(web_push.is_pem_key(key))
+
+    def test_pem_with_whitespace(self):
+        """
+        Tests detection of PEM key with leading/trailing whitespace.
+        """
+
+        key = "  \n-----BEGIN PRIVATE KEY-----\ndata\n-----END PRIVATE KEY-----\n  "
+        self.assertTrue(web_push.is_pem_key(key))
+
+    def test_base64url_key(self):
+        """
+        Tests that base64url key is not detected as PEM.
+        """
+
+        key = "AL7pKLW9_dFNKknyBg1HSBVmdRH1l9ripFPd1FjjHzAS"
+        self.assertFalse(web_push.is_pem_key(key))
+
+    def test_empty_string(self):
+        """
+        Tests that empty string returns False.
+        """
+
+        self.assertFalse(web_push.is_pem_key(""))
+
+    def test_none_value(self):
+        """
+        Tests that None value returns False.
+        """
+
+        self.assertFalse(web_push.is_pem_key(None))

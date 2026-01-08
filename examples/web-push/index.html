@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>Pushi Web Push Example</title>
+    <link rel="icon" type="image/svg+xml" href="icon.svg">
+    <style>
+        body { font-family: sans-serif; max-width: 600px; margin: 40px auto; padding: 20px; }
+        button { padding: 12px 24px; font-size: 16px; cursor: pointer; margin: 8px 4px; }
+        button:disabled { opacity: 0.5; cursor: not-allowed; }
+        #status { margin-top: 20px; padding: 12px; background: #f0f0f0; border-radius: 4px; }
+        #status.subscribed { background: #d4edda; color: #155724; }
+        #status.error { background: #f8d7da; color: #721c24; }
+        .payload-example { margin-top: 30px; padding: 16px; background: #f8f9fa; border-radius: 4px; }
+        .payload-example h3 { margin-top: 0; }
+        .payload-example pre { background: #282c34; color: #abb2bf; padding: 12px; border-radius: 4px; overflow-x: auto; font-size: 13px; }
+    </style>
+</head>
+<body>
+    <h1>Pushi Web Push Example</h1>
+
+    <button id="subscribe">Enable Notifications</button>
+    <button id="unsubscribe">Disable Notifications</button>
+
+    <div id="status">Status: Not subscribed</div>
+
+    <div class="payload-example">
+        <h3>Notification Payload Format</h3>
+        <p>Send notifications with the following JSON payload structure:</p>
+        <pre>{
+  "title": "Hello World",
+  "body": "This is a test notification",
+  "icon": "https://example.com/icon.png",
+  "badge": "https://example.com/badge.png",
+  "image": "https://example.com/image.jpg",
+  "vibrate": [200, 100, 200, 100, 400],
+  "silent": false,
+  "tag": "message-group-1",
+  "renotify": true,
+  "requireInteraction": false,
+  "url": "https://example.com/action",
+  "actions": [
+    { "action": "view", "title": "View" },
+    { "action": "dismiss", "title": "Dismiss" }
+  ]
+}</pre>
+        <p><strong>Note:</strong> Custom notification sounds are not supported by the Web Push API.
+        Sound is controlled by OS/browser settings. Use <code>"silent": true</code> to suppress sound.</p>
+    </div>
+
+    <script src="../../js/pushi.js"></script>
+    <script>
+        // sets up the application key and creates the pushi
+        // instance that will be used to manage subscriptions
+        var APP_KEY = "YOUR_APP_KEY";
+        var statusEl = document.getElementById("status");
+        var subscribeBtn = document.getElementById("subscribe");
+        var unsubscribeBtn = document.getElementById("unsubscribe");
+
+        console.log("[Pushi] Initializing Web Push example");
+
+        var pushi = new Pushi(APP_KEY, {
+            baseUrl: "ws://localhost:9090/",
+            baseWebUrl: "http://localhost:8080/"
+        });
+
+        // updates the UI to reflect the current subscription state
+        function updateUI(isSubscribed, message) {
+            statusEl.textContent = message || (isSubscribed ? "Status: Subscribed" : "Status: Not subscribed");
+            statusEl.className = isSubscribed ? "subscribed" : "";
+            subscribeBtn.disabled = isSubscribed;
+            unsubscribeBtn.disabled = !isSubscribed;
+        }
+
+        // checks if already subscribed on page load
+        updateUI(false);
+        if ("serviceWorker" in navigator) {
+            console.log("[Pushi] Checking for existing subscription...");
+            navigator.serviceWorker.ready.then(function(registration) {
+                registration.pushManager.getSubscription().then(function(subscription) {
+                    if (subscription) {
+                        console.log("[Pushi] Found existing subscription:", subscription.endpoint);
+                    } else {
+                        console.log("[Pushi] No existing subscription found");
+                    }
+                    updateUI(!!subscription);
+                });
+            });
+        }
+
+        // handles the subscribe button click, requests permission
+        // and registers the browser for push notifications
+        subscribeBtn.onclick = function() {
+            console.log("[Pushi] Subscribe button clicked");
+            statusEl.textContent = "Status: Subscribing...";
+            statusEl.className = "";
+
+            pushi.setupWebPush("notifications", { swPath: "sw.js" })
+                .then(function(result) {
+                    console.log("[Pushi] Successfully subscribed");
+                    console.log("[Pushi] Endpoint:", result.subscriptionInfo.endpoint);
+                    updateUI(true);
+                })
+                .catch(function(error) {
+                    console.error("[Pushi] Subscribe error:", error);
+                    statusEl.textContent = "Status: Error - " + error.message;
+                    statusEl.className = "error";
+                });
+        };
+
+        // handles the unsubscribe button click, removes the
+        // subscription from both the browser and the server
+        unsubscribeBtn.onclick = function() {
+            console.log("[Pushi] Unsubscribe button clicked");
+            statusEl.textContent = "Status: Unsubscribing...";
+            statusEl.className = "";
+
+            pushi.teardownWebPush("notifications")
+                .then(function() {
+                    console.log("[Pushi] Successfully unsubscribed");
+                    updateUI(false);
+                })
+                .catch(function(error) {
+                    console.error("[Pushi] Unsubscribe error:", error);
+                    statusEl.textContent = "Status: Error - " + error.message;
+                    statusEl.className = "error";
+                });
+        };
+    </script>
+</body>
+</html>

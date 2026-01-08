@@ -22,6 +22,10 @@
 
 var PUSHI_CONNECTIONS = {};
 
+// ===========================================
+// Observable Implementation
+// ===========================================
+
 var Observable = function() {
     this.events = {};
 };
@@ -60,6 +64,10 @@ Observable.prototype.unbind = function(event, method) {
     var index = methods.indexOf(method);
     index !== -1 && methods.splice(index, 1);
 };
+
+// ===========================================
+// Pushi Channel Implementation
+// ===========================================
 
 var Channel = function(pushi, name) {
     this.pushi = pushi;
@@ -120,6 +128,10 @@ Channel.prototype.trigger = Observable.prototype.trigger;
 Channel.prototype.bind = Observable.prototype.bind;
 Channel.prototype.unbind = Observable.prototype.unbind;
 
+// ===========================================
+// Pushi Base Implementation
+// ===========================================
+
 var Pushi = function(appKey, options) {
     this.init(appKey, options);
 };
@@ -160,7 +172,7 @@ Pushi.prototype.init = function(appKey, options, callback) {
 };
 
 Pushi.prototype.config = function(appKey, options) {
-    // runs the definition of a series of contant values that
+    // runs the definition of a series of constant values that
     // will be used as defaults for some options
     var TIMEOUT = 5000;
     var BASE_URL = "wss://puxiapp.com/";
@@ -169,6 +181,7 @@ Pushi.prototype.config = function(appKey, options) {
     // to the pre-defined (constant) values if that's required
     var timeout = options.timeout || TIMEOUT;
     var baseUrl = options.baseUrl || BASE_URL;
+    var baseWebUrl = options.baseWebUrl || null;
 
     // removes any previously registered configuration for the
     // the current instance app key (for cases of re-configuration)
@@ -179,6 +192,7 @@ Pushi.prototype.config = function(appKey, options) {
     this.timeout = timeout;
     this.url = baseUrl + appKey;
     this.baseUrl = baseUrl;
+    this.baseWebUrl = baseWebUrl;
     this.appKey = appKey;
     this.options = options || {};
 
@@ -199,6 +213,7 @@ Pushi.prototype.clone = function(base) {
     this.timeout = base.timeout;
     this.url = base.url;
     this.baseUrl = base.baseUrl;
+    this.baseWebUrl = base.baseWebUrl;
     this.appKey = base.appKey;
     this.options = base.options;
     this.socket = base.socket;
@@ -523,7 +538,7 @@ Pushi.prototype.subscribe = function(channel, force, callback) {
     }
 
     // retrieves the channel as the name value and then creates
-    // a channel object with the current contect and the name and
+    // a channel object with the current context and the name and
     // then sets the channel in the channels map structure
     var name = channel;
     channel = new Channel(this, name);
@@ -578,7 +593,7 @@ Pushi.prototype.latest = function(channel, skip, count, callback) {
         return;
     }
 
-    // sends the event for the latest (retrival) of the channel through
+    // sends the event for the latest (retrieval) of the channel through
     // the current pushi socket so that the latest messages are retrieved
     this.sendEvent("pusher:latest", {
         channel: channel,
@@ -617,7 +632,7 @@ Pushi.prototype.subscribePublic = function(channel) {
 };
 
 Pushi.prototype.subscribePrivate = function(channel) {
-    // in case no authentication endpoint exists returns imediately
+    // in case no authentication endpoint exists returns immediately
     // because there's not enough information to proceed with the
     // authentication process for the private channel
     if (!this.authEndpoint) {
@@ -628,7 +643,7 @@ Pushi.prototype.subscribePrivate = function(channel) {
     // used by the clojures in the current function
     var self = this;
 
-    // contructs the get query part of the url with both the socket
+    // constructs the get query part of the url with both the socket
     // id of the current connection and the channel value for it
     // then constructs the complete url value for the connection
     var query = "?socket_id=" + this.socketId + "&channel=" + channel;
@@ -647,7 +662,7 @@ Pushi.prototype.subscribePrivate = function(channel) {
             return;
         }
 
-        // retrieves the reponse data and parses it as a json
+        // retrieves the response data and parses it as a json
         // message and returns immediately in case no auth
         // information is provided as part of the response
         var result = JSON.parse(request.responseText);
@@ -671,9 +686,366 @@ Pushi.prototype.isValid = function(appKey, baseUrl) {
     return appKey === this.appKey && baseUrl === this.baseUrl;
 };
 
+// ===========================================
+// Observable Support
+// ===========================================
+
 Pushi.prototype.trigger = Observable.prototype.trigger;
 Pushi.prototype.bind = Observable.prototype.bind;
 Pushi.prototype.unbind = Observable.prototype.unbind;
+
+// ===========================================
+// Web Push API Implementation
+// ===========================================
+
+/**
+ * Fetches the VAPID public key from the server. This key is
+ * needed to subscribe to push notifications using the browser's
+ * Push API (applicationServerKey parameter).
+ *
+ * @param {Function} callback Optional callback with (error, vapidPublicKey).
+ * @returns {Promise} Promise that resolves with the VAPID public key.
+ */
+Pushi.prototype.getVapidPublicKey = function(callback) {
+    var self = this;
+    var url = this._buildApiUrl("/vapid_key");
+
+    return new Promise(function(resolve, reject) {
+        var request = new XMLHttpRequest();
+        request.open("GET", url, true);
+        request.onreadystatechange = function() {
+            if (request.readyState !== 4) {
+                return;
+            }
+
+            if (request.status === 200) {
+                var result = JSON.parse(request.responseText);
+                var publicKey = result.vapid_public_key;
+                callback && callback(null, publicKey);
+                resolve(publicKey);
+            } else {
+                var error = new Error("Failed to get VAPID public key: " + request.status);
+                callback && callback(error, null);
+                reject(error);
+            }
+        };
+        request.send();
+    });
+};
+
+/**
+ * Requests notification permission from the user. This must be
+ * called before attempting to subscribe to push notifications.
+ *
+ * @returns {Promise} Promise that resolves with permission state
+ * ('granted', 'denied', or 'default').
+ */
+Pushi.prototype.requestNotificationPermission = function() {
+    return new Promise(function(resolve, reject) {
+        if (!("Notification" in window)) {
+            reject(new Error("Notifications not supported in this browser"));
+            return;
+        }
+
+        Notification.requestPermission().then(function(permission) {
+            resolve(permission);
+        }).catch(function(error) {
+            reject(error);
+        });
+    });
+};
+
+/**
+ * Registers a service worker for handling push notifications.
+ * The service worker is required to receive and display push
+ * notifications in the browser.
+ *
+ * @param {String} swPath Path to the service worker file (default: '/sw.js').
+ * @returns {Promise} Promise that resolves with the ServiceWorkerRegistration.
+ */
+Pushi.prototype.registerServiceWorker = function(swPath) {
+    swPath = swPath || "/sw.js";
+
+    return new Promise(function(resolve, reject) {
+        if (!("serviceWorker" in navigator)) {
+            reject(new Error("Service workers not supported in this browser"));
+            return;
+        }
+
+        navigator.serviceWorker.register(swPath).then(function(registration) {
+            resolve(registration);
+        }).catch(function(error) {
+            reject(error);
+        });
+    });
+};
+
+/**
+ * Gets the current push subscription from the browser's
+ * push manager, if one exists.
+ *
+ * @param {ServiceWorkerRegistration} registration The service worker registration.
+ * @returns {Promise} Promise that resolves with PushSubscription or null.
+ */
+Pushi.prototype.getPushSubscription = function(registration) {
+    return registration.pushManager.getSubscription();
+};
+
+/**
+ * Subscribes the browser to push notifications using the
+ * Web Push API. Requires a VAPID public key from the server.
+ *
+ * @param {ServiceWorkerRegistration} registration The service worker registration.
+ * @param {String} vapidPublicKey The VAPID public key in base64url format.
+ * @returns {Promise} Promise that resolves with PushSubscription.
+ */
+Pushi.prototype.subscribeToPush = function(registration, vapidPublicKey) {
+    var self = this;
+
+    return new Promise(function(resolve, reject) {
+        // converts the base64url public key to Uint8Array
+        // as required by the Push API
+        var applicationServerKey = self._urlBase64ToUint8Array(vapidPublicKey);
+
+        registration.pushManager.subscribe({
+            userVisibleOnly: true,
+            applicationServerKey: applicationServerKey
+        }).then(function(subscription) {
+            resolve(subscription);
+        }).catch(function(error) {
+            reject(error);
+        });
+    });
+};
+
+/**
+ * Extracts the subscription information from a PushSubscription
+ * object into a plain object suitable for sending to the server.
+ *
+ * @param {PushSubscription} subscription The browser's push subscription.
+ * @returns {Object} Object containing endpoint, p256dh, and auth keys.
+ */
+Pushi.prototype.extractSubscriptionInfo = function(subscription) {
+    var json = subscription.toJSON();
+    return {
+        endpoint: json.endpoint,
+        p256dh: json.keys.p256dh,
+        auth: json.keys.auth
+    };
+};
+
+/**
+ * Sends the push subscription to the Pushi server to register
+ * for notifications on a specific event/channel.
+ *
+ * @param {Object} subscriptionInfo Object with endpoint, p256dh, auth.
+ * @param {String} event The event/channel name to subscribe to.
+ * @param {Object} options Optional settings (auth, unsubscribe).
+ * @returns {Promise} Promise that resolves with server response.
+ */
+Pushi.prototype.sendSubscriptionToServer = function(subscriptionInfo, event, options) {
+    var self = this;
+    options = options || {};
+
+    var url = this._buildApiUrl("/web_pushes");
+
+    if (options.auth) {
+        url += "&auth=" + encodeURIComponent(options.auth);
+    }
+    if (options.unsubscribe !== undefined) {
+        url += "&unsubscribe=" + options.unsubscribe;
+    }
+
+    var data = {
+        endpoint: subscriptionInfo.endpoint,
+        p256dh: subscriptionInfo.p256dh,
+        auth: subscriptionInfo.auth,
+        event: event
+    };
+
+    return new Promise(function(resolve, reject) {
+        var request = new XMLHttpRequest();
+        request.open("POST", url, true);
+        request.setRequestHeader("Content-Type", "application/json");
+        request.onreadystatechange = function() {
+            if (request.readyState !== 4) {
+                return;
+            }
+
+            if (request.status === 200 || request.status === 201) {
+                var result = JSON.parse(request.responseText);
+                resolve(result);
+            } else {
+                var error = new Error("Failed to send subscription to server: " + request.status);
+                reject(error);
+            }
+        };
+        request.send(JSON.stringify(data));
+    });
+};
+
+/**
+ * Removes the push subscription from the Pushi server for a
+ * specific event/channel or all events if event is not provided.
+ *
+ * @param {String} endpoint The push endpoint URL.
+ * @param {String} event The event/channel (optional, removes all if not provided).
+ * @returns {Promise} Promise that resolves with server response.
+ */
+Pushi.prototype.removeSubscriptionFromServer = function(endpoint, event) {
+    var self = this;
+
+    var path = "/web_pushes/" + encodeURIComponent(endpoint);
+    var url = this._buildApiUrl(path);
+    if (event) {
+        url += "&event=" + encodeURIComponent(event);
+    }
+
+    return new Promise(function(resolve, reject) {
+        var request = new XMLHttpRequest();
+        request.open("DELETE", url, true);
+        request.onreadystatechange = function() {
+            if (request.readyState !== 4) {
+                return;
+            }
+
+            if (request.status === 200) {
+                var result = JSON.parse(request.responseText);
+                resolve(result);
+            } else {
+                var error = new Error("Failed to remove subscription from server: " + request.status);
+                reject(error);
+            }
+        };
+        request.send();
+    });
+};
+
+/**
+ * High-level method to set up Web Push notifications. This handles
+ * the complete flow: requesting permission, registering service worker,
+ * subscribing to push, and registering with the server.
+ *
+ * @param {String} event The event/channel to subscribe to.
+ * @param {Object} options Configuration options including:
+ *   - swPath: Service worker path (default: '/sw.js')
+ *   - auth: Authentication token for private channels
+ *   - unsubscribe: Remove existing subscriptions (default: true)
+ * @returns {Promise} Promise that resolves with the subscription info.
+ */
+Pushi.prototype.setupWebPush = function(event, options) {
+    var self = this;
+    options = options || {};
+
+    var registration = null;
+    var vapidPublicKey = null;
+
+    return this.requestNotificationPermission()
+        .then(function(permission) {
+            if (permission !== "granted") {
+                throw new Error("Notification permission denied");
+            }
+            return self.registerServiceWorker(options.swPath);
+        })
+        .then(function(reg) {
+            registration = reg;
+            return self.getVapidPublicKey();
+        })
+        .then(function(key) {
+            vapidPublicKey = key;
+            return self.subscribeToPush(registration, vapidPublicKey);
+        })
+        .then(function(subscription) {
+            var info = self.extractSubscriptionInfo(subscription);
+            return self.sendSubscriptionToServer(info, event, options)
+                .then(function(result) {
+                    return {
+                        subscription: subscription,
+                        subscriptionInfo: info,
+                        serverResponse: result
+                    };
+                });
+        });
+};
+
+/**
+ * High-level method to unsubscribe from Web Push notifications.
+ * This removes the subscription from both the browser and the server.
+ *
+ * @param {String} event The event/channel to unsubscribe from (optional).
+ * @returns {Promise} Promise that resolves when unsubscribed.
+ */
+Pushi.prototype.teardownWebPush = function(event) {
+    var self = this;
+
+    return navigator.serviceWorker.ready
+        .then(function(registration) {
+            return registration.pushManager.getSubscription();
+        })
+        .then(function(subscription) {
+            if (!subscription) {
+                return null;
+            }
+
+            var endpoint = subscription.endpoint;
+
+            // unsubscribes from the browser first, then removes
+            // the subscription from the server
+            return subscription.unsubscribe()
+                .then(function() {
+                    return self.removeSubscriptionFromServer(endpoint, event);
+                });
+        });
+};
+
+/**
+ * Builds an API URL with the app key parameter. This is used
+ * internally by the Web Push methods to construct request URLs.
+ *
+ * @param {String} path The API path (e.g., '/vapid_key').
+ * @returns {String} The complete API URL with app key.
+ * @private
+ */
+Pushi.prototype._buildApiUrl = function(path) {
+    // determines the HTTP API base URL from options or derives it
+    // from the WebSocket URL by replacing the protocol
+    var baseWebUrl = this.baseWebUrl;
+    if (!baseWebUrl) {
+        baseWebUrl = this.baseUrl.replace("wss://", "https://").replace("ws://", "http://");
+    }
+    baseWebUrl = baseWebUrl.replace(/\/$/, "");
+
+    // builds the complete URL with app key parameter
+    var url = baseWebUrl + path;
+    url += (url.indexOf("?") === -1 ? "?" : "&") + "app_key=" + this.appKey;
+    return url;
+};
+
+/**
+ * Converts a base64url string to Uint8Array. This is used
+ * internally to convert the VAPID public key to the format
+ * required by the Push API (applicationServerKey).
+ *
+ * @param {String} base64String Base64url encoded string.
+ * @returns {Uint8Array} The decoded bytes.
+ * @private
+ */
+Pushi.prototype._urlBase64ToUint8Array = function(base64String) {
+    // adds padding if needed (base64url doesn't require padding
+    // but atob requires it)
+    var padding = "=".repeat((4 - base64String.length % 4) % 4);
+    var base64 = (base64String + padding)
+        .replace(/-/g, "+")
+        .replace(/_/g, "/");
+
+    var rawData = window.atob(base64);
+    var outputArray = new Uint8Array(rawData.length);
+
+    for (var i = 0; i < rawData.length; ++i) {
+        outputArray[i] = rawData.charCodeAt(i);
+    }
+    return outputArray;
+};
 
 if (typeof String.prototype.startsWith !== "function") {
     String.prototype.startsWith = function(string) {

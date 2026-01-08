@@ -19,24 +19,38 @@
 # You should have received a copy of the Apache License along with
 # Hive Pushi System. If not, see <http://www.apache.org/licenses/>.
 
+__author__ = "João Magalhães <joamag@hive.pt>"
+""" The author(s) of the module """
+
 __copyright__ = "Copyright (c) 2008-2024 Hive Solutions Lda."
 """ The copyright for the module """
 
 __license__ = "Apache License, Version 2.0"
 """ The license for the module """
 
-from . import apn
-from . import app
-from . import base
-from . import event
-from . import subscription
-from . import web
-from . import web_push
+import pushi
 
-from .apn import APNAPI
-from .app import AppAPI
-from .base import BASE_URL, BASE_WS_URL, API
-from .event import EventAPI
-from .subscription import SubscriptionAPI
-from .web import WebAPI
-from .web_push import WebPushAPI
+# initializes the API client with the application
+# credentials obtained from the Pushi server
+api = pushi.API(
+    app_id="YOUR_APP_ID",
+    app_key="YOUR_APP_KEY",
+    app_secret="YOUR_APP_SECRET",
+    base_url="http://localhost:8080/",
+)
+
+# sends a Web Push notification to all subscribers
+# of the "notifications" channel with full payload
+print("Sending Web Push notification...")
+api.trigger_event(
+    channel="notifications",
+    data={
+        "title": "Hello from Pushi!",
+        "body": "This is a test Web Push notification.",
+        "icon": "icon.svg",
+        "vibrate": [200, 100, 200, 100, 400],
+        "tag": "pushi-notification",
+        "url": "https://github.com/hivesolutions/pushi",
+    },
+)
+print("Notification sent!")

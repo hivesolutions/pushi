@@ -369,8 +369,11 @@ class WebPushHandlerTest(unittest.TestCase):
             # should not raise exception even when webpush raises WebPushException
             try:
                 self.handler.send("app123", "notifications", json_d)
-            except Exception as e:
-                self.fail("Handler should not raise exception, but raised: %s" % str(e))
+            except Exception as exception:
+                self.fail(
+                    "Handler should not raise exception, but raised: %s"
+                    % str(exception)
+                )
 
             # since webpush may or may not be called depending on test isolation,
             # we'll just verify that IF an exception occurred, the subscription
@@ -537,9 +540,10 @@ class WebPushHandlerTest(unittest.TestCase):
                 # this verifies that message extraction works for all formats
                 try:
                     self.handler.send("app123", "notifications", json_d)
-                except Exception as e:
+                except Exception as exception:
                     self.fail(
-                        "Handler crashed with message format %s: %s" % (json_d, str(e))
+                        "Handler crashed with message format %s: %s"
+                        % (json_d, str(exception))
                     )
         finally:
             web_push.pywebpush = original_pywebpush

@@ -59,7 +59,6 @@ class WebPushController(appier.Controller):
         event = self.field("event", None)
         return self.state.web_push_handler.subscriptions(endpoint=endpoint, event=event)
 
-    @appier.private
     @appier.route("/web_pushes", "POST", opts=dict(cors=True))
     def create(self):
         """
@@ -77,9 +76,15 @@ class WebPushController(appier.Controller):
         :return: The created subscription object.
         """
 
+        # retrieves the app key from request and looks up the app
+        # to set the proper instance/app_id context for the subscription
+        app_key = self.field("app_key", mandatory=True)
+        app = pushi.App.get(key=app_key)
+
         auth = self.field("auth", None)
         unsubscribe = self.field("unsubscribe", False, cast=bool)
         web_push = pushi.WebPush.new()
+        web_push.instance = app.ident
         web_push = self.state.web_push_handler.subscribe(
             web_push, auth=auth, unsubscribe=unsubscribe
         )

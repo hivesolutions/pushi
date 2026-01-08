@@ -29,6 +29,7 @@ __license__ = "Apache License, Version 2.0"
 """ The license for the module """
 
 import json
+import base64
 
 import appier
 
@@ -40,6 +41,11 @@ try:
     import pywebpush
 except ImportError:
     pywebpush = None
+
+try:
+    import cryptography.hazmat.primitives.serialization
+except ImportError:
+    cryptography = None
 
 
 class WebPushHandler(handler.Handler):
@@ -89,6 +95,14 @@ class WebPushHandler(handler.Handler):
             )
             return
 
+        # verifies if the cryptography library is available, if not
+        # logs a warning and returns immediately
+        if not cryptography:
+            self.logger.warning(
+                "cryptography library not available, skipping Web Push notifications"
+            )
+            return
+
         # retrieves the reference to the app structure associated with the
         # id for which the message is being sent
         app = self.owner.get_app(app_id=app_id)
@@ -97,9 +111,13 @@ class WebPushHandler(handler.Handler):
         vapid_private_key = app.vapid_key if hasattr(app, "vapid_key") else None
         vapid_email = (
             app.vapid_email
-            if hasattr(app, "vapid_email")
+            if hasattr(app, "vapid_email") and app.vapid_email
             else "mailto:noreply@pushi.io"
         )
+
+        # ensures the `vapid_email` has the "mailto:" prefix
+        if vapid_email and not vapid_email.startswith("mailto:"):
+            vapid_email = "mailto:" + vapid_email
 
         # verifies if VAPID credentials are configured, if not
         # logs a warning and returns immediately
@@ -109,6 +127,21 @@ class WebPushHandler(handler.Handler):
                 % app_id
             )
             return
+
+        # converts the VAPID private key to base64url format if it's in PEM format
+        # pywebpush expects a raw base64url-encoded 32-byte private key
+        if vapid_private_key.strip().startswith("-----BEGIN"):
+            private_key_obj = (
+                cryptography.hazmat.primitives.serialization.load_pem_private_key(
+                    vapid_private_key.encode("utf-8"), password=None
+                )
+            )
+            private_bytes = private_key_obj.private_numbers().private_value.to_bytes(
+                32, byteorder="big"
+            )
+            vapid_private_key = (
+                base64.urlsafe_b64encode(private_bytes).decode("utf-8").rstrip("=")
+            )
 
         # retrieves the app key for the retrieved app by unpacking the current
         # app structure into the appropriate values

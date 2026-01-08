@@ -90,7 +90,9 @@ class WebHandler(handler.Handler):
 
         # prints a logging message about the various (Web) subscriptions
         # that were found for the event that was triggered
-        self.logger.debug("Found %d Web (Hook) subscription(s) for '%s'" % (count, root_event))
+        self.logger.debug(
+            "Found %d Web (Hook) subscription(s) for '%s'" % (count, root_event)
+        )
 
         # serializes the JSON message so that it's possible to send it using
         # the HTTP client to the endpoints and then creates the map of headers

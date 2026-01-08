@@ -19,6 +19,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 *
 
+## [0.4.3] - 2026-01-08
+
+### Fixed
+
+* Added setuptools upgrade step to deploy workflow for improved compatibility
+
 ## [0.4.2] - 2026-01-08
 
 ### Changed

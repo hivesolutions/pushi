@@ -33,7 +33,7 @@ import setuptools
 
 setuptools.setup(
     name="pushi-service",
-    version="0.4.6",
+    version="0.4.7",
     author="Hive Solutions Lda.",
     author_email="development@hive.pt",
     description="Pushi System",

@@ -36,7 +36,7 @@ import setuptools
 # if it exists and if it does not mock the long description
 readme_path = os.path.join(os.path.dirname(__file__), "../README.md")
 if os.path.exists(readme_path):
-    long_description = (open(readme_path, "rb").read().decode("utf-8"),)
+    long_description = open(readme_path, "rb").read().decode("utf-8")
     long_description_content_type = ("text/markdown",)
 else:
     long_description = "Pushi WebSocket"
@@ -44,7 +44,7 @@ else:
 
 setuptools.setup(
     name="pushi",
-    version="0.4.6",
+    version="0.4.7",
     author="Hive Solutions Lda.",
     author_email="development@hive.pt",
     description="Pushi System API",

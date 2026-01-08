@@ -557,3 +557,56 @@ class WebPushHandlerTest(unittest.TestCase):
                     )
         finally:
             web_push.pywebpush = original_pywebpush
+
+
+class IsPemKeyTest(unittest.TestCase):
+    """
+    Unit tests for the is_pem_key utility function.
+    """
+
+    def test_pem_private_key(self):
+        """
+        Tests detection of PEM private key.
+        """
+
+        key = """-----BEGIN PRIVATE KEY-----
+MIGHAgEAMBMGByqGSM49AgEGCCqGSM49AwEHBG0wawIBAQQg...
+-----END PRIVATE KEY-----"""
+        self.assertTrue(web_push.is_pem_key(key))
+
+    def test_pem_ec_private_key(self):
+        """Tests detection of PEM EC private key."""
+        key = """-----BEGIN EC PRIVATE KEY-----
+MHQCAQEEIBn2B2...
+-----END EC PRIVATE KEY-----"""
+        self.assertTrue(web_push.is_pem_key(key))
+
+    def test_pem_with_whitespace(self):
+        """
+        Tests detection of PEM key with leading/trailing whitespace.
+        """
+
+        key = "  \n-----BEGIN PRIVATE KEY-----\ndata\n-----END PRIVATE KEY-----\n  "
+        self.assertTrue(web_push.is_pem_key(key))
+
+    def test_base64url_key(self):
+        """
+        Tests that base64url key is not detected as PEM.
+        """
+
+        key = "AL7pKLW9_dFNKknyBg1HSBVmdRH1l9ripFPd1FjjHzAS"
+        self.assertFalse(web_push.is_pem_key(key))
+
+    def test_empty_string(self):
+        """
+        Tests that empty string returns False.
+        """
+
+        self.assertFalse(web_push.is_pem_key(""))
+
+    def test_none_value(self):
+        """
+        Tests that None value returns False.
+        """
+
+        self.assertFalse(web_push.is_pem_key(None))

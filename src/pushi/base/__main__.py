@@ -30,9 +30,7 @@ __license__ = "Apache License, Version 2.0"
 
 import pushi
 
-from .state import State
-
-state = State()
+state = pushi.State()
 app = pushi.PushiApp(state)
 server = pushi.PushiServer(state)
 state.load(app, server)

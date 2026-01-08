@@ -88,19 +88,19 @@ class HealthController(appier.Controller):
         # performs the database health check
         db_check = self._check_database()
         response["checks"]["database"] = db_check
-        if db_check["status"] != "ok":
+        if not db_check["status"] == "ok":
             is_healthy = False
 
         # performs the WebSocket server health check
         ws_check = self._check_websocket_server()
         response["checks"]["websocket"] = ws_check
-        if ws_check["status"] != "ok":
+        if not ws_check["status"] == "ok":
             is_healthy = False
 
         # performs the handlers health check
         handlers_check = self._check_handlers()
         response["checks"]["handlers"] = handlers_check
-        if handlers_check["status"] != "ok":
+        if not handlers_check["status"] == "ok":
             is_healthy = False
 
         # updates the overall status based on component checks
@@ -139,7 +139,7 @@ class HealthController(appier.Controller):
 
         # checks if database is accessible
         db_check = self._check_database()
-        if db_check["status"] != "ok":
+        if not db_check["status"] == "ok":
             raise appier.OperationalError(
                 message="Database not ready: %s" % db_check.get("error", "unknown"),
                 code=503,
@@ -147,7 +147,7 @@ class HealthController(appier.Controller):
 
         # checks if WebSocket server is running
         ws_check = self._check_websocket_server()
-        if ws_check["status"] != "ok":
+        if not ws_check["status"] == "ok":
             raise appier.OperationalError(
                 message="WebSocket server not ready: %s"
                 % ws_check.get("error", "unknown"),
@@ -261,7 +261,7 @@ class HealthController(appier.Controller):
             for handler in handlers:
                 handler_status = self._check_handler(handler)
                 handler_statuses.append(handler_status)
-                if handler_status["status"] != "ok":
+                if not handler_status["status"] == "ok":
                     all_ok = False
 
             return dict(
@@ -292,7 +292,9 @@ class HealthController(appier.Controller):
             stats = dict()
 
             # checks for subscription count if available (WebPushHandler, APNHandler, etc.)
-            if hasattr(handler, "subs"):
+            # note: we avoid hasattr() because in Python 2 it catches all exceptions,
+            # not just AttributeError, which would swallow errors from property access
+            try:
                 subs = handler.subs
                 total_subscriptions = sum(
                     sum(len(events) for events in app_subs.values())
@@ -300,15 +302,19 @@ class HealthController(appier.Controller):
                 )
                 stats["subscription_count"] = total_subscriptions
                 stats["app_count"] = len(subs)
+            except AttributeError:
+                pass
 
             # checks for tokens if available (APNHandler)
-            if hasattr(handler, "tokens"):
+            try:
                 tokens = handler.tokens
                 total_tokens = sum(
                     sum(len(events) for events in app_tokens.values())
                     for app_tokens in tokens.values()
                 )
                 stats["token_count"] = total_tokens
+            except AttributeError:
+                pass
 
             return dict(
                 name=handler_name,

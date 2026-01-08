@@ -9,6 +9,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+*
+
+### Changed
+
+*
+
+### Fixed
+
+*
+
+## [0.4.0] - 2026-01-08
+
+### Added
+
 * Web Push notification support using W3C Push API (RFC 8030)
 * VAPID authentication for Web Push (RFC 8292)
 * WebPush model for storing push subscriptions

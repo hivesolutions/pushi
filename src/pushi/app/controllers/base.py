@@ -82,7 +82,7 @@ class BaseController(appier.Controller):
         try:
             # detects the key format and uses the appropriate
             # method to load it (PEM or raw base64url)
-            if pushi.base.is_pem_key(app.vapid_key):
+            if pushi.is_pem_key(app.vapid_key):
                 vapid = py_vapid.Vapid.from_pem(app.vapid_key.encode("utf-8"))
             else:
                 vapid = py_vapid.Vapid.from_string(app.vapid_key)

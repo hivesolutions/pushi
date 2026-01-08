@@ -48,6 +48,7 @@ class WebPushController(appier.Controller):
         Lists Web Push subscriptions with optional filtering.
 
         Query parameters:
+        - app_key: The application key (required)
         - endpoint: Filter by endpoint URL
         - event: Filter by event/channel name
 
@@ -55,9 +56,16 @@ class WebPushController(appier.Controller):
         :return: Dictionary containing list of subscriptions.
         """
 
+        # retrieves the app key from request and looks up the app
+        # to filter subscriptions by instance
+        app_key = self.field("app_key", mandatory=True)
+        app = pushi.App.get(key=app_key)
+
         endpoint = self.field("endpoint", None)
         event = self.field("event", None)
-        return self.state.web_push_handler.subscriptions(endpoint=endpoint, event=event)
+        return self.state.web_push_handler.subscriptions(
+            endpoint=endpoint, event=event, instance=app.ident
+        )
 
     @appier.route("/web_pushes", "POST", opts=dict(cors=True))
     def create(self):
@@ -90,11 +98,13 @@ class WebPushController(appier.Controller):
         )
         return web_push.map()
 
-    @appier.private
     @appier.route("/web_pushes/<endpoint>", "DELETE", opts=dict(cors=True))
     def deletes(self, endpoint):
         """
         Deletes all subscriptions for a given endpoint.
+
+        Query parameters:
+        - app_key: The application key (required)
 
         :type endpoint: String
         :param endpoint: The push endpoint URL (path parameter).
@@ -102,10 +112,16 @@ class WebPushController(appier.Controller):
         :return: Dictionary containing list of deleted subscriptions.
         """
 
-        web_pushes = self.state.web_push_handler.unsubscribes(endpoint)
+        # retrieves the app key from request and looks up the app
+        # to filter subscriptions by instance
+        app_key = self.field("app_key", mandatory=True)
+        app = pushi.App.get(key=app_key)
+
+        web_pushes = self.state.web_push_handler.unsubscribes(
+            endpoint, instance=app.ident
+        )
         return dict(subscriptions=[web_push.map() for web_push in web_pushes])
 
-    @appier.private
     @appier.route(
         r"/web_pushes/<endpoint>/<regex('[\.\w-]+'):event>",
         "DELETE",
@@ -116,6 +132,7 @@ class WebPushController(appier.Controller):
         Deletes a specific subscription for an endpoint and event.
 
         Query parameters:
+        - app_key: The application key (required)
         - force: Whether to raise error if not found (default: false)
 
         :type endpoint: String
@@ -126,8 +143,13 @@ class WebPushController(appier.Controller):
         :return: The deleted subscription object map, or empty dict if not found.
         """
 
+        # retrieves the app key from request and looks up the app
+        # to filter subscriptions by instance
+        app_key = self.field("app_key", mandatory=True)
+        app = pushi.App.get(key=app_key)
+
         force = self.field("force", False, cast=bool)
         web_push = self.state.web_push_handler.unsubscribe(
-            endpoint, event=event, force=force
+            endpoint, event=event, instance=app.ident, force=force
         )
         return web_push.map() if web_push else dict()

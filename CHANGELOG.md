@@ -9,6 +9,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+*
+
+### Changed
+
+*
+
+### Fixed
+
+*
+
+## [0.5.0] - 2026-01-09
+
+### Added
+
 * CI/CD workflows for JavaScript library (`main-js.yml`, `deploy-js.yml`) with linting and NPM publishing
 * ESLint configuration for JavaScript library using `eslint-config-hive`
 * Package.json for JavaScript library with NPM publishing support

@@ -13,6 +13,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * ESLint configuration for JavaScript library using `eslint-config-hive`
 * Package.json for JavaScript library with NPM publishing support
 * CommonJS module exports in JavaScript client for Node.js compatibility
+* ESM wrapper module (`pushi.mjs`) for ES module environments
+* Dual module exports (ESM and CommonJS) in JavaScript package.json
+* Comprehensive unit tests for JavaScript client using Mocha
+* Tests for Observable, Channel, and Pushi classes
+* Mock implementations for WebSocket, XMLHttpRequest, and browser APIs for Node.js testing
+* Added `yarn.lock` and `package-lock.json` to `.gitignore`
 * Health check endpoints for monitoring and load balancer integration (`/health`, `/health/detailed`, `/health/live`, `/health/ready`)
 * SMTP notification handler using netius SMTP client for email delivery
 * SMTP model for storing email subscriptions to event channels
@@ -33,6 +39,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 * Updated GitHub Actions checkout to v6 in all Python workflows
 * Improved JavaScript client code quality with ESLint-compliant patterns (`Boolean()`, `new Error()`, unused params)
+* Renamed ESLint config to ESM format (`eslint.config.js` → `eslint.config.mjs`)
 * Moved `examples/web-push/client.py` to `examples/base/notify.py` for reusability across examples
 * Updated Web Push README to reference new examples structure
 * SMTP configuration now resolves with priority: app-level smtp_url → global SMTP_URL → individual SMTP_* environment variables

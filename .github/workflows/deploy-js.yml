@@ -18,6 +18,8 @@ jobs:
     steps:
       - name: Checkout code from repository
         uses: actions/checkout@v6
+        with:
+          submodules: true
       - name: Print Node.js information
         run: node --version
       - name: Install dependencies

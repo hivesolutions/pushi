@@ -36,8 +36,9 @@ import appier
 from . import apn
 from . import app
 from . import web
-from . import web_push
+from . import smtp
 from . import event
+from . import web_push
 from . import subscription
 
 BASE_URL = "https://puxiapp.com:9090/"
@@ -54,8 +55,9 @@ class API(
     apn.APNAPI,
     app.AppAPI,
     web.WebAPI,
-    web_push.WebPushAPI,
+    smtp.SMTPAPI,
     event.EventAPI,
+    web_push.WebPushAPI,
     subscription.SubscriptionAPI,
 ):
     """

@@ -29,52 +29,52 @@ __license__ = "Apache License, Version 2.0"
 """ The license for the module """
 
 
-class APNAPI(object):
-    def list_apns(self, token=None, event=None):
-        # runs the list operation for the APN subscriptions
-        # with optional filtering by token and/or event
+class SMTPAPI(object):
+    def list_smtps(self, email=None, event=None):
+        # runs the list operation for the SMTP subscriptions
+        # with optional filtering by email and/or event
         params = dict()
-        if token:
-            params["token"] = token
+        if email:
+            params["email"] = email
         if event:
             params["event"] = event
-        result = self.get(self.base_url + "apns", params=params)
+        result = self.get(self.base_url + "smtps", params=params)
         return result
 
-    def create_apn(self, token, event, auth=None, unsubscribe=True):
-        # runs the APN subscription operation for the provided
-        # token and event, this operation uses the currently
+    def create_smtp(self, email, event, auth=None, unsubscribe=True):
+        # runs the SMTP subscription operation for the provided
+        # email and event, this operation uses the currently
         # defined app id for the operation, then returns the
         # resulting dictionary to the caller method
         result = self.post(
-            self.base_url + "apns",
+            self.base_url + "smtps",
             params=dict(auth=auth, unsubscribe=unsubscribe),
-            data_j=dict(token=token, event=event),
+            data_j=dict(email=email, event=event),
         )
         return result
 
-    def delete_apn(self, token, event, force=False):
+    def delete_smtp(self, email, event, force=False):
         # runs the unsubscription operation for the provided
-        # token and event, this operation uses the currently
+        # email and event, this operation uses the currently
         # defined app id for the operation, then returns the
         # resulting dictionary to the caller method
         params = dict()
         if force:
             params["force"] = force
         result = self.delete(
-            self.base_url + "apns/%s/%s" % (token, event), params=params
+            self.base_url + "smtps/%s/%s" % (email, event), params=params
         )
         return result
 
-    def delete_apns(self, token):
+    def delete_smtps(self, email):
         # runs the unsubscription operation for all subscriptions
-        # associated with the provided token, then returns the
+        # associated with the provided email, then returns the
         # resulting dictionary to the caller method
-        result = self.delete(self.base_url + "apns/%s" % token)
+        result = self.delete(self.base_url + "smtps/%s" % email)
         return result
 
-    def subscribe_apn(self, *args, **kwargs):
-        return self.create_apn(*args, **kwargs)
+    def subscribe_smtp(self, *args, **kwargs):
+        return self.create_smtp(*args, **kwargs)
 
-    def unsubscribe_apn(self, *args, **kwargs):
-        return self.delete_apn(*args, **kwargs)
+    def unsubscribe_smtp(self, *args, **kwargs):
+        return self.delete_smtp(*args, **kwargs)

@@ -32,6 +32,17 @@ import appier
 
 
 class WebPushAPI(object):
+    def list_web_pushes(self, endpoint=None, event=None):
+        # runs the list operation for the Web Push subscriptions
+        # with optional filtering by endpoint and/or event
+        params = dict()
+        if endpoint:
+            params["endpoint"] = endpoint
+        if event:
+            params["event"] = event
+        result = self.get(self.base_url + "web_pushes", params=params)
+        return result
+
     def create_web_push(
         self, endpoint, p256dh, auth, event, auth_token=None, unsubscribe=True
     ):
@@ -46,7 +57,7 @@ class WebPushAPI(object):
         )
         return result
 
-    def delete_web_push(self, endpoint, event=None):
+    def delete_web_push(self, endpoint, event=None, force=False):
         # runs the unsubscription operation for the provided
         # endpoint, optionally filtered by event; this operation
         # uses the currently defined app id for the operation,
@@ -55,6 +66,8 @@ class WebPushAPI(object):
         params = dict()
         if event:
             params["event"] = event
+        if force:
+            params["force"] = force
         result = self.delete(
             self.base_url + "web_pushes/%s" % endpoint_encoded, params=params
         )
@@ -65,17 +78,6 @@ class WebPushAPI(object):
         # associated with the provided endpoint, this is an alias
         # for delete_web_push without an event filter
         return self.delete_web_push(endpoint)
-
-    def list_web_pushes(self, endpoint=None, event=None):
-        # runs the list operation for the Web Push subscriptions
-        # with optional filtering by endpoint and/or event
-        params = dict()
-        if endpoint:
-            params["endpoint"] = endpoint
-        if event:
-            params["event"] = event
-        result = self.get(self.base_url + "web_pushes", params=params)
-        return result
 
     def get_vapid_public_key(self):
         # retrieves the VAPID public key for the current app,

@@ -29,6 +29,7 @@ from . import apn
 from . import app
 from . import base
 from . import event
+from . import smtp
 from . import subscription
 from . import web
 from . import web_push
@@ -37,6 +38,7 @@ from .apn import APNAPI
 from .app import AppAPI
 from .base import BASE_URL, BASE_WS_URL, API
 from .event import EventAPI
+from .smtp import SMTPAPI
 from .subscription import SubscriptionAPI
 from .web import WebAPI
 from .web_push import WebPushAPI

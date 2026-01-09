@@ -1,0 +1,28 @@
+name: Main Workflow (JS)
+on:
+  push:
+  schedule:
+    - cron: "0 0 * * 0"
+jobs:
+  build:
+    name: Build
+    timeout-minutes: 10
+    strategy:
+      matrix:
+        node-version: [18, 20, 22]
+    runs-on: ubuntu-latest
+    container: node:${{ matrix.node-version }}
+    defaults:
+      run:
+        working-directory: js
+    steps:
+      - name: Checkout code from repository
+        uses: actions/checkout@v6
+      - name: Print Node.js information
+        run: node --version
+      - name: Install dependencies
+        run: npm install
+      - name: Verify Javascript code linting
+        run: npm run lint
+      - name: Run tests
+        run: npm test

@@ -9,7 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-* Fixed naming of js library in `package.json` to `pushi-js`
+*
 
 ### Changed
 
@@ -18,6 +18,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 *
+
+## [0.5.1] - 2026-01-09
+
+### Added
+
+* Fixed naming of js library in `package.json` to `pushi-js`
 
 ## [0.5.0] - 2026-01-09
 

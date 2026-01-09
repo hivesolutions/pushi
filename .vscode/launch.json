@@ -7,8 +7,7 @@
         "module": "pushi.app",
         "justMyCode": false,
         "env": {
-            "PYTHONPATH": "src",
-            "CORS": "1"
+            "PYTHONPATH": "src"
         }
     }, {
         "name": "Pushi Base",
@@ -17,8 +16,7 @@
         "module": "pushi.base",
         "justMyCode": false,
         "env": {
-            "PYTHONPATH": "src",
-            "CORS": "1"
+            "PYTHONPATH": "src"
         }
     }]
 }

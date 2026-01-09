@@ -37,6 +37,7 @@ import pushi
 
 class BaseController(appier.Controller):
 
+    @appier.private
     @appier.route("/vapid_key", "GET")
     def vapid_key(self):
         """
@@ -50,13 +51,9 @@ class BaseController(appier.Controller):
         :return: Dictionary containing the VAPID public key in base64url format.
         """
 
-        # retrieves the app key from the request parameters
-        # going to be used to obtain the App instance
-        app_key = self.field("app_key", mandatory=True)
-
-        # retrieves the current application and verifies
-        # that VAPID credentials are properly configured
-        app = pushi.App.get(key=app_key)
+        # retrieves the app from the current session
+        app_id = self.session.get("app_id", None)
+        app = pushi.App.get(ident=app_id)
         if not app.vapid_key:
             raise appier.OperationalError(
                 message="VAPID credentials not configured for this app"

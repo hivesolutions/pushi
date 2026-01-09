@@ -17,29 +17,32 @@ vapid_key: <your-vapid-private-key>
 vapid_email: mailto:your@email.com
 ```
 
-2. Update `index.html` with your app key and server URLs:
+2. Update `index.html` with your app credentials:
 
 ```javascript
 var APP_KEY = "YOUR_APP_KEY";
+var APP_ID = "YOUR_APP_ID";
+var APP_SECRET = "YOUR_APP_SECRET";
+
 var pushi = new Pushi(APP_KEY, {
-    baseUrl: "ws://your-server:9090/",
-    baseWebUrl: "http://your-server:8080/"
+    baseUrl: "ws://localhost:9090/",
+    baseWebUrl: "http://localhost:8080/",
+    appId: APP_ID,
+    appSecret: APP_SECRET
 });
 ```
 
-3. Start the Pushi server with CORS enabled:
+3. Start the Pushi server:
 
 ```bash
-CORS=1 python -m pushi.app
+python -m pushi.app
 ```
 
-4. Serve the example files (localhost works for service workers):
+4. Access the example from the Pushi server (recommended to avoid CORS issues):
 
-```bash
-python -m http.server 8181 --directory .
+```text
+http://localhost:8080/static/examples/web-push/index.html
 ```
-
-5. Open `http://localhost:8181/examples/web-push/` in your browser and click "Enable Notifications".
 
 ## Sending Notifications
 

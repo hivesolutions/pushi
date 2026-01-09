@@ -21,6 +21,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Reorganized examples into separate directories (`examples/base/`, `examples/smtp/`)
 * Comprehensive module documentation for example scripts
 * Debug and warning logging in SMTPHandler for better observability
+* Session-based authentication support via `login()` and `logout()` methods in JavaScript client
+* Added `appId` and `appSecret` configuration options to JavaScript client for authentication
+* Web Push example now served as static files from the app at `/static/examples/web-push/`
 
 ### Changed
 
@@ -29,10 +32,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * SMTP configuration now resolves with priority: app-level smtp_url → global SMTP_URL → individual SMTP_* environment variables
 * Added `.env` to `.gitignore` for local environment configuration
 * Renamed Mail model, MailHandler, and MailController to SMTP, SMTPHandler, and SMTPController for consistency
+* Web Push API endpoints now require session authentication instead of `app_key` query parameter
+* Added `@appier.private` decorator to Web Push and VAPID endpoints to require authentication
+* Removed CORS-specific options from Web Push routes in favor of session-based authentication
+* JavaScript client Web Push API methods now include credentials for session cookie support
+* `/vapid_key` endpoint now retrieves app context from session instead of query parameter
+* Moved Web Push example files from `examples/web-push/` to `src/pushi/app/static/examples/web-push/`
+* Removed `CORS` environment variable from VSCode launch configuration
 
 ### Fixed
 
-*
+* Fixed typo in JavaScript client: "underyling" → "underlying"
 
 ## [0.4.8] - 2026-01-08
 

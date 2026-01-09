@@ -50,9 +50,11 @@
 
     <script src="../../js/pushi.js"></script>
     <script>
-        // sets up the application key and creates the pushi
+        // sets up the application credentials and creates the pushi
         // instance that will be used to manage subscriptions
         var APP_KEY = "YOUR_APP_KEY";
+        var APP_ID = "YOUR_APP_ID";
+        var APP_SECRET = "YOUR_APP_SECRET";
         var statusEl = document.getElementById("status");
         var subscribeBtn = document.getElementById("subscribe");
         var unsubscribeBtn = document.getElementById("unsubscribe");
@@ -61,7 +63,9 @@
 
         var pushi = new Pushi(APP_KEY, {
             baseUrl: "ws://localhost:9090/",
-            baseWebUrl: "http://localhost:8080/"
+            baseWebUrl: "http://localhost:8080/",
+            appId: APP_ID,
+            appSecret: APP_SECRET
         });
 
         // updates the UI to reflect the current subscription state
@@ -88,14 +92,20 @@
             });
         }
 
-        // handles the subscribe button click, requests permission
-        // and registers the browser for push notifications
+        // handles the subscribe button click, logs in first,
+        // then requests permission and registers for push notifications
         subscribeBtn.onclick = function() {
             console.log("[Pushi] Subscribe button clicked");
-            statusEl.textContent = "Status: Subscribing...";
+            statusEl.textContent = "Status: Logging in...";
             statusEl.className = "";
 
-            pushi.setupWebPush("notifications", { swPath: "sw.js" })
+            // logs in to the server first
+            pushi.login()
+                .then(function() {
+                    console.log("[Pushi] Logged in successfully");
+                    statusEl.textContent = "Status: Subscribing...";
+                    return pushi.setupWebPush("notifications", { swPath: "sw.js" });
+                })
                 .then(function(result) {
                     console.log("[Pushi] Successfully subscribed");
                     console.log("[Pushi] Endpoint:", result.subscriptionInfo.endpoint);
@@ -108,14 +118,20 @@
                 });
         };
 
-        // handles the unsubscribe button click, removes the
-        // subscription from both the browser and the server
+        // handles the unsubscribe button click, logs in first,
+        // then removes the subscription from both browser and server
         unsubscribeBtn.onclick = function() {
             console.log("[Pushi] Unsubscribe button clicked");
-            statusEl.textContent = "Status: Unsubscribing...";
+            statusEl.textContent = "Status: Logging in...";
             statusEl.className = "";
 
-            pushi.teardownWebPush("notifications")
+            // logs in to the server first (in case session expired)
+            pushi.login()
+                .then(function() {
+                    console.log("[Pushi] Logged in successfully");
+                    statusEl.textContent = "Status: Unsubscribing...";
+                    return pushi.teardownWebPush("notifications");
+                })
                 .then(function() {
                     console.log("[Pushi] Successfully unsubscribed");
                     updateUI(false);

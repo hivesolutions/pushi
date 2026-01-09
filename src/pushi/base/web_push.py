@@ -305,6 +305,7 @@ class WebPushHandler(handler.Handler):
         :type event: String
         :param event: The event/channel name.
         """
+
         events = self.subs.get(app_id, {})
         subscription_ids = events.get(event, [])
         if subscription_id not in subscription_ids:
@@ -329,7 +330,7 @@ class WebPushHandler(handler.Handler):
         if subscription_id in subscription_ids:
             subscription_ids.remove(subscription_id)
 
-    def subscriptions(self, endpoint=None, event=None, instance=None):
+    def subscriptions(self, endpoint=None, event=None):
         """
         Retrieves Web Push subscriptions from the database with optional filtering.
 
@@ -337,21 +338,17 @@ class WebPushHandler(handler.Handler):
         :param endpoint: Optional endpoint URL to filter by (default: None).
         :type event: String
         :param event: Optional event/channel name to filter by (default: None).
-        :type instance: String
-        :param instance: Optional app instance to filter by (default: None).
         :rtype: Dictionary
         :return: Dictionary containing list of mapped subscriptions under
         the 'subscriptions' key.
         """
 
-        kwargs = dict()
+        filter = dict()
         if endpoint:
-            kwargs["endpoint"] = endpoint
+            filter["endpoint"] = endpoint
         if event:
-            kwargs["event"] = event
-        if instance:
-            kwargs["instance"] = instance
-        subscriptions = pushi.WebPush.find(map=True, **kwargs)
+            filter["event"] = event
+        subscriptions = pushi.WebPush.find(map=True, **filter)
         return dict(subscriptions=subscriptions)
 
     def subscribe(self, web_push, auth=None, unsubscribe=True):
@@ -407,7 +404,7 @@ class WebPushHandler(handler.Handler):
 
         return web_push
 
-    def unsubscribe(self, endpoint, event=None, instance=None, force=True):
+    def unsubscribe(self, endpoint, event=None, force=True):
         """
         Unsubscribes a Web Push endpoint from an event/channel.
 
@@ -416,8 +413,6 @@ class WebPushHandler(handler.Handler):
         :type event: String
         :param event: Optional event/channel name. If None, unsubscribes
         from all events (default: None).
-        :type instance: String
-        :param instance: Optional app instance to filter by (default: None).
         :type force: bool
         :param force: Whether to raise an error if subscription not found
         (default: True).
@@ -430,8 +425,6 @@ class WebPushHandler(handler.Handler):
         kwargs = dict(endpoint=endpoint, raise_e=force)
         if event:
             kwargs["event"] = event
-        if instance:
-            kwargs["instance"] = instance
 
         web_push = pushi.WebPush.get(**kwargs)
         if not web_push:
@@ -443,7 +436,7 @@ class WebPushHandler(handler.Handler):
 
         return web_push
 
-    def unsubscribes(self, endpoint, event=None, instance=None):
+    def unsubscribes(self, endpoint, event=None):
         """
         Unsubscribes a Web Push endpoint from multiple events/channels.
 
@@ -455,8 +448,6 @@ class WebPushHandler(handler.Handler):
         :type event: String
         :param event: Optional event/channel name to filter by
         (default: None).
-        :type instance: String
-        :param instance: Optional app instance to filter by (default: None).
         :rtype: List
         :return: List of deleted WebPush model instances.
         """
@@ -464,8 +455,6 @@ class WebPushHandler(handler.Handler):
         kwargs = dict(endpoint=endpoint)
         if event:
             kwargs["event"] = event
-        if instance:
-            kwargs["instance"] = instance
 
         web_pushes = pushi.WebPush.find(**kwargs)
         for web_push in web_pushes:

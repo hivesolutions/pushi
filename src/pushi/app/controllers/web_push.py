@@ -42,13 +42,12 @@ class WebPushController(appier.Controller):
     """
 
     @appier.private
-    @appier.route("/web_pushes", "GET", opts=dict(cors=True))
+    @appier.route("/web_pushes", "GET")
     def list(self):
         """
         Lists Web Push subscriptions with optional filtering.
 
         Query parameters:
-        - app_key: The application key (required)
         - endpoint: Filter by endpoint URL
         - event: Filter by event/channel name
 
@@ -56,18 +55,12 @@ class WebPushController(appier.Controller):
         :return: Dictionary containing list of subscriptions.
         """
 
-        # retrieves the app key from request and looks up the app
-        # to filter subscriptions by instance
-        app_key = self.field("app_key", mandatory=True)
-        app = pushi.App.get(key=app_key)
-
         endpoint = self.field("endpoint", None)
         event = self.field("event", None)
-        return self.state.web_push_handler.subscriptions(
-            endpoint=endpoint, event=event, instance=app.ident
-        )
+        return self.state.web_push_handler.subscriptions(endpoint=endpoint, event=event)
 
-    @appier.route("/web_pushes", "POST", opts=dict(cors=True))
+    @appier.private
+    @appier.route("/web_pushes", "POST")
     def create(self):
         """
         Creates a new Web Push subscription.
@@ -84,56 +77,42 @@ class WebPushController(appier.Controller):
         :return: The created subscription object.
         """
 
-        # retrieves the app key from request and looks up the app
-        # to set the proper instance/app_id context for the subscription
-        app_key = self.field("app_key", mandatory=True)
-        app = pushi.App.get(key=app_key)
-
         auth = self.field("auth", None)
         unsubscribe = self.field("unsubscribe", False, cast=bool)
         web_push = pushi.WebPush.new()
-        web_push.instance = app.ident
         web_push = self.state.web_push_handler.subscribe(
             web_push, auth=auth, unsubscribe=unsubscribe
         )
         return web_push.map()
 
-    @appier.route(r"/web_pushes/<regex('.+'):endpoint>", "DELETE", opts=dict(cors=True))
+    @appier.private
+    @appier.route(r"/web_pushes/<regex('.+'):endpoint>", "DELETE")
     def delete(self, endpoint):
         """
         Deletes Web Push subscriptions for a given endpoint.
 
-        If event is provided, deletes only the subscription for that
-        specific event. Otherwise, deletes all subscriptions for the endpoint.
+        If event query parameter is provided, deletes only the subscription
+        for that specific event. Otherwise, deletes all subscriptions for
+        the endpoint.
 
         Query parameters:
-        - app_key: The application key (required)
         - event: The event/channel name (optional)
         - force: Whether to raise error if not found (default: false)
 
         :type endpoint: String
         :param endpoint: The push endpoint URL (path parameter, URL-encoded).
         :rtype: Dictionary
-        :return: Dictionary containing deleted subscription(s).
+        :return: The deleted subscription(s).
         """
-
-        # retrieves the app key from request and looks up the app
-        # to filter subscriptions by instance
-        app_key = self.field("app_key", mandatory=True)
-        app = pushi.App.get(key=app_key)
 
         event = self.field("event", None)
         force = self.field("force", False, cast=bool)
 
-        # if event is provided, deletes only the specific subscription
-        # otherwise deletes all subscriptions for the endpoint
         if event:
             web_push = self.state.web_push_handler.unsubscribe(
-                endpoint, event=event, instance=app.ident, force=force
+                endpoint, event=event, force=force
             )
             return web_push.map() if web_push else dict()
         else:
-            web_pushes = self.state.web_push_handler.unsubscribes(
-                endpoint, instance=app.ident
-            )
+            web_pushes = self.state.web_push_handler.unsubscribes(endpoint)
             return dict(subscriptions=[web_push.map() for web_push in web_pushes])

@@ -13,7 +13,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
-*
+* Updated release instructions to include steps for updating `Pushi.VERSION` in `js/pushi.js` and copying `js/pushi.js` to `src/extras/js`
+* Improved JavaScript module exports formatting in CommonJS export block
 
 ### Fixed
 

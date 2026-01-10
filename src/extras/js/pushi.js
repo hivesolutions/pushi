@@ -1179,5 +1179,9 @@ if (typeof String.prototype.startsWith !== "function") {
 
 // Module exports for Node.js/CommonJS environments
 if (typeof module !== "undefined" && module.exports) {
-    module.exports = { Pushi: Pushi, Channel: Channel, Observable: Observable };
+    module.exports = {
+        Pushi: Pushi,
+        Channel: Channel,
+        Observable: Observable
+    };
 }

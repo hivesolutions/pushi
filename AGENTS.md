@@ -104,6 +104,8 @@ To create a new release follow the following steps:
 - Make sure that both the tests pass and the code formatting are valid.
 - Increment (look at `CHANGELOG.md` for semver changes) the `version` value in `setup.py` and `lib/setup.py`, and then the `def _version(self):` return value in `src/pushi/app`.
 - Update the `version` field in the `js/package.json` (inside sub-modules) and queue for new commit.
+- Update the `Pushi.VERSION` field in `js/pushi.js`
+- Copy the `js/pushi.js` file into `src/extras/js`.
 - Move all the `CHANGELOG.md` Unreleased items that have at least one non empty item the into a new section with the new version number and date, and then create new empty sub-sections (Added, Changed and Fixed) for the Unreleased section with a single empty item.
 - Create a commit with the following message `version: $VERSION_NUMBER`.
 - Push the commit.

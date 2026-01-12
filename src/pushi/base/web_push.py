@@ -137,19 +137,23 @@ class WebPushHandler(handler.Handler):
         )
 
         # batch fetch all subscription objects from the database
-        subscription_ids_to_fetch = [sid for sid in subscription_ids if sid not in invalid]
+        subscription_ids_to_fetch = [
+            sid for sid in subscription_ids if sid not in invalid
+        ]
         subscription_objects = pushi.WebPush.find(id={"$in": subscription_ids_to_fetch})
 
         # builds the subscriptions list in the format expected by send_to_subscriptions
         subscriptions = []
         for sub in subscription_objects:
-            subscriptions.append({
-                "endpoint": sub.endpoint,
-                "p256dh": sub.p256dh,
-                "auth": sub.auth,
-                "_id": sub.id,
-                "_obj": sub,
-            })
+            subscriptions.append(
+                {
+                    "endpoint": sub.endpoint,
+                    "p256dh": sub.p256dh,
+                    "auth": sub.auth,
+                    "_id": sub.id,
+                    "_obj": sub,
+                }
+            )
 
         # delegates to the direct send method
         self.send_to_subscriptions(subscriptions, message, app=app, invalid=invalid)

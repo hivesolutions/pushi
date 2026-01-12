@@ -99,7 +99,16 @@ class APNHandler(handler.Handler):
         # delegates to the direct send method with resolved tokens
         self.send_to_tokens(tokens, message, app=app, invalid=invalid)
 
-    def send_to_tokens(self, tokens, message, app=None, key_data=None, cer_data=None, sandbox=None, invalid={}):
+    def send_to_tokens(
+        self,
+        tokens,
+        message,
+        app=None,
+        key_data=None,
+        cer_data=None,
+        sandbox=None,
+        invalid={},
+    ):
         """
         Sends APN notifications directly to a set of device tokens.
 

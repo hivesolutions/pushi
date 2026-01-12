@@ -64,7 +64,8 @@ class MessagingController(appier.Controller):
         }
         """
 
-        # retrieves the app from the current session
+        # retrieves the app from the current session and validates that
+        # the application identifier is present and that the application
         app_id = self.session.get("app_id", None)
         if not app_id:
             raise appier.OperationalError(message="No application selected")
@@ -115,9 +116,14 @@ class MessagingController(appier.Controller):
         }
         """
 
-        # retrieves the app from the current session
+        # retrieves the app from the current session and validates that
+        # the application identifier is present and that the application
         app_id = self.session.get("app_id", None)
+        if not app_id:
+            raise appier.OperationalError(message="No application selected")
         app = pushi.App.get(ident=app_id)
+        if not app:
+            raise appier.OperationalError(message="Application not found")
 
         # retrieves the JSON payload from the request
         data = self.request.get_json() or dict()
@@ -157,9 +163,14 @@ class MessagingController(appier.Controller):
         }
         """
 
-        # retrieves the app from the current session
+        # retrieves the app from the current session and validates that
+        # the application identifier is present and that the application
         app_id = self.session.get("app_id", None)
+        if not app_id:
+            raise appier.OperationalError(message="No application selected")
         app = pushi.App.get(ident=app_id)
+        if not app:
+            raise appier.OperationalError(message="Application not found")
 
         # retrieves the JSON payload from the request
         data = self.request.get_json() or dict()
@@ -245,9 +256,14 @@ class MessagingController(appier.Controller):
         }
         """
 
-        # retrieves the app from the current session
+        # retrieves the app from the current session and validates that
+        # the application identifier is present and that the application
         app_id = self.session.get("app_id", None)
+        if not app_id:
+            raise appier.OperationalError(message="No application selected")
         app = pushi.App.get(ident=app_id)
+        if not app:
+            raise appier.OperationalError(message="Application not found")
 
         # retrieves the JSON payload from the request
         data = self.request.get_json() or dict()

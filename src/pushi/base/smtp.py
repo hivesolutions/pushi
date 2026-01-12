@@ -227,7 +227,11 @@ Data:
         smtp_port = smtp_port or smtp_config.get("port", 25)
         smtp_user = smtp_user or smtp_config.get("user")
         smtp_password = smtp_password or smtp_config.get("password")
-        smtp_starttls = smtp_starttls if smtp_starttls is not None else smtp_config.get("starttls", False)
+        smtp_starttls = (
+            smtp_starttls
+            if smtp_starttls is not None
+            else smtp_config.get("starttls", False)
+        )
         smtp_sender = smtp_sender or smtp_config.get("sender")
 
         # in case the SMTP host is not configured skips the sending operation

@@ -130,9 +130,7 @@ class Messenger(object):
                 if adapter == "apn":
                     if apn_tokens:
                         result = self.send_apn(
-                            tokens=apn_tokens,
-                            message=apn_message or data,
-                            **kwargs
+                            tokens=apn_tokens, message=apn_message or data, **kwargs
                         )
                         results["apn"] = result
 
@@ -171,8 +169,7 @@ class Messenger(object):
 
                 else:
                     results[adapter] = dict(
-                        success=False,
-                        error="Unknown adapter: %s" % adapter
+                        success=False, error="Unknown adapter: %s" % adapter
                     )
 
             except Exception as exception:

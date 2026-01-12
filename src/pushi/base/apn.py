@@ -61,52 +61,7 @@ class APNHandler(handler.Handler):
             raise RuntimeError("No message defined")
 
         # retrieves the reference to the app with the defined app id
-        # and extracts the APN specific values for it to be used in
-        # the process of authentication
         app = self.owner.get_app(app_id=app_id)
-        key_data = app.apn_key
-        cer_data = app.apn_cer
-        sandbox = app.apn_sandbox
-
-        # in case no key data or certificate data is present a runtime
-        # error is raised to indicate the problem
-        if not key_data:
-            raise RuntimeError("No APN key defined")
-        if not cer_data:
-            raise RuntimeError("No APN certificate defined")
-
-        # ensures that the complete set of data is encoded as bytes, as
-        # this is required for the proper writing of the file, otherwise
-        # and invalid encoding would be raised for some platforms
-        key_data = netius.legacy.bytes(key_data)
-        cer_data = netius.legacy.bytes(cer_data)
-
-        # creates a new temporary directory that will be used to store
-        # the temporary key and certificate files for SSL
-        path = tempfile.mkdtemp()
-
-        # creates the full paths to both the key and certificate
-        # files using the temporary path as base
-        key_path = os.path.join(path, "apn.key")
-        cer_path = os.path.join(path, "apn.cer")
-
-        # opens the SSL key file for writing (in binary mode) and
-        # then writes the current data into it so that it may be
-        # used by the encryption infra-structure
-        key_file = open(key_path, "wb")
-        try:
-            key_file.write(key_data)
-        finally:
-            key_file.close()
-
-        # opens the temporary certificate file and writes
-        # the retrieved certificate data into it, to be used
-        # temporarily by the SSL infra-structure
-        cer_file = open(cer_path, "wb")
-        try:
-            cer_file.write(cer_data)
-        finally:
-            cer_file.close()
 
         # retrieves the app key for the retrieved app by unpacking the current
         # app structure into the appropriate values
@@ -141,10 +96,110 @@ class APNHandler(handler.Handler):
         # that were found for the event that was triggered
         self.logger.debug("Found %d APN subscription(s) for '%s'" % (count, root_event))
 
+        # delegates to the direct send method with resolved tokens
+        self.send_to_tokens(tokens, message, app=app, invalid=invalid)
+
+    def send_to_tokens(
+        self,
+        tokens,
+        message,
+        app=None,
+        key_data=None,
+        cer_data=None,
+        sandbox=None,
+        invalid={},
+    ):
+        """
+        Sends APN notifications directly to a set of device tokens.
+
+        This method can be used for direct messaging without requiring
+        pub/sub subscriptions, while reusing the core sending logic.
+
+        :type tokens: List/Set
+        :param tokens: Device tokens to send to.
+        :type message: Dictionary/String
+        :param message: Notification payload with APN fields.
+        :type app: App
+        :param app: Optional App instance for credentials.
+        :type key_data: String
+        :param key_data: PEM-encoded private key (overrides app).
+        :type cer_data: String
+        :param cer_data: PEM-encoded certificate (overrides app).
+        :type sandbox: bool
+        :param sandbox: Use sandbox environment (overrides app).
+        :type invalid: Dictionary
+        :param invalid: Map of already sent tokens to skip.
+        :rtype: Dictionary
+        :return: Result with success status and sent tokens.
+        """
+
+        # retrieves the APN specific values from the app to be used in
+        # the process of authentication, can be overridden by direct params
+        if app:
+            key_data = key_data or getattr(app, "apn_key", None)
+            cer_data = cer_data or getattr(app, "apn_cer", None)
+            if sandbox is None:
+                sandbox = getattr(app, "apn_sandbox", False)
+
+        if sandbox is None:
+            sandbox = False
+
+        # in case no message, key data or certificate data is present
+        # a runtime error is raised to indicate the problem
+        if not message:
+            raise RuntimeError("No message defined")
+        if not key_data:
+            raise RuntimeError("No APN key defined")
+        if not cer_data:
+            raise RuntimeError("No APN certificate defined")
+
+        # normalizes tokens to a set for iteration, ensuring that
+        # one token gets notified only once (no double notifications)
+        if isinstance(tokens, str):
+            tokens = [tokens]
+        tokens = set(tokens)
+
+        if not tokens:
+            return dict(success=True, tokens=[])
+
+        # ensures that the complete set of data is encoded as bytes, as
+        # this is required for the proper writing of the file, otherwise
+        # an invalid encoding would be raised for some platforms
+        key_data = netius.legacy.bytes(key_data)
+        cer_data = netius.legacy.bytes(cer_data)
+
+        # creates a new temporary directory that will be used to store
+        # the temporary key and certificate files for SSL
+        path = tempfile.mkdtemp()
+
+        # creates the full paths to both the key and certificate
+        # files using the temporary path as base
+        key_path = os.path.join(path, "apn.key")
+        cer_path = os.path.join(path, "apn.cer")
+
+        # opens the SSL key file for writing (in binary mode) and
+        # then writes the current data into it so that it may be
+        # used by the encryption infra-structure
+        key_file = open(key_path, "wb")
+        try:
+            key_file.write(key_data)
+        finally:
+            key_file.close()
+
+        # opens the temporary certificate file and writes
+        # the retrieved certificate data into it, to be used
+        # temporarily by the SSL infra-structure
+        cer_file = open(cer_path, "wb")
+        try:
+            cer_file.write(cer_data)
+        finally:
+            cer_file.close()
+
         # creates the counter that will be used by the cleanup function
         # to know exactly when to remove the SSL associated files
         pending = len(tokens)
         clojure = dict(pending=pending)
+        sent_tokens = []
 
         # creates the cleanup function that will be called for
         # the close operation of the APN protocol, this function
@@ -155,7 +210,7 @@ class APNHandler(handler.Handler):
             # APN operation has been completed with success
             netius.compat_loop(loop).stop()
 
-            # retrieve the number of pending APN messages from the
+            # retrieves the number of pending APN messages from the
             # clojure and verifies if the end has been reached
             pending = clojure["pending"]
             pending -= 1
@@ -163,7 +218,7 @@ class APNHandler(handler.Handler):
             if not pending == 0:
                 return
 
-            # removes the temporary keys and certificated files as
+            # removes the temporary keys and certificate files as
             # they are no longer required for APN usage
             self.logger.debug("Removing temporary APN keys")
             shutil.rmtree(path, ignore_errors=True)
@@ -193,9 +248,12 @@ class APNHandler(handler.Handler):
             protocol.bind("finish", cleanup)
             loop.run_forever()
 
-            # adds the current token to the list of invalid item for
+            # adds the current token to the list of invalid items for
             # the current message sending stream
             invalid[token] = True
+            sent_tokens.append(token)
+
+        return dict(success=True, tokens=sent_tokens)
 
     def load(self):
         subs = pushi.APN.find()

@@ -87,16 +87,14 @@ class WebPushHandler(handler.Handler):
         duplicate sends (default: empty dict).
         """
 
-        # verifies if the pywebpush library is available, if not
-        # logs a warning and returns immediately
+        # verifies if the pywebpush library is available
         if not pywebpush:
             self.logger.warning(
                 "pywebpush library not available, skipping Web Push notifications"
             )
             return
 
-        # verifies if the cryptography library is available, if not
-        # logs a warning and returns immediately
+        # verifies if the cryptography library is available
         if not cryptography:
             self.logger.warning(
                 "cryptography library not available, skipping Web Push notifications"
@@ -107,26 +105,118 @@ class WebPushHandler(handler.Handler):
         # id for which the message is being sent
         app = self.owner.get_app(app_id=app_id)
 
-        # retrieves the VAPID credentials from the app configuration
-        vapid_private_key = app.vapid_key if hasattr(app, "vapid_key") else None
-        vapid_email = (
-            app.vapid_email
-            if hasattr(app, "vapid_email") and app.vapid_email
-            else "mailto:noreply@pushi.io"
+        # retrieves the app key for the retrieved app
+        app_key = app.key
+
+        # saves the original event name for debugging
+        root_event = event
+
+        # tries to extract the message from the JSON data structure
+        message = json_d.get("data", None)
+        message = json_d.get("push", message)
+        message = json_d.get("web_push", message)
+        message = json_d.get("message", message)
+
+        # resolves the complete set of (extra) channels for the event
+        extra = self.owner.get_channels(app_key, event)
+        events = [event] + extra
+
+        # retrieves the complete set of subscriptions
+        subs = self.subs.get(app_id, {})
+
+        # creates the list of subscription IDs to be notified
+        subscription_ids = []
+        for event in events:
+            _subscriptions = subs.get(event, [])
+            subscription_ids.extend(_subscriptions)
+        subscription_ids = list(set(subscription_ids))
+        count = len(subscription_ids)
+
+        self.logger.debug(
+            "Found %d Web Push subscription(s) for '%s'" % (count, root_event)
         )
 
-        # ensures the `vapid_email` has the "mailto:" prefix
-        if vapid_email and not vapid_email.startswith("mailto:"):
-            vapid_email = "mailto:" + vapid_email
+        # batch fetch all subscription objects from the database
+        subscription_ids_to_fetch = [
+            sid for sid in subscription_ids if sid not in invalid
+        ]
+        subscription_objects = pushi.WebPush.find(id={"$in": subscription_ids_to_fetch})
+
+        # builds the subscriptions list in the format expected by send_to_subscriptions
+        subscriptions = []
+        for sub in subscription_objects:
+            subscriptions.append(
+                {
+                    "endpoint": sub.endpoint,
+                    "p256dh": sub.p256dh,
+                    "auth": sub.auth,
+                    "_id": sub.id,
+                    "_obj": sub,
+                }
+            )
+
+        # delegates to the direct send method
+        self.send_to_subscriptions(subscriptions, message, app=app, invalid=invalid)
+
+    def send_to_subscriptions(
+        self,
+        subscriptions,
+        message,
+        app=None,
+        vapid_private_key=None,
+        vapid_email=None,
+        invalid={},
+    ):
+        """
+        Sends Web Push notifications directly to a set of subscriptions.
+
+        This method can be used for direct messaging without requiring
+        pub/sub subscriptions, while reusing the core sending logic.
+
+        :type subscriptions: List
+        :param subscriptions: List of subscription dicts with endpoint,
+        p256dh, and auth keys.
+        :type message: Dictionary/String
+        :param message: Notification payload.
+        :type app: App
+        :param app: Optional App instance for VAPID config.
+        :type vapid_private_key: String
+        :param vapid_private_key: VAPID private key (overrides app).
+        :type vapid_email: String
+        :param vapid_email: VAPID contact email (overrides app).
+        :type invalid: Dictionary
+        :param invalid: Map of already sent endpoints to skip.
+        :rtype: Dictionary
+        :return: Result with success status and sent endpoints.
+        """
+
+        # verifies if the pywebpush library is available, if not
+        # returns an error as we cannot send Web Push notifications
+        if not pywebpush:
+            return dict(success=False, error="pywebpush library not available")
+
+        # verifies if the cryptography library is available, if not
+        # returns an error as we need it for key conversion
+        if not cryptography:
+            return dict(success=False, error="cryptography library not available")
+
+        # retrieves the VAPID credentials from the app configuration
+        # if not provided directly through the method parameters
+        if app:
+            vapid_private_key = vapid_private_key or getattr(app, "vapid_key", None)
+            vapid_email = vapid_email or getattr(app, "vapid_email", None)
+
+        vapid_email = vapid_email or "mailto:noreply@pushi.io"
 
         # verifies if VAPID credentials are configured, if not
-        # logs a warning and returns immediately
+        # returns an error as we cannot authenticate with the push service
         if not vapid_private_key:
-            self.logger.warning(
-                "VAPID credentials not configured for app '%s', skipping Web Push"
-                % app_id
-            )
-            return
+            return dict(success=False, error="VAPID private key not configured")
+
+        # ensures the vapid_email has the "mailto:" prefix as required
+        # by the VAPID specification
+        if vapid_email and not vapid_email.startswith("mailto:"):
+            vapid_email = "mailto:" + vapid_email
 
         # converts the VAPID private key to base64url format if it's in PEM format
         # pywebpush expects a raw base64url-encoded 32-byte private key
@@ -143,51 +233,13 @@ class WebPushHandler(handler.Handler):
                 base64.urlsafe_b64encode(private_bytes).decode("utf-8").rstrip("=")
             )
 
-        # retrieves the app key for the retrieved app by unpacking the current
-        # app structure into the appropriate values
-        app_key = app.key
-
-        # saves the original event name for the received event, so that it may
-        # be used later for debugging/log purposes
-        root_event = event
-
-        # tries to extract the message from the JSON data structure, trying
-        # multiple keys in sequence (data, push, web_push, message)
-        message = json_d.get("data", None)
-        message = json_d.get("push", message)
-        message = json_d.get("web_push", message)
-        message = json_d.get("message", message)
-
-        # resolves the complete set of (extra) channels for the provided
-        # event assuming that it may be associated with alias, then creates
-        # the complete list of events containing also the "extra" events
-        extra = self.owner.get_channels(app_key, event)
-        events = [event] + extra
-
-        # retrieves the complete set of subscriptions for the current Web Push
-        # infrastructure to be able to resolve the appropriate subscription objects
-        subs = self.subs.get(app_id, {})
-
-        # creates the initial list of subscription objects to be notified and then
-        # populates the list with the various subscriptions associated with the
-        # complete set of resolved events, note that a set is created at the end
-        # so that one subscription gets notified only once (no double notifications)
-        subscriptions = []
-        for event in events:
-            _subscriptions = subs.get(event, [])
-            subscriptions.extend(_subscriptions)
-        subscriptions = list(set(subscriptions))
-        count = len(subscriptions)
-
-        # prints a logging message about the various (Web Push) subscriptions
-        # that were found for the event that was triggered
-        self.logger.debug(
-            "Found %d Web Push subscription(s) for '%s'" % (count, root_event)
-        )
+        # returns early if there are no subscriptions to notify
+        if not subscriptions:
+            return dict(success=True, endpoints=[])
 
         # prepares the notification payload, ensuring it's a JSON string
         # handles the case where message could be None or various types
-        if message == None:
+        if message is None:
             payload = json.dumps({})
         elif isinstance(message, dict):
             payload = json.dumps(message)
@@ -196,44 +248,40 @@ class WebPushHandler(handler.Handler):
         else:
             payload = json.dumps({"message": str(message)})
 
-        # batch fetch all subscription objects from the database to avoid N+1 queries
-        # filters out subscriptions that are already in the invalid map
-        subscription_ids_to_fetch = [sid for sid in subscriptions if sid not in invalid]
-        subscription_objects = pushi.WebPush.find(id={"$in": subscription_ids_to_fetch})
-        subscription_map = {sub.id: sub for sub in subscription_objects}
+        sent_endpoints = []
 
         # iterates over the complete set of subscriptions that are going to
         # be notified about the message, each of them is going to receive
         # a Web Push notification
-        for subscription_id in subscriptions:
-            # in case the current subscription ID is present in the current
-            # map of invalid items must skip iteration as the message
-            # has probably already been sent to the target subscription
-            if subscription_id in invalid:
+        for sub in subscriptions:
+            endpoint = sub.get("endpoint")
+            p256dh = sub.get("p256dh")
+            auth = sub.get("auth")
+
+            # validates that all required subscription fields are present
+            if not endpoint or not p256dh or not auth:
+                self.logger.warning("Invalid subscription, missing required fields")
                 continue
 
-            # retrieves the subscription object from the pre-fetched map
-            subscription_obj = subscription_map.get(subscription_id)
-            if not subscription_obj:
-                self.logger.warning(
-                    "Web push subscription '%s' not found in database" % subscription_id
-                )
+            # in case the current subscription is present in the current
+            # map of invalid items must skip iteration as the message
+            # has probably already been sent to the target subscription
+            sub_id = sub.get("_id", endpoint)
+            if sub_id in invalid:
                 continue
 
             # builds the subscription info dictionary required by pywebpush
             subscription_info = {
-                "endpoint": subscription_obj.endpoint,
+                "endpoint": endpoint,
                 "keys": {
-                    "p256dh": subscription_obj.p256dh,
-                    "auth": subscription_obj.auth,
+                    "p256dh": p256dh,
+                    "auth": auth,
                 },
             }
 
             # prints a debug message about the Web Push notification that
             # is going to be sent (includes endpoint)
-            self.logger.debug(
-                "Sending Web Push notification to '%s'" % subscription_obj.endpoint
-            )
+            self.logger.debug("Sending Web Push notification to '%s'" % endpoint)
 
             try:
                 # sends the Web Push notification using pywebpush library
@@ -245,37 +293,36 @@ class WebPushHandler(handler.Handler):
                     vapid_claims=dict(sub=vapid_email),
                 )
 
-                # adds the current subscription ID to the list of invalid items
+                # adds the current subscription to the list of invalid items
                 # for the current message sending stream
-                invalid[subscription_id] = True
+                invalid[sub_id] = True
+                sent_endpoints.append(endpoint)
 
             except pywebpush.WebPushException as exception:
                 # logs the error that occurred during the Web Push send
                 self.logger.warning(
-                    "Failed to send Web Push to '%s': %s"
-                    % (subscription_obj.endpoint, str(exception))
+                    "Failed to send Web Push to '%s': %s" % (endpoint, str(exception))
                 )
 
                 # if the error is due to an expired or invalid subscription (410 Gone
                 # or 404 Not Found), removes the subscription from the database
                 if exception.response and exception.response.status_code in (404, 410):
-                    self.logger.info(
-                        "Removing expired Web Push subscription '%s'" % subscription_id
-                    )
-                    try:
-                        subscription_obj.delete()
-                    except Exception as delete_exception:
-                        self.logger.error(
-                            "Failed to delete expired subscription: %s"
-                            % str(delete_exception)
-                        )
+                    self.logger.info("Subscription expired: '%s'" % endpoint)
+                    sub_obj = sub.get("_obj")
+                    if sub_obj:
+                        try:
+                            sub_obj.delete()
+                        except Exception:
+                            pass
 
             except Exception as exception:
                 # logs any other unexpected errors
                 self.logger.error(
                     "Unexpected error sending Web Push to '%s': %s"
-                    % (subscription_obj.endpoint, str(exception))
+                    % (endpoint, str(exception))
                 )
+
+        return dict(success=True, endpoints=sent_endpoints)
 
     def load(self):
         """

@@ -94,11 +94,51 @@ class WebHandler(handler.Handler):
             "Found %d Web (Hook) subscription(s) for '%s'" % (count, root_event)
         )
 
+        # delegates to the direct send method with resolved URLs
+        self.send_to_urls(urls, json_d, invalid=invalid)
+
+    def send_to_urls(self, urls, data, headers=None, method="POST", invalid={}):
+        """
+        Sends HTTP requests directly to a set of webhook URLs.
+
+        This method can be used for direct messaging without requiring
+        pub/sub subscriptions, while reusing the core sending logic.
+
+        :type urls: List/Set
+        :param urls: Webhook URLs to send to.
+        :type data: Dictionary/String
+        :param data: Data to send (dictionaries are JSON-encoded).
+        :type headers: Dictionary
+        :param headers: Additional headers to include.
+        :type method: String
+        :param method: HTTP method to use (default: POST).
+        :type invalid: Dictionary
+        :param invalid: Map of already sent URLs to skip.
+        :rtype: Dictionary
+        :return: Result with success status and sent URLs.
+        """
+
+        # normalizes URLs to a set for iteration, ensuring that
+        # one URL gets notified only once (no double notifications)
+        if isinstance(urls, str):
+            urls = [urls]
+        urls = set(urls)
+
+        if not urls:
+            return dict(success=True, urls=[])
+
         # serializes the JSON message so that it's possible to send it using
-        # the HTTP client to the endpoints and then creates the map of headers
-        # that is going to be used in the post messages to be sent
-        data = json.dumps(json_d)
-        headers = {"content-type": "application/json"}
+        # the HTTP client to the endpoints
+        if isinstance(data, dict):
+            data = json.dumps(data)
+
+        # creates the map of headers that is going to be used in the
+        # HTTP requests to be sent, merging with any custom headers
+        request_headers = {"content-type": "application/json"}
+        if headers:
+            request_headers.update(headers)
+
+        sent_urls = []
 
         # creates the on message function that is going to be used at the end of
         # the request to be able to close the protocol, this is a clojure and so
@@ -106,16 +146,16 @@ class WebHandler(handler.Handler):
         def on_message(protocol, parser, message):
             protocol.close()
 
-        # creates the on close function that will be responsible for the stopping
+        # creates the on finish function that will be responsible for the stopping
         # of the loop as defined by the Web (Hook) implementation
         def on_finish(protocol):
             netius.compat_loop(loop).stop()
 
         # iterates over the complete set of URLs that are going to
         # be notified about the message, each of them is going to
-        # received an HTTP post request with the data
+        # receive an HTTP request with the data
         for url in urls:
-            # in case the current token is present in the current
+            # in case the current URL is present in the current
             # map of invalid items must skip iteration as the message
             # has probably already been sent "to the target URL"
             if url in invalid:
@@ -123,14 +163,31 @@ class WebHandler(handler.Handler):
 
             # prints a debug message about the Web (Hook) message that
             # is going to be sent (includes URL)
-            self.logger.debug("Sending POST request to '%s'" % url)
+            self.logger.debug("Sending %s request to '%s'" % (method, url))
 
-            # creates the HTTP protocol to be used in the POST request and
+            # creates the HTTP protocol to be used in the request and
             # sets the headers and the data then registers for the message
             # event so that the loop and protocol may be closed
-            loop, protocol = netius.clients.HTTPClient.post_s(
-                url, headers=headers, data=data
-            )
+            method_upper = method.upper()
+            if method_upper == "POST":
+                loop, protocol = netius.clients.HTTPClient.post_s(
+                    url, headers=request_headers, data=data
+                )
+            elif method_upper == "GET":
+                loop, protocol = netius.clients.HTTPClient.get_s(
+                    url, headers=request_headers
+                )
+            elif method_upper == "PUT":
+                loop, protocol = netius.clients.HTTPClient.put_s(
+                    url, headers=request_headers, data=data
+                )
+            elif method_upper == "DELETE":
+                loop, protocol = netius.clients.HTTPClient.delete_s(
+                    url, headers=request_headers
+                )
+            else:
+                continue
+
             protocol.bind("message", on_message)
             protocol.bind("finish", on_finish)
             loop.run_forever()
@@ -138,6 +195,9 @@ class WebHandler(handler.Handler):
             # adds the current URL to the list of invalid items for
             # the current message sending stream
             invalid[url] = True
+            sent_urls.append(url)
+
+        return dict(success=True, urls=sent_urls, method=method)
 
     def load(self):
         subs = pushi.Web.find()

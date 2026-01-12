@@ -9,12 +9,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-*
+* Messenger API for direct messaging without requiring pub/sub subscriptions
+* MessagingController with REST endpoints for direct message sending (`/messaging/send`, `/messaging/apn`, `/messaging/email`, `/messaging/webhook`, `/messaging/web_push`)
+* `send_to_tokens()` method in APNHandler for direct APN notifications
+* `send_to_emails()` method in SMTPHandler for direct email sending with HTML support
+* `send_to_urls()` method in WebHandler for direct webhook calls with configurable HTTP methods
+* `send_to_subscriptions()` method in WebPushHandler for direct Web Push notifications
+* Standalone handler classes for use without State owner in direct messaging mode
 
 ### Changed
 
 * Updated release instructions to include steps for updating `Pushi.VERSION` in `js/pushi.js` and copying `js/pushi.js` to `src/extras/js`
 * Improved JavaScript module exports formatting in CommonJS export block
+* Refactored APNHandler to separate subscription resolution from token sending logic
+* Refactored SMTPHandler to separate subscription resolution from email sending logic
+* Refactored WebHandler to separate subscription resolution from URL sending logic
+* Refactored WebPushHandler to separate subscription resolution from notification sending logic
+* Handler methods now return result dictionaries with success status and sent targets
 
 ### Fixed
 

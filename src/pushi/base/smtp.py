@@ -83,32 +83,6 @@ class SMTPHandler(handler.Handler):
         # id for which the message is being sent
         app = self.owner.get_app(app_id=app_id)
 
-        # resolves SMTP configuration with priority:
-        # 1. App-level smtp_url
-        # 2. Global SMTP_URL environment variable
-        # 3. Individual SMTP_* environment variables
-        smtp_config = self._resolve_smtp_config(app)
-
-        # unpacks the SMTP configuration values
-        smtp_host = smtp_config.get("host")
-        smtp_port = smtp_config.get("port", 25)
-        smtp_user = smtp_config.get("user")
-        smtp_password = smtp_config.get("password")
-        smtp_starttls = smtp_config.get("starttls", False)
-        smtp_sender = smtp_config.get("sender")
-
-        # in case the SMTP host is not configured skips the sending operation
-        # as there's no way to send emails without a valid host
-        if not smtp_host:
-            self.logger.warning("SMTP host not configured, skipping SMTP send")
-            return
-
-        # in case the SMTP sender is not configured skips the sending operation
-        # as a valid sender address is required for email delivery
-        if not smtp_sender:
-            self.logger.warning("SMTP sender not configured, skipping SMTP send")
-            return
-
         # retrieves the app key for the retrieved app by unpacking the current
         # app structure into the appropriate values
         app_key = app.key
@@ -149,7 +123,6 @@ class SMTPHandler(handler.Handler):
         )
 
         # in case there are no emails to notify returns immediately
-        # as there's no need to build the email content
         if not emails:
             return
 
@@ -160,24 +133,19 @@ class SMTPHandler(handler.Handler):
         event_name = json_d.get("event", root_event)
 
         # tries to extract custom subject and body from the JSON dictionary
-        # allowing the caller to override the default email format
         custom_subject = json_d.get("subject", None)
         custom_body = json_d.get("body", None)
 
-        # builds the subject line for the email, using custom subject if
-        # provided or falling back to the default format
+        # builds the subject line for the email
         if custom_subject:
             subject = custom_subject
         else:
             subject = "[Pushi] %s" % event_name
 
-        # builds the body content for the email, using custom body if
-        # provided or falling back to the default format with event details
+        # builds the body content for the email
         if custom_body:
             body = custom_body
         else:
-            # serializes the data to JSON for inclusion in the email body
-            # if the data is not already a string
             if data and not isinstance(data, str):
                 data_str = json.dumps(data, indent=2)
             else:
@@ -197,13 +165,104 @@ Data:
                 data_str,
             )
 
+        # delegates to the direct send method with resolved emails
+        self.send_to_emails(emails, subject, body, app=app, invalid=invalid)
+
+    def send_to_emails(
+        self,
+        emails,
+        subject,
+        body,
+        app=None,
+        smtp_host=None,
+        smtp_port=None,
+        smtp_user=None,
+        smtp_password=None,
+        smtp_starttls=None,
+        smtp_sender=None,
+        html=False,
+        invalid={},
+    ):
+        """
+        Sends emails directly to a set of email addresses.
+
+        This method can be used for direct messaging without requiring
+        pub/sub subscriptions, while reusing the core sending logic.
+
+        :type emails: List/Set
+        :param emails: Email addresses to send to.
+        :type subject: String
+        :param subject: Email subject line.
+        :type body: String
+        :param body: Email body content.
+        :type app: App
+        :param app: Optional App instance for SMTP config.
+        :type smtp_host: String
+        :param smtp_host: SMTP server hostname (overrides app).
+        :type smtp_port: int
+        :param smtp_port: SMTP server port (overrides app).
+        :type smtp_user: String
+        :param smtp_user: SMTP username (overrides app).
+        :type smtp_password: String
+        :param smtp_password: SMTP password (overrides app).
+        :type smtp_starttls: bool
+        :param smtp_starttls: Whether to use STARTTLS (overrides app).
+        :type smtp_sender: String
+        :param smtp_sender: Sender email address (overrides app).
+        :type html: bool
+        :param html: Whether body is HTML content.
+        :type invalid: Dictionary
+        :param invalid: Map of already sent emails to skip.
+        :rtype: Dictionary
+        :return: Result with success status and sent recipients.
+        """
+
+        # resolves SMTP configuration with priority:
+        # 1. Direct parameters (highest)
+        # 2. App-level smtp_url
+        # 3. Global SMTP_URL environment variable
+        # 4. Individual SMTP_* environment variables (lowest)
+        smtp_config = self._resolve_smtp_config(app)
+        smtp_host = smtp_host or smtp_config.get("host")
+        smtp_port = smtp_port or smtp_config.get("port", 25)
+        smtp_user = smtp_user or smtp_config.get("user")
+        smtp_password = smtp_password or smtp_config.get("password")
+        smtp_starttls = smtp_starttls if smtp_starttls is not None else smtp_config.get("starttls", False)
+        smtp_sender = smtp_sender or smtp_config.get("sender")
+
+        # in case the SMTP host is not configured skips the sending operation
+        # as there's no way to send emails without a valid host
+        if not smtp_host:
+            self.logger.warning("SMTP host not configured, skipping SMTP send")
+            return dict(success=False, error="SMTP host not configured")
+
+        # in case the SMTP sender is not configured skips the sending operation
+        # as a valid sender address is required for email delivery
+        if not smtp_sender:
+            self.logger.warning("SMTP sender not configured, skipping SMTP send")
+            return dict(success=False, error="SMTP sender not configured")
+
+        # normalizes emails to a set for iteration, ensuring that
+        # one email gets notified only once (no double notifications)
+        if isinstance(emails, str):
+            emails = [emails]
+        emails = set(emails)
+
+        if not emails:
+            return dict(success=True, recipients=[])
+
         # creates a single SMTP client instance to send all emails
         # the auto_close flag ensures the client closes after all messages are sent
         smtp_client = netius.clients.SMTPClient(auto_close=True)
+        sent_recipients = []
+
+        # determines the MIME type based on html flag for
+        # proper content-type header in the email
+        mime_type = "html" if html else "plain"
 
         # iterates over the complete set of emails that are going to
         # be notified about the message, each of them is going to
-        # received an email with the event data
+        # receive an email with the provided subject and body
         for target_email in emails:
             # in case the current email is present in the current
             # map of invalid items must skip iteration as the message
@@ -215,9 +274,9 @@ Data:
             # is going to be sent (includes email address)
             self.logger.debug("Sending email to '%s'" % target_email)
 
-            # builds the MIME message for the email using the plain text
-            # content type for simple text emails
-            mime = email.mime.text.MIMEText(body)
+            # builds the MIME message for the email using the appropriate
+            # content type for text or HTML emails
+            mime = email.mime.text.MIMEText(body, mime_type)
             mime["Subject"] = subject
             mime["From"] = smtp_sender
             mime["To"] = target_email
@@ -239,6 +298,9 @@ Data:
             # adds the current email to the list of invalid items for
             # the current message sending stream
             invalid[target_email] = True
+            sent_recipients.append(target_email)
+
+        return dict(success=True, recipients=sent_recipients)
 
     def load(self):
         subs = pushi.SMTP.find()

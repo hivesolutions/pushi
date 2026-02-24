@@ -102,7 +102,7 @@ Before committing, ensure that the following operations items check:
 To create a new release follow the following steps:
 
 - Make sure that both the tests pass and the code formatting are valid.
-- Increment (look at `CHANGELOG.md` for semver changes) the `version` value in `setup.py` and `lib/setup.py`, and then the `def _version(self):` return value in `src/pushi/app`.
+- Increment (look at `CHANGELOG.md` for semver changes) the `version` value in `setup.py` and `lib/setup.py`, and then the `def _version(self):` return value in `src/pushi/app/base.py`.
 - Update the `version` field in the `js/package.json` (inside sub-modules) and queue for new commit.
 - Update the `Pushi.VERSION` field in `js/pushi.js`
 - Copy the `js/pushi.js` file into `src/extras/js`.

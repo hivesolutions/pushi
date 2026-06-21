@@ -9,16 +9,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+*
+
+### Changed
+
+*
+
+### Fixed
+
+*
+
+## [0.5.2] - 2026-06-21
+
+### Added
+
 * Docker image build and deploy workflow with multi-architecture support
 
 ### Changed
 
 * Updated release instructions to include steps for updating `Pushi.VERSION` in `js/pushi.js` and copying `js/pushi.js` to `src/extras/js`
 * Improved JavaScript module exports formatting in CommonJS export block
-
-### Fixed
-
-*
 
 ## [0.5.1] - 2026-01-09
 

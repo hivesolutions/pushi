@@ -9,7 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-*
+* Docker image build and deploy workflow with multi-architecture support
 
 ### Changed
 

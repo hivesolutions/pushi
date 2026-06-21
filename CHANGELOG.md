@@ -13,11 +13,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
-* Modernized PyPI publishing to use the standard build tool
+*
 
 ### Fixed
 
 *
+
+## [0.5.3] - 2026-06-21
+
+### Changed
+
+* Modernized PyPI publishing to use the standard build tool
 
 ## [0.5.2] - 2026-06-21
 

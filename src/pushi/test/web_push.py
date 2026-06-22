@@ -558,6 +558,171 @@ class WebPushHandlerTest(unittest.TestCase):
         finally:
             web_push.pywebpush = original_pywebpush
 
+    def test_send_to_subscriptions_with_pywebpush_unavailable(self):
+        """
+        Tests send_to_subscriptions when pywebpush library is not available.
+        """
+
+        # saves original pywebpush reference
+        original_pywebpush = web_push.pywebpush
+
+        try:
+            # sets pywebpush to None to simulate unavailable library
+            web_push.pywebpush = None
+
+            result = self.handler.send_to_subscriptions([], "test")
+
+            # verifies the unavailable library is reported as a failure
+            self.assertEqual(result["success"], False)
+            self.assertEqual(result["error"], "pywebpush library not available")
+        finally:
+            web_push.pywebpush = original_pywebpush
+
+    def test_send_to_subscriptions_without_vapid_credentials(self):
+        """
+        Tests send_to_subscriptions when VAPID credentials are not configured.
+        """
+
+        # saves original module references
+        original_pywebpush = web_push.pywebpush
+        original_cryptography = web_push.cryptography
+
+        try:
+            # enables the required library mocks
+            web_push.pywebpush = mock.MagicMock()
+            web_push.cryptography = mock.MagicMock()
+
+            # mocks an app without VAPID credentials
+            class MockApp:
+                vapid_key = None
+                vapid_email = None
+
+            result = self.handler.send_to_subscriptions([], "test", app=MockApp())
+
+            # verifies the missing credentials are reported as a failure
+            self.assertEqual(result["success"], False)
+            self.assertEqual(result["error"], "VAPID private key not configured")
+        finally:
+            web_push.pywebpush = original_pywebpush
+            web_push.cryptography = original_cryptography
+
+    def test_send_to_subscriptions_empty(self):
+        """
+        Tests send_to_subscriptions returns success with no subscriptions.
+        """
+
+        # saves original module references
+        original_pywebpush = web_push.pywebpush
+        original_cryptography = web_push.cryptography
+
+        try:
+            # enables the required library mocks
+            web_push.pywebpush = mock.MagicMock()
+            web_push.cryptography = mock.MagicMock()
+
+            # sends with valid credentials but no subscriptions
+            result = self.handler.send_to_subscriptions(
+                [], "test", vapid_private_key="key", vapid_email="test@example.com"
+            )
+
+            self.assertEqual(result["success"], True)
+            self.assertEqual(result["endpoints"], [])
+        finally:
+            web_push.pywebpush = original_pywebpush
+            web_push.cryptography = original_cryptography
+
+    def test_send_to_subscriptions_success(self):
+        """
+        Tests successful send of Web Push notifications to subscriptions.
+        """
+
+        # saves original module references
+        original_pywebpush = web_push.pywebpush
+        original_cryptography = web_push.cryptography
+
+        try:
+            # sets up the pywebpush mock with a webpush callable
+            mock_webpush = mock.MagicMock()
+            mock_pywebpush_module = mock.MagicMock()
+            mock_pywebpush_module.webpush = mock_webpush
+            web_push.pywebpush = mock_pywebpush_module
+
+            # sets up cryptography mock
+            web_push.cryptography = mock.MagicMock()
+
+            # builds the subscription dictionary as expected by the method
+            subscriptions = [
+                {
+                    "endpoint": "https://fcm.googleapis.com/fcm/send/endpoint123",
+                    "p256dh": "test_p256dh_key",
+                    "auth": "test_auth_secret",
+                }
+            ]
+
+            # sends with valid credentials directly through the parameters
+            result = self.handler.send_to_subscriptions(
+                subscriptions,
+                {"title": "Test"},
+                vapid_private_key="test_vapid_private_key",
+                vapid_email="test@example.com",
+                invalid={},
+            )
+
+            # verifies the notification was sent and the endpoint collected
+            self.assertEqual(result["success"], True)
+            self.assertEqual(
+                result["endpoints"],
+                ["https://fcm.googleapis.com/fcm/send/endpoint123"],
+            )
+            mock_webpush.assert_called_once()
+        finally:
+            web_push.pywebpush = original_pywebpush
+            web_push.cryptography = original_cryptography
+
+    def test_send_to_subscriptions_invalid_subscription(self):
+        """
+        Tests send_to_subscriptions skips subscriptions missing required fields.
+        """
+
+        # saves original module references
+        original_pywebpush = web_push.pywebpush
+        original_cryptography = web_push.cryptography
+
+        try:
+            # sets up the pywebpush mock with a webpush callable
+            mock_webpush = mock.MagicMock()
+            mock_pywebpush_module = mock.MagicMock()
+            mock_pywebpush_module.webpush = mock_webpush
+            web_push.pywebpush = mock_pywebpush_module
+
+            # sets up cryptography mock
+            web_push.cryptography = mock.MagicMock()
+
+            # builds a subscription missing the auth secret
+            subscriptions = [
+                {
+                    "endpoint": "https://fcm.googleapis.com/fcm/send/endpoint123",
+                    "p256dh": "test_p256dh_key",
+                }
+            ]
+
+            result = self.handler.send_to_subscriptions(
+                subscriptions,
+                {"title": "Test"},
+                vapid_private_key="test_vapid_private_key",
+                vapid_email="test@example.com",
+                invalid={},
+            )
+
+            # verifies the invalid subscription was skipped and a warning logged
+            self.assertEqual(result["success"], True)
+            self.assertEqual(result["endpoints"], [])
+            mock_webpush.assert_not_called()
+            self.mock_owner.app.logger.warning.assert_called()
+        finally:
+            web_push.pywebpush = original_pywebpush
+            web_push.cryptography = original_cryptography
+
 
 class IsPemKeyTest(unittest.TestCase):
     """

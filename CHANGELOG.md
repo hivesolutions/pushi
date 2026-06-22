@@ -9,11 +9,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-*
+* Direct messaging API for sending messages through push, email, webhook and web push adapters without requiring subscriptions
 
 ### Changed
 
-*
+* Reorganized message handlers to share their sending logic between subscription based and direct delivery
 
 ### Fixed
 

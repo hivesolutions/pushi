@@ -30,6 +30,8 @@ __license__ = "Apache License, Version 2.0"
 
 import json
 
+import appier
+
 from . import apn
 from . import smtp
 from . import web
@@ -50,6 +52,8 @@ class Messenger(object):
     """
 
     ADAPTERS = ("apn", "email", "webhook", "web_push")
+
+    ALIASES = dict(smtp="email", web="webhook", webpush="web_push")
 
     def __init__(self, app=None, logger=None):
         self.app = app
@@ -119,25 +123,29 @@ class Messenger(object):
         """
 
         # normalizes adapters to list for iteration
-        if isinstance(adapters, str):
+        if type(adapters) in appier.legacy.STRINGS:
             adapters = [adapters]
 
         results = {}
 
         for adapter in adapters:
+            # normalizes the adapter alias into its canonical key so that
+            # both the success and the failure paths use the same key (eg:
+            # the "smtp" alias is reported under the "email" key)
             adapter = adapter.lower()
+            key = self.ALIASES.get(adapter, adapter)
             try:
-                if adapter == "apn":
+                if key == "apn":
                     if apn_tokens:
                         result = self.send_apn(
                             tokens=apn_tokens, message=apn_message or data, **kwargs
                         )
-                        results["apn"] = result
+                        results[key] = result
 
-                elif adapter in ("email", "smtp"):
+                elif key == "email":
                     if email_to:
                         body = email_body
-                        if body is None and data:
+                        if body == None and data:
                             body = json.dumps(data, indent=2)
                         result = self.send_email(
                             to=email_to,
@@ -146,9 +154,9 @@ class Messenger(object):
                             html=email_html,
                             **kwargs
                         )
-                        results["email"] = result
+                        results[key] = result
 
-                elif adapter in ("webhook", "web"):
+                elif key == "webhook":
                     if webhook_urls:
                         result = self.send_webhook(
                             urls=webhook_urls,
@@ -156,24 +164,24 @@ class Messenger(object):
                             headers=webhook_headers,
                             method=webhook_method,
                         )
-                        results["webhook"] = result
+                        results[key] = result
 
-                elif adapter in ("web_push", "webpush"):
+                elif key == "web_push":
                     if web_push_subscriptions:
                         result = self.send_web_push(
                             subscriptions=web_push_subscriptions,
                             message=web_push_message or data,
                             **kwargs
                         )
-                        results["web_push"] = result
+                        results[key] = result
 
                 else:
-                    results[adapter] = dict(
+                    results[key] = dict(
                         success=False, error="Unknown adapter: %s" % adapter
                     )
 
             except Exception as exception:
-                results[adapter] = dict(success=False, error=str(exception))
+                results[key] = dict(success=False, error=str(exception))
 
         return results
 

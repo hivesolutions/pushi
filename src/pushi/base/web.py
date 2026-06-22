@@ -30,6 +30,8 @@ __license__ = "Apache License, Version 2.0"
 
 import json
 
+import appier
+
 import netius.clients
 
 import pushi
@@ -122,7 +124,7 @@ class WebHandler(handler.Handler):
 
         # normalizes URLs to a set for iteration, ensuring that
         # one URL gets notified only once (no double notifications)
-        if isinstance(urls, str):
+        if type(urls) in appier.legacy.STRINGS:
             urls = [urls]
         urls = set(urls)
 

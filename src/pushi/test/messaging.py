@@ -142,6 +142,33 @@ class MessengerTest(unittest.TestCase):
         self.assertEqual(results["apn"]["success"], False)
         self.assertEqual(results["apn"]["error"], "boom")
 
+    def test_send_adapter_alias(self):
+        """
+        Tests that an adapter alias is dispatched under its canonical key.
+        """
+
+        self.messenger._smtp_handler.send_to_emails.return_value = dict(success=True)
+
+        results = self.messenger.send("smtp", email_to="user@example.com")
+
+        # verifies the "smtp" alias is reported under the "email" key
+        self.assertIn("email", results)
+        self.assertNotIn("smtp", results)
+        self.messenger._smtp_handler.send_to_emails.assert_called_once()
+
+    def test_send_adapter_exception_alias(self):
+        """
+        Tests that an alias failure is keyed by its canonical name.
+        """
+
+        self.messenger._web_handler.send_to_urls.side_effect = RuntimeError("boom")
+
+        results = self.messenger.send("web", webhook_urls=["https://example.com/hook"])
+
+        # verifies the "web" alias failure is reported under the "webhook" key
+        self.assertEqual(results["webhook"]["success"], False)
+        self.assertEqual(results["webhook"]["error"], "boom")
+
     def test_send_email_body_from_data(self):
         """
         Tests that the email body defaults to the JSON dump of the data.

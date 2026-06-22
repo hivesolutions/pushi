@@ -249,7 +249,7 @@ class WebPushHandler(handler.Handler):
 
         # prepares the notification payload, ensuring it's a JSON string
         # handles the case where message could be None or various types
-        if message is None:
+        if message == None:
             payload = json.dumps({})
         elif isinstance(message, dict):
             payload = json.dumps(message)

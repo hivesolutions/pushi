@@ -32,6 +32,8 @@ import os
 import shutil
 import tempfile
 
+import appier
+
 import netius.clients
 
 import pushi
@@ -139,10 +141,10 @@ class APNHandler(handler.Handler):
         if app:
             key_data = key_data or getattr(app, "apn_key", None)
             cer_data = cer_data or getattr(app, "apn_cer", None)
-            if sandbox is None:
+            if sandbox == None:
                 sandbox = getattr(app, "apn_sandbox", False)
 
-        if sandbox is None:
+        if sandbox == None:
             sandbox = False
 
         # in case no message, key data or certificate data is present
@@ -156,7 +158,7 @@ class APNHandler(handler.Handler):
 
         # normalizes tokens to a set for iteration, ensuring that
         # one token gets notified only once (no double notifications)
-        if isinstance(tokens, str):
+        if type(tokens) in appier.legacy.STRINGS:
             tokens = [tokens]
         tokens = set(tokens)
 

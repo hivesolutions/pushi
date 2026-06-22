@@ -230,7 +230,7 @@ Data:
         smtp_password = smtp_password or smtp_config.get("password")
         smtp_starttls = (
             smtp_starttls
-            if smtp_starttls is not None
+            if not smtp_starttls == None
             else smtp_config.get("starttls", False)
         )
         smtp_sender = smtp_sender or smtp_config.get("sender")
@@ -249,7 +249,7 @@ Data:
 
         # normalizes emails to a set for iteration, ensuring that
         # one email gets notified only once (no double notifications)
-        if isinstance(emails, str):
+        if type(emails) in appier.legacy.STRINGS:
             emails = [emails]
         emails = set(emails)
 

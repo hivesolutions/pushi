@@ -227,7 +227,7 @@ class MessagingController(appier.Controller):
 
         if not urls:
             raise appier.OperationalError(message="No webhook URL specified")
-        if payload is None:
+        if payload == None:
             raise appier.OperationalError(message="No data specified")
 
         # creates the messenger instance and sends the webhook

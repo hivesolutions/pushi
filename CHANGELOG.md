@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 * Direct messaging API for sending messages through push, email, webhook and web push adapters without requiring subscriptions
+* Client library support for the direct messaging API
 
 ### Changed
 

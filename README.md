@@ -92,27 +92,31 @@ as part of the `channel_data` structure.
 To be able to run the pushi infra-structure under a normal non encrypted connection
 and bind to the complete set of network interfaces in the host the following command:
 
-    APP_HOST=0.0.0.0 \
-    APP_PORT=8080 \
-    SERVER_HOST=0.0.0.0 \
-    SERVER_PORT=80 \
-    python pushi/src/pushi/base/state.py < /dev/null &> ~/pushi.log &
+```bash
+APP_HOST=0.0.0.0 \
+APP_PORT=8080 \
+SERVER_HOST=0.0.0.0 \
+SERVER_PORT=80 \
+python pushi/src/pushi/base/state.py < /dev/null &> ~/pushi.log &
+```
 
 To be able to run in using SSL encryption additional commands must be used, please note
 that the SSL port used by the app is not the default one:
 
-    APP_SERVER=netius \
-    APP_HOST=0.0.0.0 \
-    APP_PORT=9090 \
-    APP_SSL=1 \
-    APP_SSL_KEY=/path/to/file.key \
-    APP_SSL_CER=/path/to/file.cer \
-    SERVER_HOST=0.0.0.0 \
-    SERVER_PORT=443 \
-    SERVER_SSL=1 \
-    SERVER_SSL_KEY=/path/to/file.key \
-    SERVER_SSL_CER=/path/to/file.cer \
-    python pushi/src/pushi/base/state.py < /dev/null &> ~/pushi.log &
+```bash
+APP_SERVER=netius \
+APP_HOST=0.0.0.0 \
+APP_PORT=9090 \
+APP_SSL=1 \
+APP_SSL_KEY=/path/to/file.key \
+APP_SSL_CER=/path/to/file.cer \
+SERVER_HOST=0.0.0.0 \
+SERVER_PORT=443 \
+SERVER_SSL=1 \
+SERVER_SSL_KEY=/path/to/file.key \
+SERVER_SSL_CER=/path/to/file.cer \
+python pushi/src/pushi/base/state.py < /dev/null &> ~/pushi.log &
+```
 
 ## Quick Start
 
@@ -140,6 +144,49 @@ proxy.trigger_event(
     data = "hello world",
     event = "message"
 )
+```
+
+## Examples
+
+A set of runnable examples is available to demonstrate the most common operations,
+all of them require a running Pushi server and the `pushi` client (`pip install pushi`).
+
+### Web Push
+
+A browser based example demonstrating Web Push notifications is available under
+[`src/pushi/app/static/examples/web-push`](src/pushi/app/static/examples/web-push).
+It includes the browser client (`index.html`) and the service worker (`sw.js`) used
+to display the notifications.
+
+To test it, configure an app with VAPID credentials (use the `Generate VAPID`
+operation on the app), fill the `APP_KEY`, `APP_ID` and `APP_SECRET` values in
+`index.html` and start the server with a single command:
+
+```bash
+APP_HOST=0.0.0.0 APP_PORT=8080 SERVER_HOST=0.0.0.0 SERVER_PORT=9090 python -m pushi.base
+```
+
+Then open the example from the Pushi server (to avoid CORS issues):
+
+```text
+http://localhost:8080/static/examples/web-push/index.html
+```
+
+Subscribe from the browser and then trigger a notification from the server side
+using the [`examples/base/notify.py`](examples/base/notify.py) script:
+
+```bash
+python examples/base/notify.py
+```
+
+### Email (SMTP)
+
+The [`examples/smtp/subscribe.py`](examples/smtp/subscribe.py) script subscribes an
+email address to a channel so that an email is sent whenever an event is triggered
+on it (requires SMTP to be configured on the server):
+
+```bash
+python examples/smtp/subscribe.py user@example.com
 ```
 
 ## License

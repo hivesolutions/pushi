@@ -1,0 +1,13 @@
+from typing import Any, Mapping
+
+from .base import PushiRecord
+
+class Subscription(PushiRecord):
+    user_id: str
+    event: str
+
+class SubscriptionAPI(object):
+    def create_subscription(self, user_id: str, event: str) -> Subscription: ...
+    def delete_subscription(self, user_id: str, event: str) -> Mapping[str, Any]: ...
+    def subscribe(self, *args, **kwargs) -> Subscription: ...
+    def unsubscribe(self, *args, **kwargs) -> Mapping[str, Any]: ...

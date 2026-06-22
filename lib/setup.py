@@ -53,6 +53,7 @@ setuptools.setup(
     url="http://pushi.hive.pt",
     zip_safe=False,
     packages=["pushi"],
+    package_data={"pushi": ["*.pyi", "py.typed"]},
     install_requires=["appier"],
     classifiers=[
         "Development Status :: 5 - Production/Stable",

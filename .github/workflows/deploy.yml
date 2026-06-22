@@ -36,6 +36,7 @@ jobs:
       - run: |
           pip install twine build
           python -m build
+          cp README.md lib/README.md
           cd lib && python -m build && cd ..
           python -m twine upload -u ${PYPI_USERNAME} -p ${PYPI_PASSWORD} dist/*
           python -m twine upload -u ${PYPI_USERNAME} -p ${PYPI_PASSWORD} lib/dist/*

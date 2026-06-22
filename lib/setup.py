@@ -31,10 +31,13 @@ __license__ = "Apache License, Version 2.0"
 import os
 import setuptools
 
-# README.md file is located in the root of the project
-# and is not included in the library, so we need to check
-# if it exists and if it does not mock the long description
-readme_path = os.path.join(os.path.dirname(__file__), "../README.md")
+# the README.md file is located in the root of the project and is
+# copied into the library directory at build time, so the local copy
+# is preferred and the root one is used as a fallback for in place builds
+base_dir = os.path.dirname(__file__)
+readme_path = os.path.join(base_dir, "README.md")
+if not os.path.exists(readme_path):
+    readme_path = os.path.join(base_dir, "../README.md")
 if os.path.exists(readme_path):
     long_description = open(readme_path, "rb").read().decode("utf-8")
     long_description_content_type = "text/markdown"

@@ -13,11 +13,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
-* Updated the default API endpoint used by the client
+*
 
 ### Fixed
 
 *
+
+## [0.6.3] - 2026-06-22
+
+### Changed
+
+* Updated the default API endpoint used by the client
 
 ## [0.6.2] - 2026-06-22
 

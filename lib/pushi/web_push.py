@@ -83,7 +83,7 @@ class WebPushAPI(object):
         # retrieves the VAPID public key for the current app,
         # this key is needed by browsers to subscribe to push
         # notifications using the Web Push API
-        result = self.get(self.base_url + "apps/vapid_key")
+        result = self.get(self.base_url + "vapid_key")
         return result
 
     def subscribe_web_push(self, *args, **kwargs):

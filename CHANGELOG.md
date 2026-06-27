@@ -17,7 +17,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
-*
+* Corrected the Web Push client VAPID public key endpoint path
 
 ## [0.6.3] - 2026-06-25
 

@@ -47,7 +47,7 @@ else:
 
 setuptools.setup(
     name="pushi",
-    version="0.6.3",
+    version="0.6.4",
     author="Hive Solutions Lda.",
     author_email="development@hive.pt",
     description="Pushi System API",

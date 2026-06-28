@@ -584,6 +584,52 @@ class WebPushHandlerTest(unittest.TestCase):
         finally:
             web_push.pywebpush = original_pywebpush
 
+    @mock.patch("pushi.WebPush")
+    def test_send_prefers_data_over_push(self, mock_web_push_model):
+        """
+        Tests that the structured data payload is preferred over the plain push
+        payload so that the client receives the complete notification structure.
+        """
+
+        # saves original module references
+        original_pywebpush = web_push.pywebpush
+        original_cryptography = web_push.cryptography
+
+        try:
+            # enables the required library mocks
+            web_push.pywebpush = mock.MagicMock()
+            web_push.cryptography = mock.MagicMock()
+
+            # mocks the app with the required VAPID credentials
+            mock_app = mock.MagicMock()
+            mock_app.key = "appkey123"
+            mock_app.vapid_key = "test_vapid_private_key"
+            mock_app.vapid_email = "mailto:test@example.com"
+            self.mock_owner.get_app.return_value = mock_app
+            self.mock_owner.get_channels.return_value = []
+            mock_web_push_model.find.return_value = []
+
+            # replaces the direct send method so that the resolved message may
+            # be captured and verified after the send operation
+            self.handler.send_to_subscriptions = mock.MagicMock(
+                return_value=dict(success=True)
+            )
+
+            # sends an event carrying both the structured data and the plain
+            # push payloads (the data one is expected to be preferred)
+            self.handler.send(
+                "app123",
+                "notifications",
+                {"data": {"title": "Data"}, "push": "Push"},
+            )
+
+            # verifies the structured data payload was the one used
+            message = self.handler.send_to_subscriptions.call_args[0][1]
+            self.assertEqual(message, {"title": "Data"})
+        finally:
+            web_push.pywebpush = original_pywebpush
+            web_push.cryptography = original_cryptography
+
     def test_send_to_subscriptions_with_pywebpush_unavailable(self):
         """
         Tests send_to_subscriptions when pywebpush library is not available.

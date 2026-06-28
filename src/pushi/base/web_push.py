@@ -118,11 +118,14 @@ class WebPushHandler(handler.Handler):
         # saves the original event name for debugging
         root_event = event
 
-        # tries to extract the message from the JSON data structure
-        message = json_d.get("data", None)
+        # tries to extract the message from the JSON data structure, note that
+        # the structured "data" payload is preferred over the plain "push" and
+        # "message" ones (so that the client receives the complete structure)
+        # while the "web_push" specific payload still takes precedence
+        message = json_d.get("message", None)
         message = json_d.get("push", message)
+        message = json_d.get("data", message)
         message = json_d.get("web_push", message)
-        message = json_d.get("message", message)
 
         # resolves the complete set of (extra) channels for the event
         extra = self.owner.get_channels(app_key, event)

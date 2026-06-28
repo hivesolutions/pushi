@@ -65,11 +65,14 @@ class WebPushController(appier.Controller):
         """
         Creates a new Web Push subscription.
 
-        Form/JSON parameters:
+        JSON body parameters:
         - endpoint: The push service endpoint URL (required)
         - p256dh: The P256DH encryption key (required)
-        - auth: The authentication secret (required)
+        - auth: The (browser) authentication secret used for the message
+        encryption (required)
         - event: The event/channel name (required)
+
+        Query parameters:
         - auth: Optional authentication token for private channels
         - unsubscribe: Whether to remove existing subscriptions (default: false)
 
@@ -79,7 +82,8 @@ class WebPushController(appier.Controller):
 
         auth = self.field("auth", None)
         unsubscribe = self.field("unsubscribe", False, cast=bool)
-        web_push = pushi.WebPush.new()
+        model = self.request.get_json() or dict()
+        web_push = pushi.WebPush.new(model=model, form=False)
         web_push = self.state.web_push_handler.subscribe(
             web_push, auth=auth, unsubscribe=unsubscribe
         )

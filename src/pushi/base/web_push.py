@@ -47,6 +47,13 @@ try:
 except ImportError:
     cryptography = None
 
+TTL = 86400
+""" The default time to live (in seconds) to be used for the Web Push
+messages, controlling for how long the push service should retain the
+message while trying to deliver it to an offline/disconnected client,
+defaulting to one day (avoids the immediate discard implied by a zero
+value) """
+
 
 class WebPushHandler(handler.Handler):
     """
@@ -295,12 +302,16 @@ class WebPushHandler(handler.Handler):
 
             try:
                 # sends the Web Push notification using pywebpush library
-                # with VAPID authentication
+                # with VAPID authentication, note that a (non zero) time to
+                # live is provided so that the push service retains the message
+                # for offline/disconnected clients instead of discarding it
+                ttl = appier.conf("WEB_PUSH_TTL", TTL, cast=int)
                 pywebpush.webpush(
                     subscription_info=subscription_info,
                     data=payload,
                     vapid_private_key=vapid_private_key,
                     vapid_claims=dict(sub=vapid_email),
+                    ttl=ttl,
                 )
 
                 # adds the current subscription to the list of invalid items

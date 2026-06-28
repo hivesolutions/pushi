@@ -17,7 +17,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
-*
+* Send Web Push messages with a non zero time to live so they are retained for offline clients instead of being discarded
 
 ## [0.6.6] - 2026-06-28
 

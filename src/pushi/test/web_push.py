@@ -679,6 +679,51 @@ class WebPushHandlerTest(unittest.TestCase):
             web_push.pywebpush = original_pywebpush
             web_push.cryptography = original_cryptography
 
+    def test_send_to_subscriptions_ttl(self):
+        """
+        Tests send_to_subscriptions sends the notification with a non zero
+        time to live so that the push service retains it for offline clients.
+        """
+
+        # saves original module references
+        original_pywebpush = web_push.pywebpush
+        original_cryptography = web_push.cryptography
+
+        try:
+            # sets up the pywebpush mock with a webpush callable
+            mock_webpush = mock.MagicMock()
+            mock_pywebpush_module = mock.MagicMock()
+            mock_pywebpush_module.webpush = mock_webpush
+            web_push.pywebpush = mock_pywebpush_module
+
+            # sets up cryptography mock
+            web_push.cryptography = mock.MagicMock()
+
+            # builds the subscription dictionary as expected by the method
+            subscriptions = [
+                {
+                    "endpoint": "https://fcm.googleapis.com/fcm/send/endpoint123",
+                    "p256dh": "test_p256dh_key",
+                    "auth": "test_auth_secret",
+                }
+            ]
+
+            self.handler.send_to_subscriptions(
+                subscriptions,
+                {"title": "Test"},
+                vapid_private_key="test_vapid_private_key",
+                vapid_email="test@example.com",
+                invalid={},
+            )
+
+            # verifies the notification was sent with the default time to live
+            mock_webpush.assert_called_once()
+            self.assertEqual(mock_webpush.call_args[1]["ttl"], web_push.TTL)
+            self.assertNotEqual(mock_webpush.call_args[1]["ttl"], 0)
+        finally:
+            web_push.pywebpush = original_pywebpush
+            web_push.cryptography = original_cryptography
+
     def test_send_to_subscriptions_invalid_subscription(self):
         """
         Tests send_to_subscriptions skips subscriptions missing required fields.

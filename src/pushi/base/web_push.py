@@ -444,9 +444,12 @@ class WebPushHandler(handler.Handler):
             self.owner.verify(web_push.app_key, web_push.endpoint, web_push.event, auth)
 
         # if unsubscribe is enabled, removes any existing subscriptions
-        # for the same endpoint (prevents duplicates)
+        # for the same endpoint (prevents duplicates) and also the ones that
+        # share the same browser key (p256dh) for the event, as the browser
+        # rotates the endpoint on re-subscription leaving stale entries behind
         if unsubscribe:
             self.unsubscribe(web_push.endpoint, force=False)
+            self.unsubscribe_stale(web_push.p256dh, web_push.event, web_push.endpoint)
 
         # checks if a subscription already exists for this endpoint and event
         exists = pushi.WebPush.exists(endpoint=web_push.endpoint, event=web_push.event)
@@ -518,6 +521,44 @@ class WebPushHandler(handler.Handler):
             web_push.delete()
 
         return web_pushes
+
+    def unsubscribe_stale(self, p256dh, event, endpoint):
+        """
+        Unsubscribes the stale Web Push subscriptions that share the same
+        browser key (p256dh) and event but a different endpoint.
+
+        This is used to prune the entries left behind when a browser rotates
+        its push endpoint while keeping the same encryption key, avoiding the
+        accumulation of dead endpoints that would fail on delivery.
+
+        :type p256dh: String
+        :param p256dh: The browser-generated P256DH public key shared by the
+        subscriptions to be pruned.
+        :type event: String
+        :param event: The event/channel name the subscriptions belong to.
+        :type endpoint: String
+        :param endpoint: The current endpoint that should be kept (and so
+        excluded from the pruning operation).
+        :rtype: List
+        :return: List of deleted (stale) WebPush model instances.
+        """
+
+        # in case there's no browser key available there's no way to detect
+        # the stale subscriptions, so the operation is skipped immediately
+        if not p256dh:
+            return []
+
+        # finds the subscriptions for the same browser key and event and
+        # deletes the ones whose endpoint differs from the current one
+        web_pushes = pushi.WebPush.find(p256dh=p256dh, event=event)
+        stale = []
+        for web_push in web_pushes:
+            if web_push.endpoint == endpoint:
+                continue
+            web_push.delete()
+            stale.append(web_push)
+
+        return stale
 
 
 def is_pem_key(key):

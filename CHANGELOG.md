@@ -17,7 +17,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
-*
+* Prune stale Web Push subscriptions sharing the browser key on re-subscription
 
 ## [0.6.4] - 2026-06-27
 

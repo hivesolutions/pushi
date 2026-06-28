@@ -13,11 +13,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
-* Prefer the structured data payload over the plain push one for Web Push so the client receives the complete notification structure
+*
 
 ### Fixed
 
 *
+
+## [0.6.10] - 2026-06-28
+
+### Changed
+
+* Prefer the structured data payload over the plain push one for Web Push so the client receives the complete notification structure
 
 ## [0.6.9] - 2026-06-28
 

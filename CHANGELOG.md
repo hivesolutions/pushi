@@ -17,7 +17,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
-*
+* Remove the expired Web Push subscriptions when delivery fails with a gone or not found response
 
 ## [0.6.5] - 2026-06-28
 

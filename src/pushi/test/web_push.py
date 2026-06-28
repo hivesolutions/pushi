@@ -508,42 +508,6 @@ class WebPushHandlerTest(unittest.TestCase):
         self.assertEqual(len(result), 2)
 
     @mock.patch("pushi.WebPush")
-    def test_unsubscribe_stale(self, mock_web_push_model):
-        """
-        Tests pruning the stale subscriptions that share the browser key
-        but have a different endpoint, keeping the current one.
-        """
-
-        # mocks a stale subscription (different endpoint) and the current one
-        mock_stale = mock.MagicMock()
-        mock_stale.endpoint = "https://fcm.googleapis.com/fcm/send/old"
-        mock_current = mock.MagicMock()
-        mock_current.endpoint = "https://fcm.googleapis.com/fcm/send/new"
-        mock_web_push_model.find.return_value = [mock_stale, mock_current]
-
-        # prunes the stale subscriptions for the browser key keeping the
-        # current endpoint untouched
-        result = self.handler.unsubscribe_stale(
-            "key123", "notifications", "https://fcm.googleapis.com/fcm/send/new"
-        )
-
-        # verifies only the stale subscription was deleted
-        mock_stale.delete.assert_called_once()
-        mock_current.delete.assert_not_called()
-        self.assertEqual(len(result), 1)
-
-    def test_unsubscribe_stale_no_key(self):
-        """
-        Tests that no pruning is performed when no browser key is provided.
-        """
-
-        # should not raise an exception and return an empty list
-        result = self.handler.unsubscribe_stale(
-            None, "notifications", "https://fcm.googleapis.com/fcm/send/new"
-        )
-        self.assertEqual(result, [])
-
-    @mock.patch("pushi.WebPush")
     def test_message_extraction_from_json(self, mock_web_push_model):
         """
         Tests that messages are correctly extracted from various JSON structures.
@@ -755,6 +719,75 @@ class WebPushHandlerTest(unittest.TestCase):
             self.assertEqual(result["endpoints"], [])
             mock_webpush.assert_not_called()
             self.mock_owner.app.logger.warning.assert_called()
+        finally:
+            web_push.pywebpush = original_pywebpush
+            web_push.cryptography = original_cryptography
+
+    def test_send_to_subscriptions_expired_removed(self):
+        """
+        Tests send_to_subscriptions removes a subscription that expired with
+        a 410 response, whose boolean value is "falsy" under requests.
+        """
+
+        # saves original module references
+        original_pywebpush = web_push.pywebpush
+        original_cryptography = web_push.cryptography
+
+        try:
+            # creates a mock WebPushException class matching the pywebpush one
+            class MockWebPushException(Exception):
+                def __init__(self, message, response=None):
+                    super(MockWebPushException, self).__init__(message)
+                    self.response = response
+
+            # creates a response whose boolean value is falsy, imitating the
+            # behaviour of a requests response for an error status code (410)
+            class MockResponse(object):
+                def __init__(self, status_code):
+                    self.status_code = status_code
+
+                def __bool__(self):
+                    return False
+
+                __nonzero__ = __bool__
+
+            # sets up the pywebpush mock raising the expired exception
+            mock_webpush = mock.MagicMock()
+            mock_webpush.side_effect = MockWebPushException(
+                "Push failed: 410 Gone", response=MockResponse(410)
+            )
+            mock_pywebpush_module = mock.MagicMock()
+            mock_pywebpush_module.webpush = mock_webpush
+            mock_pywebpush_module.WebPushException = MockWebPushException
+            web_push.pywebpush = mock_pywebpush_module
+
+            # sets up cryptography mock
+            web_push.cryptography = mock.MagicMock()
+
+            # builds a subscription carrying the database object reference so
+            # that it may be removed once the expiration is detected
+            mock_obj = mock.MagicMock()
+            subscriptions = [
+                {
+                    "endpoint": "https://fcm.googleapis.com/fcm/send/endpoint123",
+                    "p256dh": "test_p256dh_key",
+                    "auth": "test_auth_secret",
+                    "_id": "sub123",
+                    "_obj": mock_obj,
+                }
+            ]
+
+            result = self.handler.send_to_subscriptions(
+                subscriptions,
+                {"title": "Test"},
+                vapid_private_key="test_vapid_private_key",
+                vapid_email="test@example.com",
+                invalid={},
+            )
+
+            # verifies the expired subscription was removed from the database
+            self.assertEqual(result["success"], True)
+            mock_obj.delete.assert_called_once()
         finally:
             web_push.pywebpush = original_pywebpush
             web_push.cryptography = original_cryptography

@@ -17,6 +17,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+*
+
+## [0.6.9] - 2026-06-28
+
+### Fixed
+
 * Store the browser authentication secret on Web Push subscription instead of the channel authentication token, fixing the message decryption on the client
 
 ## [0.6.8] - 2026-06-28

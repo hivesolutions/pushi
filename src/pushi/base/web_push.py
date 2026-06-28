@@ -306,13 +306,18 @@ class WebPushHandler(handler.Handler):
                 # live is provided so that the push service retains the message
                 # for offline/disconnected clients instead of discarding it
                 ttl = appier.conf("WEB_PUSH_TTL", TTL, cast=int)
-                pywebpush.webpush(
+                response = pywebpush.webpush(
                     subscription_info=subscription_info,
                     data=payload,
                     vapid_private_key=vapid_private_key,
                     vapid_claims=dict(sub=vapid_email),
                     ttl=ttl,
                 )
+
+                # logs the response returned by the push service so that the
+                # outcome of the delivery (eg: status, message location and
+                # body) may be inspected/debugged when required
+                self._log_response(endpoint, response)
 
                 # adds the current subscription to the list of invalid items
                 # for the current message sending stream
@@ -534,6 +539,38 @@ class WebPushHandler(handler.Handler):
             web_push.delete()
 
         return web_pushes
+
+    def _log_response(self, endpoint, response):
+        """
+        Logs (at the debug level) the response returned by the push service
+        for a Web Push delivery, including the status code, the message
+        location header and the body, so that the delivery may be inspected.
+
+        :type endpoint: String
+        :param endpoint: The push endpoint URL the notification was sent to.
+        :type response: Response
+        :param response: The response returned by the push service for the
+        Web Push delivery operation.
+        """
+
+        # in case there's no response available (eg: curl based sending) there
+        # is nothing to be logged, so the operation is skipped immediately
+        if response == None:
+            return
+
+        # retrieves the status code, the message location and the body from
+        # the response in a safe manner as some of them may not be available
+        status_code = getattr(response, "status_code", None)
+        headers = getattr(response, "headers", {}) or {}
+        location = headers.get("location", None)
+        body = getattr(response, "text", "")
+
+        # logs the relevant information about the response so that the push
+        # service behaviour may be inspected/debugged when required
+        self.logger.debug(
+            "Web Push response for '%s': status=%s location=%s body=%s"
+            % (endpoint, status_code, location, repr(body[:256]))
+        )
 
 
 def is_pem_key(key):

@@ -9,7 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-*
+* Debug logging of the push service response (status, message location and body) for each Web Push delivery
 
 ### Changed
 

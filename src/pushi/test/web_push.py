@@ -146,6 +146,32 @@ class WebPushHandlerTest(unittest.TestCase):
         # should not raise an exception
         self.handler.remove(app_id, subscription_id, event)
 
+    def test_log_response(self):
+        """
+        Tests logging the push service response (status, location and body).
+        """
+
+        # mocks a response with a status code, a location header and a body
+        mock_response = mock.MagicMock()
+        mock_response.status_code = 201
+        mock_response.headers = {"location": "https://fcm.googleapis.com/0:123"}
+        mock_response.text = "ok"
+
+        # logs the response and verifies the debug logging was performed
+        self.handler._log_response(
+            "https://fcm.googleapis.com/fcm/send/x", mock_response
+        )
+        self.mock_owner.app.logger.debug.assert_called()
+
+    def test_log_response_none(self):
+        """
+        Tests that no logging is performed when no response is available.
+        """
+
+        # should not raise an exception and not log anything
+        self.handler._log_response("https://fcm.googleapis.com/fcm/send/x", None)
+        self.mock_owner.app.logger.debug.assert_not_called()
+
     @mock.patch("pushi.WebPush")
     def test_load(self, mock_web_push_model):
         """

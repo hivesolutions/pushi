@@ -148,7 +148,7 @@ class WebPushHandler(handler.Handler):
 
         # batch fetch all subscription objects from the database
         subscription_ids_to_fetch = [
-            sid for sid in subscription_ids if sid not in invalid
+            sid for sid in subscription_ids if not sid in invalid
         ]
         subscription_objects = pushi.WebPush.find(id={"$in": subscription_ids_to_fetch})
 
@@ -389,7 +389,7 @@ class WebPushHandler(handler.Handler):
 
         events = self.subs.get(app_id, {})
         subscription_ids = events.get(event, [])
-        if subscription_id not in subscription_ids:
+        if not subscription_id in subscription_ids:
             subscription_ids.append(subscription_id)
         events[event] = subscription_ids
         self.subs[app_id] = events

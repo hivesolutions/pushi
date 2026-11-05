@@ -1,4 +1,5 @@
 redis
 pywebpush
+httpx[http2]
 py_vapid
 mock

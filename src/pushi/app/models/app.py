@@ -57,8 +57,10 @@ class App(base.PushiBase):
         - All credentials are auto-generated as SHA256 hashes of UUIDs on creation.
 
     Push notification configuration:
-        - APN (Apple Push Notifications): Requires `apn_key`, `apn_cer`, and
-          `apn_sandbox` flag for iOS push notifications.
+        - APN (Apple Push Notifications): Requires either `apn_auth_key`,
+          `apn_key_id`, `apn_team_id` and `apn_topic` (token based) or
+          `apn_key` and `apn_cer` (certificate based), plus the `apn_sandbox`
+          flag for iOS push notifications.
         - Web Push (W3C Push API): Requires `vapid_key` and `vapid_email` for
           browser push notifications.
 
@@ -74,6 +76,7 @@ class App(base.PushiBase):
           related Subscriptions, Events, etc. Implement cleanup if required.
         - APN certificate management: The `apn_key` and `apn_cer` must be kept
           in sync with Apple Developer portal; expired certs cause delivery failures.
+          The token based `apn_auth_key` (.p8) does not expire and is preferred.
         - Unique names: App names must be unique within the system.
 
     Related models:
@@ -170,6 +173,57 @@ class App(base.PushiBase):
     """
     PEM-formatted certificate for Apple Push Notification authentication.
     Obtained from Apple Developer portal; must match apn_key.
+
+    :type: str
+    """
+
+    apn_auth_key = appier.field(
+        meta="longtext",
+        description="APN Auth Key",
+        observations="""The authentication key (.p8) in PEM format to be used
+        in the token based authentication of the messages to be sent using
+        APN (Apple Push Notifications), preferred over the certificate""",
+    )
+    """
+    PEM-formatted (.p8) authentication key for the token based Apple Push
+    Notification authentication, used to sign the provider (JWT) tokens.
+    Obtained from Apple Developer portal; does not expire.
+
+    :type: str
+    """
+
+    apn_key_id = appier.field(
+        description="APN Key ID",
+        observations="""The identifier of the authentication key (.p8) to be
+        used in the token based authentication of APN (Apple Push Notifications)""",
+    )
+    """
+    Identifier of the authentication key, as shown in the Apple Developer
+    portal, used as the key identifier (`kid`) of the provider tokens.
+
+    :type: str
+    """
+
+    apn_team_id = appier.field(
+        description="APN Team ID",
+        observations="""The identifier of the Apple Developer team that owns the
+        authentication key, used in the token based authentication of APN""",
+    )
+    """
+    Identifier of the Apple Developer team owning the authentication key,
+    used as the issuer (`iss`) of the provider tokens.
+
+    :type: str
+    """
+
+    apn_topic = appier.field(
+        description="APN Topic",
+        observations="""The topic of the APN (Apple Push Notifications) messages,
+        usually the bundle identifier of the target iOS application""",
+    )
+    """
+    Topic of the notifications, usually the bundle identifier of the
+    target application (eg: `pt.hive.omni-dashboard`).
 
     :type: str
     """

@@ -10,6 +10,10 @@ class App(PushiRecord):
     apn_sandbox: bool
     apn_key: str | None
     apn_cer: str | None
+    apn_auth_key: str | None
+    apn_key_id: str | None
+    apn_team_id: str | None
+    apn_topic: str | None
     vapid_key: str | None
     vapid_email: str | None
     smtp_url: str | None

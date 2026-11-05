@@ -145,6 +145,10 @@ class MessagingController(appier.Controller):
             key_data=data.get("key_data"),
             cer_data=data.get("cer_data"),
             sandbox=data.get("sandbox"),
+            auth_key=data.get("auth_key"),
+            key_id=data.get("key_id"),
+            team_id=data.get("team_id"),
+            topic=data.get("topic"),
         )
 
         return result

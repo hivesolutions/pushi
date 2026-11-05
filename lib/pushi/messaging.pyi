@@ -31,6 +31,10 @@ class APNParams(TypedDict):
     key_data: NotRequired[str]
     cer_data: NotRequired[str]
     sandbox: NotRequired[bool]
+    auth_key: NotRequired[str]
+    key_id: NotRequired[str]
+    team_id: NotRequired[str]
+    topic: NotRequired[str]
 
 class EmailParams(TypedDict):
     smtp_host: NotRequired[str]

@@ -60,10 +60,12 @@ class APN(base.PushiBase):
           feedback service should be used to clean up stale tokens.
 
     Cautions:
-        - Token invalidation: iOS device tokens can become invalid; implement
-          feedback handling to remove stale subscriptions.
-        - Certificate requirements: The parent App must have valid `apn_key`
-          and `apn_cer` configured, matching the `apn_sandbox` environment.
+        - Token invalidation: iOS device tokens can become invalid; the
+          subscriptions of tokens reported as invalid by APN are removed.
+        - Credential requirements: The parent App must have either valid
+          `apn_auth_key`, `apn_key_id`, `apn_team_id` and `apn_topic` (token
+          based) or `apn_key` and `apn_cer` (certificate based) configured,
+          matching the `apn_sandbox` environment.
         - Sandbox vs Production: Ensure `apn_sandbox` flag matches the token's
           environment; sandbox tokens won't work in production and vice versa.
         - State synchronization: If application state is unavailable, handler

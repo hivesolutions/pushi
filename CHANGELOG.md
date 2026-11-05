@@ -9,7 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-*
+* Token based authentication for Apple push notifications, using a .p8 key instead of a yearly renewed certificate - [#17](https://github.com/hivesolutions/pushi/issues/17)
 
 ### Changed
 
@@ -17,7 +17,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
-*
+* Apple push notifications are delivered again, through the current Apple push service instead of the retired one - [#17](https://github.com/hivesolutions/pushi/issues/17)
+* Repeated direct Apple push notifications to the same device are no longer skipped
 
 ## [0.6.10] - 2026-06-28
 
